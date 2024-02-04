@@ -9,6 +9,7 @@ import SwitchingTabs from '../components/SwitchingTabs.vue';
 import { useRouter } from 'vue-router';
 import { User } from '../models/user';
 import Loading from '../components/Loading.vue';
+import Avatar from '../components/Avatar.vue';
 
 const router = useRouter();
 const userName = ref<string>("")
@@ -63,6 +64,26 @@ async function editExe() {
 async function tabSwitched(idx:number){
     if(idx==2){
         await edit();
+    }
+}
+
+const file = ref<HTMLInputElement>();
+async function pick() {
+    if(!file.value){
+        return false;
+    }
+    file.value.showPicker();
+}
+async function pickDone() {
+    if(!file.value){
+        return false;
+    }
+    if(file.value.files && file.value.files.length>0){
+        const resp = await api.identites.user.setAvatar(file.value.files[0]);
+        if(resp){
+            await edit();
+        }
+        file.value.value = "";
     }
 }
 
@@ -126,6 +147,11 @@ onMounted(async()=>{
         </div>
         <div>
             <div v-if="uInfo">
+                <div class="avt">
+                    <Avatar :file-name="uInfo.AvatarName" :name="uInfo.Name" @click="pick"></Avatar>
+                    <input ref="file" @change="pickDone" type="file">
+                </div>
+                <div class="avtNotice">点击设置</div>
                 <table>
                     <tr>
                         <td>昵称</td>
@@ -152,6 +178,20 @@ onMounted(async()=>{
 </template>
 
 <style scoped>
+.avtNotice{
+    text-align: center;
+    color:#aaa;
+    font-size: 14px;
+}
+input[type=file]{
+    display: none;
+}
+.avt{
+    position: relative;
+    height: 68px;
+    width: 68px;
+    margin: 20px auto 0px auto;
+}
 .notice{
     text-align: center;
     margin-top: 20px;
@@ -192,4 +232,4 @@ button.logout{
     color:gray;
     margin-top: 20px;
 }
-</style>../../consts
+</style>

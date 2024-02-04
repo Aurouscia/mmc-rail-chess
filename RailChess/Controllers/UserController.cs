@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using RailChess.Models;
 using RailChess.Services;
 using RailChess.Utils;
-using System.Xml.Linq;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace RailChess.Controllers
 {
@@ -88,5 +89,54 @@ namespace RailChess.Controllers
             }
             return this.ApiResp();
         }
+
+        [Authorize]
+        public IActionResult SetAvatar(IFormFile avatar)
+        {
+            if (avatar is null || _userId == 0)
+                return BadRequest();
+            var u = _context.Users.Find(_userId);
+            if (u is null)
+                return BadRequest();
+            if (avatar.Length > 5 * 1000 * 1000)
+                return this.ApiFailedResp("请勿上传过大图片");
+            string ext = Path.GetExtension(avatar.FileName).ToLower();
+            if (!supportedAvatarExts.Contains(ext))
+                return this.ApiFailedResp($"请上传{string.Join('/',supportedAvatarExts)}");
+
+            Image img = Image.Load(avatar.OpenReadStream());
+            img.Mutate(x => x.Resize(new ResizeOptions()
+            {
+                Mode = ResizeMode.Crop,
+                Position = AnchorPositionMode.Center,
+                Size = new Size(avatarSide,avatarSide)
+            }));
+
+            string name = Path.GetRandomFileName();
+            name = Path.ChangeExtension(name, "png");
+            var dir = "./wwwroot/avts";
+            var di = new DirectoryInfo(dir);
+            if (!di.Exists)
+                di.Create();
+            string pathName = Path.Combine(dir, name);
+            img.SaveAsPng(pathName);
+
+            string? originalName = u.AvatarName;
+            u.AvatarName = name;
+            _context.SaveChanges();
+
+            if(originalName is not null)
+            {
+                var originalAvt = new FileInfo(Path.Combine(dir, originalName));
+                if(originalAvt.Exists)
+                {
+                    originalAvt.Delete();
+                }
+            }
+            return this.ApiResp();
+        }
+
+        private readonly static List<string> supportedAvatarExts = new() { ".png", ".jpg", ".jpeg" };
+        private const int avatarSide = 64;
     }
 }

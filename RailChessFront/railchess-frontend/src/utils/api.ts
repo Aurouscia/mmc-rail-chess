@@ -52,6 +52,14 @@ export class Api{
                     user,
                     "修改成功");
                 return res.success
+            },
+            setAvatar: async(avatar:File)=>{
+                var res = await this.httpClient.request(
+                    "/api/User/SetAvatar",
+                    "postForm",
+                    {avatar},
+                    "上传成功");
+                return res.success
             }
         },
     }

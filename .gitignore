@@ -361,5 +361,15 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+
+# prod config file
 /RailChess/appsettings.Production.json
+
+
+# db file
 /RailChess/Data/fcloud3.db
+
+
+# front end build output target
+/RailChess/wwwroot/*
