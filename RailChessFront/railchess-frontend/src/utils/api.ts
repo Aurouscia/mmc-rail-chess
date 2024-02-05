@@ -102,6 +102,24 @@ export class Api{
                 "已保存"
             )
             return resp.success
+        },
+        importTopo: async (id:number, file:File)=>{
+            const resp = await this.httpClient.request(
+                "/api/Map/ImportTopo",
+                "postForm",
+                {id,file},
+                "成功导入"
+            )
+            return resp.success
+        },
+        delete: async(id:number)=>{
+            const resp = await this.httpClient.request(
+                "/api/Map/Delete",
+                "get",
+                {id},
+                "成功删除"
+            )
+            return resp.success
         }
     }
 }

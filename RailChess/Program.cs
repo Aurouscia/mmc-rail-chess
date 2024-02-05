@@ -37,7 +37,7 @@ try
     var app = builder.Build();
 
     //app.UseHttpsRedirection();
-    app.UseStaticFiles();
+    app.UseFileServer();
     app.UseCors(localVueCors);
 
     app.UseRouting();

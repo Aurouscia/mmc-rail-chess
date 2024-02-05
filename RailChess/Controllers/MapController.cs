@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using RailChess.Models.DbCtx;
 using RailChess.Models.Map;
 using RailChess.Services;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RailChess.Controllers
 {
@@ -22,7 +23,7 @@ namespace RailChess.Controllers
         public IActionResult Index(string search)
         {
             search ??= "";
-            var q = _context.Maps.AsQueryable<RailChessMap>();
+            var q = _context.Maps.Where(x => x.Deleted == false);
             if(search.Trim() == myMaps)
                 q = q.Where(x => x.Author == _userId);
             else if(!string.IsNullOrWhiteSpace(search))
@@ -135,6 +136,8 @@ namespace RailChess.Controllers
             RailChessMap? map = _context.Maps.Find(id);
             if (map is null)
                 return this.ApiFailedResp("找不到指定棋盘");
+            if (map.Author != _userId)
+                return this.ApiFailedResp("只能编辑自己的棋盘");
             RailChessTopo? topo = JsonConvert.DeserializeObject<RailChessTopo>(data);
             if (topo is null || topo.Lines is null || topo.Stations is null)
                 return this.ApiFailedResp("未知错误，请联系管理员");
@@ -144,6 +147,47 @@ namespace RailChess.Controllers
             map.ExcStationCount = staDirsInfo.Values.Where(x => x > 2).Count();
             map.UpdateTime = DateTime.Now;
             map.TopoData = data;
+            _context.SaveChanges();
+            return this.ApiResp();
+        }
+        public IActionResult ImportTopo(int id, IFormFile file)
+        {
+            if(file is null || file.Length > 500*1000)
+            {
+                return BadRequest();
+            }
+            RailChessMap? map = _context.Maps.Find(id);
+            if (map is null)
+                return this.ApiFailedResp("找不到指定棋盘");
+            if (map.Author != _userId)
+                return this.ApiFailedResp("只能编辑自己的棋盘");
+            if (map.TopoData is not null)
+                return this.ApiFailedResp("只能向新建棋盘导入");
+
+            var sr = new StreamReader(file.OpenReadStream());
+            string json = sr.ReadToEnd();
+
+            RailChessTopo? topo = JsonConvert.DeserializeObject<RailChessTopo>(json);
+            if (topo is null || topo.Lines is null || topo.Stations is null)
+                return this.ApiFailedResp("文件格式有误");
+            var staDirsInfo = topo.StationsDirections();
+            map.LineCount = topo.Lines.Count;
+            map.StationCount = staDirsInfo.Count;
+            map.ExcStationCount = staDirsInfo.Values.Where(x => x > 2).Count();
+            map.UpdateTime = DateTime.Now;
+            map.TopoData = json;
+            _context.SaveChanges();
+            return this.ApiResp();
+        }
+
+        public IActionResult Delete(int id)
+        {
+            RailChessMap? map = _context.Maps.Find(id);
+            if (map is null)
+                return this.ApiFailedResp("找不到指定棋盘");
+            if (map.Author != _userId)
+                return this.ApiFailedResp("只能编辑自己的棋盘");
+            map.Deleted = true;
             _context.SaveChanges();
             return this.ApiResp();
         }

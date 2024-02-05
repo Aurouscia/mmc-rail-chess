@@ -5,6 +5,7 @@ import { Api } from '../utils/api';
 import { RailChessMapIndexResult, RailChessMapIndexResultItem } from '../models/map';
 import Loading from '../components/Loading.vue';
 import SideBar from '../components/SideBar.vue';
+import Notice from '../components/Notice.vue';
 import { router } from '../main';
 
 const search = ref<string>();
@@ -67,6 +68,29 @@ function toTopo(id:number){
     router.push({name:'topo',params:{id}});
 }
 
+const ipt = ref<HTMLInputElement>();
+async function iptChange(){
+    if(ipt.value && ipt.value.files){
+        if(ipt.value.files.length>0 && editing.value){
+            const res = await api.map.importTopo(editing.value.Id, ipt.value.files[0])
+            if(res){
+                await load();
+                sidebar.value?.fold();
+            }
+        }
+    }
+}
+
+async function deleteMap(id:number) {
+    if(window.confirm("确认删除该棋盘")){
+        const resp = await api.map.delete(id);
+        if(resp){
+            await load();
+            sidebar.value?.fold();
+        }
+    }
+}
+
 var api:Api;
 onMounted(async()=>{
     api = injectApi()
@@ -104,8 +128,10 @@ onMounted(async()=>{
                 <span class="authorName" @click="search = m.Author; load();">{{ m.Author }}</span>
             </td>
             <td>
-                <button class="minor" @click="edit(m.Id)">信息</button>
-                <button class="minor" @click="toTopo(m.Id)">编辑</button>
+                <div class="ops">
+                    <button class="minor" @click="edit(m.Id)">信息</button>
+                    <button class="minor" @click="toTopo(m.Id)">编辑</button>
+                </div>
             </td>
         </tr>
         <tr v-if="data.Items.length==20">
@@ -116,7 +142,7 @@ onMounted(async()=>{
     </Loading>
 </div>
 <SideBar ref="sidebar">
-    <h1>{{ editing?.Title ? editing.Title : '新建棋盘' }}</h1>
+    <h1>{{ editing && editing.Id>0 ? editing.Title : '新建棋盘' }}</h1>
     <div class="previewDiv" v-if="editing?.FileName">
         <img class="preview" :src="bgFilePath(editing.FileName)"/>
     </div>
@@ -133,16 +159,35 @@ onMounted(async()=>{
                 <input ref="file" type="file" @change="fileChange"/>
             </td>
         </tr>
-        <tr>
+        <tr class="noneBackground">
             <td></td>
             <td><button @click="confirm">确认</button></td>
         </tr>
     </table>
     <Loading v-else></Loading>
+    <Notice v-if="editing && editing.Id>0" :type="'warn'">
+        注意：替换背景图片时请确保新图片和旧图片中车站的相对位置一致
+    </Notice>
+    <Notice v-if="editing && editing.Id==0" :type="'warn'">
+        注意：如果地图后续会扩大，提前预留好位置，确保替换背景图片时新图片和旧图片中车站的相对位置一致
+    </Notice>
+    <div class="iptOuter">
+        <button v-if="editing && editing.Id>0" class="minor" @click="ipt?.showPicker">导入数据</button>
+        <input type="file" ref="ipt" @change="iptChange"/>
+    </div>
+    <div class="iptOuter">
+        <button v-if="editing && editing.Id>0" class="danger" @click="deleteMap(editing.Id)">删除</button>
+    </div>
 </SideBar>
 </template>
 
 <style scoped>
+.iptOuter{
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
 .previewDiv{
     display: flex;
     justify-content: center;
@@ -155,6 +200,13 @@ onMounted(async()=>{
 }
 input[type=file]{
     display: none;
+}
+
+
+.ops{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
 }
 .date{
     font-size: 14px;

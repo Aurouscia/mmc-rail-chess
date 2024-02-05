@@ -46,7 +46,11 @@ async function Logout() {
 const newUserName = ref<string>("")
 const newPassword = ref<string>("")
 async function Register() {
-    await api.identites.user.add({userName:newUserName.value,password:newPassword.value});
+    const res = await api.identites.user.add({userName:newUserName.value,password:newPassword.value});
+    if(res){
+        newUserName.value = "";
+        newPassword.value = "";
+    }
 }
 
 const uInfo = ref<User>();
