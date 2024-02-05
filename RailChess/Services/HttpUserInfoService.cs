@@ -1,4 +1,4 @@
-﻿using RailChess.Models;
+﻿using RailChess.Models.DbCtx;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace RailChess.Services

@@ -1,14 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RailChess.Models.Map;
 
-namespace RailChess.Models
+namespace RailChess.Models.DbCtx
 {
     public class RailChessContext : DbContext
     {
         public RailChessContext(DbContextOptions<RailChessContext> options) : base(options)
-        { 
+        {
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<RailChessMap> Maps { get; set; }
     }
     public static class DbContextSetup
     {

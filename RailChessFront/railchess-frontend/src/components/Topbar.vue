@@ -12,7 +12,7 @@
     </div>
     <div class="topbar-item">
       <div>
-        <RouterLink to="/d">作品</RouterLink>
+        <RouterLink to="/maps">棋盘</RouterLink>
       </div>
     </div>
   </div>

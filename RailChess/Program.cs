@@ -1,4 +1,4 @@
-using RailChess.Models;
+using RailChess.Models.DbCtx;
 using RailChess.Services;
 using Serilog;
 

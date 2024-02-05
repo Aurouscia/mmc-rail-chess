@@ -1,3 +1,4 @@
+import { RailChessMapIndexResult } from "../models/map";
 import { User } from "../models/user";
 import { HttpClient } from "./httpClient";
 import { IdentityInfo } from "./userInfo";
@@ -61,6 +62,27 @@ export class Api{
                     "上传成功");
                 return res.success
             }
+        }
+    }
+    map = {
+        index: async (search: string) => {
+            const resp = await this.httpClient.request(
+                "/api/Map/Index",
+                "get",
+                { search }
+            );
+            if (resp.success) {
+                return resp.data as RailChessMapIndexResult
+            }
         },
+        createOrEdit: async(id:number, title:string, file?:File)=>{
+            const resp = await this.httpClient.request(
+                "/api/Map/CreateOrEdit",
+                "postForm",
+                {id,title,file},
+                "保存成功"
+            );
+            return resp.success
+        }
     }
 }

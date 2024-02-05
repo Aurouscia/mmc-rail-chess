@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RailChess.Models;
+using RailChess.Models.DbCtx;
 using RailChess.Services;
 using RailChess.Utils;
 using SixLabors.ImageSharp;

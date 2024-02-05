@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using RailChess.Models;
+using RailChess.Models.DbCtx;
 using RailChess.Services;
 using RailChess.Utils;
 using System.IdentityModel.Tokens.Jwt;
