@@ -1,4 +1,4 @@
-import { RailChessMapIndexResult } from "../models/map";
+import { RailChessMapIndexResult, RailChessTopo, TopoEditorLoadResult } from "../models/map";
 import { User } from "../models/user";
 import { HttpClient } from "./httpClient";
 import { IdentityInfo } from "./userInfo";
@@ -82,6 +82,25 @@ export class Api{
                 {id,title,file},
                 "保存成功"
             );
+            return resp.success
+        },
+        loadTopo: async (id:number)=>{
+            const resp = await this.httpClient.request(
+                "/api/Map/LoadTopo",
+                "get",
+                {id},
+            );
+            if(resp.success){
+                return resp.data as TopoEditorLoadResult
+            }
+        },
+        saveTopo: async (id:number, data:RailChessTopo)=>{
+            const resp = await this.httpClient.request(
+                "/api/Map/SaveTopo",
+                "postForm",
+                {id,data:JSON.stringify(data)},
+                "已保存"
+            )
             return resp.success
         }
     }

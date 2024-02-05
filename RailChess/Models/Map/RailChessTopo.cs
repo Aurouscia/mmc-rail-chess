@@ -19,16 +19,48 @@
                 return 0;
             foreach (Line l in Lines)
             {
-                if (l.Stas is null)
+                if (l.Stas is null || l.Stas.Count==0)
                     continue;
-                int idx = l.Stas.IndexOf(stationId);
-                if (idx == 0 || idx == Stations.Count - 1)
-                {
-                    res += 1;
+                for(int i=0;i<l.Stas.Count;i++)
+                { 
+                    var s = l.Stas[i];
+                    if (s == stationId)
+                    {
+                        if (i == 0 || i == l.Stas.Count - 1)
+                            res += 1;
+                        else
+                            res += 2;
+                    }
                 }
-                else if (idx != -1)
+            }
+            return res;
+        }
+        public Dictionary<int,int> StationsDirections()
+        {
+            Dictionary<int, int> res = new();
+            if (Lines is null || Stations is null)
+                return res;
+            foreach (Line l in Lines)
+            {
+                if (l.Stas is null || l.Stas.Count == 0)
+                    continue;
+                for (int i = 0; i < l.Stas.Count; i++)
                 {
-                    res += 2;
+                    var s = l.Stas[i];
+                    if (res.ContainsKey(s))
+                    {
+                        if (i == 0 || i == l.Stas.Count - 1)
+                            res[s] += 1;
+                        else
+                            res[s] += 2;
+                    }
+                    else 
+                    {
+                        if (i == 0 || i == l.Stas.Count - 1)
+                            res.Add(s, 1);
+                        else
+                            res.Add(s, 2);
+                    }
                 }
             }
             return res;

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using RailChess.Models.DbCtx;
 using RailChess.Models.Map;
 using RailChess.Services;
@@ -32,7 +33,8 @@ namespace RailChess.Controllers
                 else
                     q = q.Where(x => x.Title != null && x.Title.Contains(search));
             }
-            var list = q.OrderByDescending(x => x.UpdateTime).Select(x => new {x.Id, x.Title, x.Author, x.ImgFileName, x.UpdateTime}).Take(20).ToList();
+            var list = q.OrderByDescending(x => x.UpdateTime).Select(x => 
+                new {x.Id, x.Title, x.Author, x.ImgFileName, x.LineCount,x.StationCount,x.ExcStationCount, x.UpdateTime}).Take(20).ToList();
             var authorIds = list.Select(x=>x.Author).ToList();
             var us = _context.Users.Where(x => authorIds.Contains(x.Id)).Select(x => new {x.Id,x.Name}).ToList();
 
@@ -46,7 +48,10 @@ namespace RailChess.Controllers
                     Title = map.Title,
                     Author = authorName,
                     Date = map.UpdateTime.ToString("yy-MM-dd HH:mm:ss"),
-                    FileName = map.ImgFileName
+                    FileName = map.ImgFileName,
+                    LineCount = map.LineCount,
+                    StationCount = map.StationCount,
+                    ExcStationCount = map.ExcStationCount,
                 });
             }
             return this.ApiResp(res);
@@ -113,7 +118,35 @@ namespace RailChess.Controllers
             _context.SaveChanges();
             return this.ApiResp();
         }
-
+        public IActionResult LoadTopo(int id)
+        {
+            var m = _context.Maps.Find(id);
+            if (m is null)
+                return this.ApiFailedResp("找不到指定棋盘");
+            TopoEditorLoadResult res = new()
+            {
+                TopoData = m.TopoData,
+                FileName = m.ImgFileName
+            };
+            return this.ApiResp(res);
+        }
+        public IActionResult SaveTopo(int id, string data)
+        {
+            RailChessMap? map = _context.Maps.Find(id);
+            if (map is null)
+                return this.ApiFailedResp("找不到指定棋盘");
+            RailChessTopo? topo = JsonConvert.DeserializeObject<RailChessTopo>(data);
+            if (topo is null || topo.Lines is null || topo.Stations is null)
+                return this.ApiFailedResp("未知错误，请联系管理员");
+            var staDirsInfo = topo.StationsDirections();
+            map.LineCount = topo.Lines.Count;
+            map.StationCount = staDirsInfo.Count;
+            map.ExcStationCount = staDirsInfo.Values.Where(x => x > 2).Count();
+            map.UpdateTime = DateTime.Now;
+            map.TopoData = data;
+            _context.SaveChanges();
+            return this.ApiResp();
+        }
 
         public class RailChessMapIndexResult
         {
@@ -126,10 +159,18 @@ namespace RailChess.Controllers
             {
                 public int Id { get; set; }
                 public string? Title { get; set; }
+                public int LineCount { get; set; }
+                public int StationCount { get; set; }
+                public int ExcStationCount { get; set; }
                 public string? Author { get; set; }
                 public string? Date { get; set; } 
                 public string? FileName { get; set; }
             }
+        }
+        public class TopoEditorLoadResult
+        {
+            public string? TopoData { get; set; }
+            public string? FileName { get; set; }
         }
     }
 }

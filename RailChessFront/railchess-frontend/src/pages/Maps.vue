@@ -5,6 +5,7 @@ import { Api } from '../utils/api';
 import { RailChessMapIndexResult, RailChessMapIndexResultItem } from '../models/map';
 import Loading from '../components/Loading.vue';
 import SideBar from '../components/SideBar.vue';
+import { router } from '../main';
 
 const search = ref<string>();
 const data = ref<RailChessMapIndexResult>();
@@ -24,7 +25,11 @@ function create(){
         Id: 0,
         Title: "",
         Author: "",
-        Date:""
+        Date:"",
+        FileName:undefined,
+        LineCount:0,
+        StationCount:0,
+        ExcStationCount:0
     }
     fileSelected.value = undefined;
     if(file.value)
@@ -54,9 +59,12 @@ async function confirm(){
         sidebar.value?.fold();
     }
 }
-
 function bgFilePath(fileName:string){
     return import.meta.env.VITE_BASEURL+"/maps/"+fileName;
+}
+
+function toTopo(id:number){
+    router.push({name:'topo',params:{id}});
 }
 
 var api:Api;
@@ -81,7 +89,14 @@ onMounted(async()=>{
         <tr v-for="m in data.Items">
             <td>
                 <div class="title">
-                    {{ m.Title }}
+                    <div class="titleLeft">
+                        <div>{{ m.Title }}</div>
+                        <div class="mapInfo">
+                            {{ m.LineCount }}线 
+                            {{ m.StationCount }}站 
+                            {{ m.ExcStationCount }}换乘站
+                        </div>
+                    </div>
                     <span class="date">{{ m.Date }}</span>
                 </div>
             </td>
@@ -89,7 +104,8 @@ onMounted(async()=>{
                 <span class="authorName" @click="search = m.Author; load();">{{ m.Author }}</span>
             </td>
             <td>
-                <button class="minor" @click="edit(m.Id)">编辑</button>
+                <button class="minor" @click="edit(m.Id)">信息</button>
+                <button class="minor" @click="toTopo(m.Id)">编辑</button>
             </td>
         </tr>
         <tr v-if="data.Items.length==20">
@@ -142,13 +158,23 @@ input[type=file]{
 }
 .date{
     font-size: 14px;
-    color:#999
+    color:#777
 }
 .authorName{
     cursor: pointer;
 }
 .authorName:hover{
     text-decoration: underline;
+}
+.mapInfo{
+    font-size: 14px;
+    color:#777;
+    font-weight: normal;
+}
+.titleLeft{
+    text-align: left;
+    font-size: 18px;
+    font-weight: 600;
 }
 .title{
     display: flex;
