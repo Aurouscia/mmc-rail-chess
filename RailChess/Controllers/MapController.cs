@@ -61,7 +61,7 @@ namespace RailChess.Controllers
         {
             bool existing = id > 0;
             title ??= "";
-            if (title.Length < 3 || title.Length > 20)
+            if (title.Length < 2 || title.Length > 20)
                 return this.ApiFailedResp("棋盘名称应在2-20之间");
 
             RailChessMap? m;
@@ -161,8 +161,8 @@ namespace RailChess.Controllers
                 return this.ApiFailedResp("找不到指定棋盘");
             if (map.Author != _userId)
                 return this.ApiFailedResp("只能编辑自己的棋盘");
-            if (map.TopoData is not null)
-                return this.ApiFailedResp("只能向新建棋盘导入");
+            //if (map.TopoData is not null)
+            //    return this.ApiFailedResp("只能向新建棋盘导入");
 
             var sr = new StreamReader(file.OpenReadStream());
             string json = sr.ReadToEnd();
