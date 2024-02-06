@@ -71,26 +71,6 @@ async function tabSwitched(idx:number){
     }
 }
 
-const file = ref<HTMLInputElement>();
-async function pick() {
-    if(!file.value){
-        return false;
-    }
-    file.value.showPicker();
-}
-async function pickDone() {
-    if(!file.value){
-        return false;
-    }
-    if(file.value.files && file.value.files.length>0){
-        const resp = await api.identites.user.setAvatar(file.value.files[0]);
-        if(resp){
-            await edit();
-        }
-        file.value.value = "";
-    }
-}
-
 onMounted(async()=>{
     pop = inject('pop') as Ref<InstanceType<typeof Pop>>
     httpClient = inject('http') as HttpClient;
@@ -152,8 +132,7 @@ onMounted(async()=>{
         <div>
             <div v-if="uInfo">
                 <div class="avt">
-                    <Avatar :file-name="uInfo.AvatarName" :name="uInfo.Name" @click="pick"></Avatar>
-                    <input ref="file" @change="pickDone" type="file">
+                    <Avatar :file-name="uInfo.AvatarName" @need-refresh="edit"></Avatar>
                 </div>
                 <div class="avtNotice">点击设置</div>
                 <table>
