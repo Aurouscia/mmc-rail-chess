@@ -12,6 +12,11 @@
     </div>
     <div class="topbar-item">
       <div>
+        <RouterLink to="/games">对局</RouterLink>
+      </div>
+    </div>
+    <div class="topbar-item">
+      <div>
         <RouterLink to="/maps">棋盘</RouterLink>
       </div>
     </div>

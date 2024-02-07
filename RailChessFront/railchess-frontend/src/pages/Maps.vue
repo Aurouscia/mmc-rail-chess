@@ -165,8 +165,7 @@ onMounted(async()=>{
             </td>
         </tr>
         <tr class="noneBackground">
-            <td></td>
-            <td><button @click="confirm">确认</button></td>
+            <td colspan="2"><button @click="confirm">确认</button></td>
         </tr>
     </table>
     <Loading v-else></Loading>

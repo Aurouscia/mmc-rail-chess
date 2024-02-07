@@ -64,7 +64,7 @@ function removeColor(idx:number){
 var lastRender = 0;
 function tryRender(){
     var time = getTimeStamp();
-    if(time-lastRender<0.1){return;}
+    if(time-lastRender<0.03){return;}
     lastRender = time;
     render();
 }
@@ -90,10 +90,10 @@ function render(){
         counter++;
     })
     ctx.fillStyle = textColor.value;
-    ctx.font = `${cvsSide*2/3}px msyh`;
+    ctx.font = `${cvsSide*0.8}px msyh`;
     ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(text.value, cvsSide/2, cvsSide*5/9);
+    ctx.textBaseline = 'hanging'
+    ctx.fillText(text.value, cvsSide/2, cvsSide*0.1);
 }
 function done(){
     if(cvs.value){
@@ -140,7 +140,7 @@ const emit = defineEmits<{
             <div>
                 <button @click="addColor" v-show="colorList.length<4" class="minor">添加颜色</button>
             </div>
-            <div>角度偏移<input v-model="startAngle" type="number" @input="render" @blur="render"></div>
+            <div>角度偏移<input v-model="startAngle" type="range" min="0" max="360" @input="tryRender" @blur="render"></div>
             <div>
                 <input v-model="text" maxlength="1" placeholder="写字" style="width: 50px;" @blur="render"/>
                 <input v-model="textColor" type="color" @input="tryRender" @blur="render">

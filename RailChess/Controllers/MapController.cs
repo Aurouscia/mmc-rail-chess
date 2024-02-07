@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using RailChess.Models.COM;
 using RailChess.Models.DbCtx;
 using RailChess.Models.Map;
 using RailChess.Services;
@@ -20,6 +21,7 @@ namespace RailChess.Controllers
             _context = context;
             _userId = httpUserIdProvider.Get();
         }
+        [AllowAnonymous]
         public IActionResult Index(string search)
         {
             search ??= "";
@@ -190,6 +192,19 @@ namespace RailChess.Controllers
             map.Deleted = true;
             _context.SaveChanges();
             return this.ApiResp();
+        }
+        public IActionResult QuickSearch(string s)
+        {
+            var maps = _context.Maps
+                .Where(x => !x.Deleted)
+                .Where(x => x.Title != null && x.Title.Contains(s))
+                .Select(x => new { x.Id,x.Title, x.UpdateTime }).Take(6).ToList();
+            QuickSearchResult res = new();
+            maps.ForEach(x =>
+            {
+                res.Items.Add(new(x.Title??"???", x.UpdateTime.ToString("yy/MM/dd HH:mm"), x.Id));
+            });
+            return this.ApiResp(res);
         }
 
         public class RailChessMapIndexResult

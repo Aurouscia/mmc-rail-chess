@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RailChess.Models.Game;
 using RailChess.Models.Map;
 
 namespace RailChess.Models.DbCtx
@@ -11,6 +12,7 @@ namespace RailChess.Models.DbCtx
 
         public DbSet<User> Users { get; set; }
         public DbSet<RailChessMap> Maps { get; set; }
+        public DbSet<RailChessGame> Games { get; set; }
     }
     public static class DbContextSetup
     {

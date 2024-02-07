@@ -1,4 +1,6 @@
+import { GameActiveResult, RailChessGame } from "../models/game";
 import { RailChessMapIndexResult, RailChessTopo, TopoEditorLoadResult } from "../models/map";
+import { QuickSearchResult } from "../models/quickSearch";
 import { User } from "../models/user";
 import { HttpClient } from "./httpClient";
 import { IdentityInfo } from "./userInfo";
@@ -118,6 +120,45 @@ export class Api{
                 "get",
                 {id},
                 "成功删除"
+            )
+            return resp.success
+        },
+        quickSearch: async(s:string)=>{
+            const resp = await this.httpClient.request(
+                "/api/Map/QuickSearch",
+                "get",
+                {s}
+            );
+            if(resp.success){
+                return resp.data as QuickSearchResult
+            }
+        }
+    }
+    game = {
+        active:async()=>{
+            const resp = await this.httpClient.request(
+                "/api/Game/Active",
+                "get"
+            )
+            if(resp.success){
+                return resp.data as GameActiveResult
+            }
+        },
+        create:async(game:RailChessGame)=>{
+            const resp = await this.httpClient.request(
+                "/api/Game/Create",
+                "postRaw",
+                game,
+                "创建成功"
+            )
+            return resp.success;
+        },
+        delete:async(id:number)=>{
+            const resp = await this.httpClient.request(
+                "/api/Game/Delete",
+                "get",
+                {id},
+                "删除成功"
             )
             return resp.success
         }

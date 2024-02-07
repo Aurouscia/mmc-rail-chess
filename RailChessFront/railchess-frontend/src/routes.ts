@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage.vue'
 import Login from './pages/Login.vue'
 import Maps from './pages/Maps.vue'
 import Topo from './pages/Topo.vue'
+import Games from './pages/Games.vue'
 
 export const routes = [
     {
@@ -22,5 +23,8 @@ export const routes = [
         component: Topo,
         props:true,
         name:'topo'
+    },{
+        path: '/games',
+        component: Games
     }
 ]
