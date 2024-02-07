@@ -4,6 +4,7 @@ import Login from './pages/Login.vue'
 import Maps from './pages/Maps.vue'
 import Topo from './pages/Topo.vue'
 import Games from './pages/Games.vue'
+import Play from './pages/Play.vue'
 
 export const routes = [
     {
@@ -26,5 +27,10 @@ export const routes = [
     },{
         path: '/games',
         component: Games
+    },{
+        path: '/play/:id',
+        component: Play,
+        props:true,
+        name:'play'
     }
 ]

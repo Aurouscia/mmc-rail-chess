@@ -6,6 +6,7 @@ import { Api } from '../utils/api';
 import { injectApi } from '../provides';
 import Loading from '../components/Loading.vue';
 import Search from '../components/Search.vue';
+import { router } from '../main';
 
 const active = ref<GameActiveResult>();
 async function loadActive(){
@@ -25,6 +26,9 @@ async function create(){
             await loadActive();
         }
     }
+}
+function enter(id:number){
+    router.push({name:'play',params:{id}});
 }
 var api:Api
 onMounted(async ()=>{
@@ -49,7 +53,7 @@ onMounted(async ()=>{
     <tr><th class="mapCol">棋盘</th><th>房主</th></tr>
     <tr v-for="g in active.Items">
         <td>
-            {{ g.MapName }}
+            <div class="mapName" @click="enter(g.Data.Id||0)">{{ g.MapName }}</div>
             <div v-if="g.StartedMins>=0" class="gameStatus">已开始{{ g.StartedMins }}分钟</div>
             <div v-else class="gameStatus">正在等人</div>
         </td>
@@ -94,6 +98,13 @@ onMounted(async ()=>{
 </template>
 
 <style scoped>
+.mapName:hover{
+    text-decoration: underline;
+}
+.mapName{
+    font-weight: bold;
+    cursor: pointer;
+}
 .gameStatus{
     color:#666;
     font-size: 12px;

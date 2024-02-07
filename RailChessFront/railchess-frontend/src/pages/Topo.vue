@@ -7,6 +7,8 @@ import { MouseDragListener } from '../utils/mouseDrag';
 import SideBar from '../components/SideBar.vue'
 import { router } from '../main';
 import { AurStateStore } from '@aurouscia/au-undo-redo'
+import { bgSrc } from '../utils/fileSrc';
+import { posBase } from '../models/map';
 
 const props = defineProps<{
   id:string
@@ -15,7 +17,7 @@ const bgImg = ref<string>();
 const lines = ref<Line[]>([]);
 const stations = ref<StaParsed[]>([]),
 selectedLineId = ref<number>(-1);
-const posBase = 10000
+
 const autoSave = 20
 interface TempStore{lines:Line[],stations:StaParsed[]}
 
@@ -309,7 +311,7 @@ onMounted(async()=>{
         ssSave();
       }
       if(res && res.FileName){
-        bgImg.value = import.meta.env.VITE_BASEURL + "/maps/" + res.FileName;
+        bgImg.value = bgSrc(res.FileName);
       }
     }
   }

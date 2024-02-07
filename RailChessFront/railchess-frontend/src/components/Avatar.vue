@@ -4,6 +4,7 @@ import SideBar from './SideBar.vue';
 import { Api } from '../utils/api';
 import { injectApi } from '../provides';
 import { getTimeStamp } from '../utils/timeStamp';
+import { avtSrc } from '../utils/fileSrc';
 
 
 const props = defineProps<{
@@ -40,8 +41,7 @@ function setSrc(){
         src.value = undefined;
         return;
     }
-    const baseUrl = import.meta.env.VITE_BASEURL;
-    src.value = baseUrl+"/avts/"+props.fileName;
+    src.value = avtSrc(props.fileName);
 }
 watch(props,()=>{
     setSrc();

@@ -18,6 +18,7 @@ export interface TopoEditorLoadResult{
     FileName:string
 }
 
+export const posBase = 10000
 export interface RailChessTopo{
     Stations:Sta[]
     Lines:Line[]

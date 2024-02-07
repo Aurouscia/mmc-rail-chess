@@ -15,7 +15,7 @@ export interface SyncData{
     RandNumber:number,
     Ocps:OcpStatus[],
     NewOcps:OcpStatus,
-    Selections?:StepSelection[]
+    Selections:StepSelection[]
 }
 
 export interface StepSelection{

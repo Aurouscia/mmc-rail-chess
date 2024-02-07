@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RailChess.Models.DbCtx;
 using RailChess.Models.Game;
+using RailChess.Models.Map;
 using RailChess.Services;
 
 namespace RailChess.Controllers
@@ -48,6 +49,16 @@ namespace RailChess.Controllers
             _context.SaveChanges();
             return this.ApiResp();
         }
+        public IActionResult Init(int id)
+        {
+            var g = _context.Games.Find(id);
+            if (g is null)
+                return this.ApiFailedResp("找不到指定棋局");
+            var m = _context.Maps.Find(g.UseMapId);
+            if (m is null)
+                return this.ApiFailedResp("找不到指定地图");
+            return this.ApiResp(new InitData(m, g));
+        }
         public IActionResult Delete(int id)
         {
             var g = _context.Games.Find(id);
@@ -81,6 +92,18 @@ namespace RailChess.Controllers
                     else
                         StartedMins = -1;
                 }
+            }
+        }
+        public class InitData
+        {
+            public string? BgFileName { get; set; }
+            public string? TopoData { get; set; }
+            public RailChessGame GameInfo { get; set; }
+            public InitData(RailChessMap map, RailChessGame game)
+            {
+                BgFileName = map.ImgFileName;
+                TopoData = map.TopoData;
+                GameInfo = game;
             }
         }
     }

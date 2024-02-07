@@ -1,5 +1,6 @@
 import { GameActiveResult, RailChessGame } from "../models/game";
 import { RailChessMapIndexResult, RailChessTopo, TopoEditorLoadResult } from "../models/map";
+import { InitData } from "../models/play";
 import { QuickSearchResult } from "../models/quickSearch";
 import { User } from "../models/user";
 import { HttpClient } from "./httpClient";
@@ -152,6 +153,16 @@ export class Api{
                 "创建成功"
             )
             return resp.success;
+        },
+        init:async(id:number)=>{
+            const resp = await this.httpClient.request(
+                "/api/Game/Init",
+                "get",
+                {id}
+            );
+            if(resp.success){
+                return resp.data as InitData
+            }
         },
         delete:async(id:number)=>{
             const resp = await this.httpClient.request(

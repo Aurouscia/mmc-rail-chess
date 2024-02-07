@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { inject, onMounted, ref } from 'vue';
-import { Api } from '../utils/api';
+import { onMounted, ref } from 'vue';
 import { QuickSearchResult, QuickSearchResultItem } from '../models/quickSearch';
 
 const props = defineProps<{
@@ -61,9 +60,7 @@ const emits = defineEmits<{
 }>();
 defineExpose({clear});
 
-var api:Api;
 onMounted(()=>{
-    api = inject('api') as Api;
 })
 </script>
 
