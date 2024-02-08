@@ -13,6 +13,7 @@ namespace RailChess.Models.DbCtx
         public DbSet<User> Users { get; set; }
         public DbSet<RailChessMap> Maps { get; set; }
         public DbSet<RailChessGame> Games { get; set; }
+        public DbSet<RailChessEvent> Events { get; set; }
     }
     public static class DbContextSetup
     {

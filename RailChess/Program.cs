@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.SignalR;
 using RailChess.Models.DbCtx;
+using RailChess.Play;
+using RailChess.Play.Services;
 using RailChess.Services;
 using Serilog;
 
@@ -9,6 +12,7 @@ try
     var c = builder.Configuration;
 
     builder.Services.AddSerilog(c);
+    builder.Services.AddMemoryCache();
     builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
     builder.Services.AddScoped<HttpUserIdProvider>();
     builder.Services.AddScoped<HttpUserInfoService>();
@@ -18,6 +22,16 @@ try
     {
         options.Filters.Add<ApiExceptionFilter>();
     });
+    builder.Services.AddSignalR(options =>
+    {
+        options.AddFilter<PlayInvokeInfoFilter>();
+    });
+    builder.Services.AddSingleton<PlayInvokeInfoFilter>();
+    builder.Services.AddScoped<PlayEventsService>();
+    builder.Services.AddScoped<PlayService>();
+    
+    
+
     string localVueCors = "localVueCors";
     builder.Services.AddCors(options =>
     {
@@ -45,6 +59,7 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
 
+    app.MapHub<PlayHub>("play");
     app.MapControllerRoute(
         name: "default",
         pattern: "api/{controller=Home}/{action=Index}/{id?}");

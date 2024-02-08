@@ -21,8 +21,8 @@ export class Scaler{
             }
         })
         
-        // frame.addEventListener("touchmove",this.touchHandler)
-        // frame.addEventListener("touchend",()=>{this.dist=0})
+        // window.addEventListener("touchmove",this.touchHandler)
+        // window.addEventListener("touchend",()=>{this.dist=0})
     }
     // dist=0;
     // touchHandler(e:TouchEvent){

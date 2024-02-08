@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { CSSProperties, onMounted, ref } from 'vue';
-import { injectApi, injectHideTopbar, injectUserInfo } from '../provides';
+import { injectApi, injectHideTopbar, injectHttp, injectUserInfo } from '../provides';
 import { Player, SyncData } from '../models/play';
 import SideBar from '../components/SideBar.vue';
 import { RailChessTopo,posBase } from '../models/map';
@@ -8,6 +8,7 @@ import { Api } from '../utils/api';
 import { RailChessGame } from '../models/game';
 import { avtSrc,bgSrc } from '../utils/fileSrc';
 import { Scaler } from '../models/scale';
+import { SignalRClient } from '../utils/signalRClient';
 
 const props = defineProps<{id:string}>();
 const gameId = parseInt(props.id);
@@ -135,9 +136,14 @@ const frame = ref<HTMLDivElement>();
 const arena = ref<HTMLDivElement>();
 var api:Api;
 var me:number;
+var jwtToken:string|null;
+var sgrc:SignalRClient
 onMounted(async()=>{
     injectHideTopbar()();
     api = injectApi();
+    var http = injectHttp();
+    jwtToken = http.jwtToken;
+    sgrc = new SignalRClient(jwtToken||"",()=>{});
     const mInfo = await injectUserInfo().getIdentityInfo();
     me = mInfo.Id;
     init();
@@ -151,10 +157,14 @@ onMounted(async()=>{
     }
 })
 var scaler:Scaler|undefined
+
+function temp(){
+    sgrc.join(gameId);
+}
 </script>
 
 <template>
-<div class="topbar">
+<div class="topbar" @click="temp">
     <div class="playerList">
         <div v-for="p in playerRenderedList" class="player" :key="p.p.Id" :style="p.style">
             <img :src="avtSrc(p.p.AvtFileName)"/>
