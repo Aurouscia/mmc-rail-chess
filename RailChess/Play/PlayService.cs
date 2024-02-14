@@ -1,8 +1,11 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
+using RailChess.Models;
 using RailChess.Models.DbCtx;
 using RailChess.Models.Game;
+using RailChess.Play.PlayHubResponseModel;
 using RailChess.Play.Services;
 using RailChess.Utils;
+using static RailChess.Models.Map.RailChessTopo;
 
 namespace RailChess.Play
 {
@@ -10,6 +13,7 @@ namespace RailChess.Play
     {
         private readonly PlayEventsService _eventsService;
         private readonly PlayToposService _topoService;
+        private readonly PlayPlayerService _playerService;
         private readonly RailChessContext _context;
         private int _gameId;
         private int _userId;
@@ -18,22 +22,52 @@ namespace RailChess.Play
                 if (value <= 0) throw new Exception("请从正确入口进入");
                 _gameId = value;
                 _eventsService.GameId = value;
+                _topoService.GameId = value;
             }
         }
-        public int UserId { get => _gameId; set
+        public int UserId { get => _userId; set
             {
                 _userId = value;
                 _eventsService.UserId = value;
             }
         }
-        public PlayService(PlayEventsService eventsService, PlayToposService toposService, RailChessContext context) 
+        public PlayService(PlayEventsService eventsService, PlayToposService toposService, PlayPlayerService playerService, RailChessContext context) 
         { 
             _eventsService = eventsService;
             _topoService = toposService;
+            _playerService = playerService;
             _context = context;
         }
 
-        public SyncData
+        public SyncData GetSyncData()
+        {
+            var playerIds = _eventsService.PlayersJoinEvents().ConvertAll(x => x.PlayerId);
+            var players = _playerService.Get(playerIds);
+            List<Player> playerStatus = new();
+            var locEvents = _eventsService.PlayerLocateEvents();
+            var stuckEvents = _eventsService.PlayerStuckEvents();
+            var captureEvents = _eventsService.PlayerCaptureEvents();
+            players.ForEach(p =>
+            {
+                int atSta = locEvents.OfUser(p.Id).Select(x=>x.StationId).FirstOrDefault();
+                if (atSta <= 0) throw new Exception($"玩家[{p.Name}]定位失败");
+                int stuckTimes = stuckEvents.OfUser(p.Id).Count;
+                List<int> hisStations = captureEvents.OfUser(p.Id).ConvertAll(x=>x.StationId);
+                playerStatus.Add(new()
+                {
+                    Id = p.Id,
+                    Name = p.Name ?? "???",
+                    AtSta = atSta,
+                    AvtFileName = p?.AvatarName ?? "???",
+                    StuckTimes = stuckTimes,
+                    Score = _topoService.TotalDirections(hisStations)
+                });
+            });
+            var res = new SyncData()
+            {
+                PlayerStatus = playerStatus,
+            };
+        }
 
         public string? Join()
         {
@@ -43,7 +77,7 @@ namespace RailChess.Play
                 return "对局已开始，不能加入";
             if (_eventsService.MeJoined())
                 return "已在对局中";
-            var pureTerminals = _topoService.PureTerminalIds(GameId);
+            var pureTerminals = _topoService.PureTerminalIds();
             var otherPlayersJoinEvents = _eventsService.PlayersJoinEvents();
             var occupiedStations = otherPlayersJoinEvents.ConvertAll(x => x.StationId);
             var available = pureTerminals.Except(occupiedStations).ToList();
@@ -70,11 +104,11 @@ namespace RailChess.Play
             return null;
         }
 
-        //public Dictionary<int,int> PlayersOcpStatus()
+        //public Dictionary<int, int> PlayersOcpStatus()
         //{
-        //    var moveEvents = _eventsService.EventsOf(GameId).Where(x=>x.EventType==RailChessEventType.PlayerMoveTo);
+        //    var moveEvents = _eventsService.OurEvents().Where(x => x.EventType == RailChessEventType.PlayerMoveTo);
         //    var lastMoves = moveEvents.Reverse().DistinctBy(x => x.PlayerId)
-        //        .Select(x => new {x.PlayerId,x.StationId});
+        //        .Select(x => new { x.PlayerId, x.StationId });
         //    return lastMoves.ToDictionary(x => x.PlayerId, x => x.StationId);
         //}
     }

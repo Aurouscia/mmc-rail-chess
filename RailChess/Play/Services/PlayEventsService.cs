@@ -38,6 +38,18 @@ namespace RailChess.Play.Services
             => OurEvents().FindAll(x => x.EventType == RailChessEventType.PlayerJoin);
         public bool GameStarted()
             => OurEvents().Any(x => x.EventType == RailChessEventType.GameStart);
+        public List<RailChessEvent> PlayerLocateEvents()
+        {
+            var events = OurEvents().FindAll(x =>
+                x.EventType == RailChessEventType.PlayerMoveTo
+                || x.EventType == RailChessEventType.PlayerJoin);
+            return events.OrderByDescending(x=>x.Id).DistinctBy(x => x.PlayerId).ToList();
+        }
+        public List<RailChessEvent> PlayerCaptureEvents()
+            => OurEvents().FindAll(x => x.EventType == RailChessEventType.PlayerCapture);
+        public List<RailChessEvent> PlayerStuckEvents()
+            => OurEvents().FindAll(x => x.EventType == RailChessEventType.PlayerStuck);
+
 
         public void Add(RailChessEventType type, int stationId, bool saveChanges=true)
         {
