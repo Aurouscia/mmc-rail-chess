@@ -7,7 +7,7 @@
         public List<OcpStatus>? Ocps { get; set; }
         public OcpStatus? NewOcps { get; set; }
         public List<StepSelection>? Selections { get; set; }
-}
+    }
 
     public class Player
     {

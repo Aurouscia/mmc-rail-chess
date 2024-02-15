@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using RailChess.Models.DbCtx;
 using RailChess.Play.PlayHubRequestModel;
-using RailChess.Services;
+using RailChess.Play.PlayHubResponseModel;
 
 namespace RailChess.Play
 {
@@ -9,14 +10,34 @@ namespace RailChess.Play
     public class PlayHub : Hub
     {
         public PlayService Service { get; }
-        public PlayHub(PlayService service)
+        public string GroupName => $"gameGroup_{Service.GameId}";
+        public IClientProxy Group => Clients.Group(GroupName);
+
+        private string textMsgMethod = "textmsg";
+        private string syncMethod = "sync";
+        private readonly RailChessContext _context;
+        
+        public PlayHub(PlayService playService, RailChessContext context)
         {
-            Service = service;
+            Service = playService;
+            _context = context;
         }
 
-        public async Task Join(JoinRequest request)
+        public async Task Join(JoinRequest _)
         {
-            var a = Service.GameId;
+            var errmsg = Service.Join();
+            if(errmsg is null)
+            {
+                //无报错信息，成功加入，需要让房间里所有人
+                var data = Service.GetSyncData();
+                await Group.SendAsync(syncMethod,data);
+                await SendTextMsg($"用户[{SenderName()}]加入了棋局","服务器", TextMsgType.Important);
+            }
+            else
+            {
+                //有报错信息，未能加入
+                await SendTextMsg(errmsg, "服务器", TextMsgType.Err, Clients.Caller);
+            }
         }
 
         //public async Task SendMessage(MsgInputModel model)
@@ -104,59 +125,38 @@ namespace RailChess.Play
         //        }
         //    }
         //}
-        //public async Task SendMessageExe(string str,string sender="服务器")
-        //{
-        //    await Clients.Group(_gameId.ToString()).SendAsync(MsgOutputModel.InvokeMethod, new MsgOutputModel()
-        //    {
-        //        Str = str,
-        //        Time = Time(),
-        //        User = sender
-        //    });
-        //}
-        //public override async Task OnConnectedAsync()
-        //{
-        //    if (_userName is null || _gameId == RailChessConstants.InvalidGameId)
-        //        Context.Abort();
+        public async Task SendTextMsg(SendTextMsgRequest request)
+        {
+            string? senderName = SenderName();
+            if (senderName is null || request.Content is null)
+                return;
+            await SendTextMsg(request.Content, senderName);
+        }
+        private async Task SendTextMsg(string str, string sender = "服务器", TextMsgType type = TextMsgType.Plain, IClientProxy? to = null)
+        {
+            to ??= Group;
+            await to.SendAsync(textMsgMethod, new TextMsg(str, sender, type));
+        }
+        public async Task Enter(EnterRequest _)
+        {
+            if (Service.UserId == 0)
+            {
+                await SendTextMsg("请先登录再进入房间","服务器",TextMsgType.Err, Clients.Caller);
+                Context.Abort();
+                return;
+            }
 
-        //    bool newlyEntered = _ea.PlayerConnect();
-        //    _eq.ClearLazy(x => x.PlayerIds);
-        //    _eq.ClearLazy(x => x.Events);
-        //    string isAudience = "";
-        //    if (!_eq.PlayerIds.Value.Contains(_userInfo.UID))
-        //    {
-        //        isAudience = "（观战模式）";
-        //    }
-        //    await Groups.AddToGroupAsync(Context.ConnectionId, _gameId.ToString());
+            await Groups.AddToGroupAsync(Context.ConnectionId, GroupName);
 
-        //    Thread.Sleep(500);
+            await Clients.Caller.SendAsync(syncMethod, Service.GetSyncData());
 
-        //    await Clients.Caller.SendAsync(MsgOutputModel.InvokeMethod,
-        //        new MsgOutputModel($"欢迎进入游戏[{_gameId}]{isAudience}{RailChessConstants.EnterHint}"));
-
-        //    await Clients.OthersInGroup(_gameId.ToString())
-        //        .SendAsync(MsgOutputModel.InvokeMethod,
-        //        new MsgOutputModel($"用户[{_userName}]已经成功连接{isAudience}"));
-
-        //    await Clients.Caller.SendAsync(CvsInitData.ResponseMethod, _initer.GetInitData(_userInfo.UID));
-
-        //    Thread.Sleep(500);
-        //    if (newlyEntered)
-        //    {
-        //        await Clients.Group(_gameId.ToString())
-        //            .SendAsync(PlayerStaticData.InvokeMethod, new PlayerStaticData(_eq));
-        //    }
-        //    else
-        //    {
-        //        await Clients.Caller.SendAsync(PlayerStaticData.InvokeMethod, new PlayerStaticData(_eq));
-        //    }
-        //    await Clients.Group(_gameId.ToString()).SendAsync(RefreshData.InvokeMethod, new RefreshData(_eq,_ea));
-        //}
-        //public override async Task OnDisconnectedAsync(Exception? exception)
-        //{
-        //    _ea.PlayerDisconnect();
-        //    await Clients.Group(_gameId.ToString()).SendAsync(MsgOutputModel.InvokeMethod,
-        //        new MsgOutputModel($"用户[{_userName}]已经断开连接"));
-        //}
+            await SendTextMsg("欢迎来到轨交棋", "服务器", TextMsgType.Plain, Clients.Caller);
+            await SendTextMsg($"用户[{SenderName()}]进入房间观战", "服务器", TextMsgType.Important, Clients.OthersInGroup(GroupName));
+        }
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            await SendTextMsg($"用户[{SenderName()}]离开房间", "服务器", TextMsgType.Important, Clients.OthersInGroup(GroupName));
+        }
         //public async Task RefreshAll()
         //{
         //    await Clients.Group(_gameId.ToString()).SendAsync(RefreshData.InvokeMethod, new RefreshData(_eq,_ea));
@@ -196,5 +196,9 @@ namespace RailChess.Play
         //    await SendMessageExe($"<u><span style=\"color:green\">{_userName}</span>因为没有可走的站点，<span style=\"color:red\">受伤一次</span>，接下来轮到：<span style=\"color:greenyellow\">{nowPlaying}</span>，随机数是{data.RandRes}</u>");
         //    await Clients.Group(_gameId.ToString()).SendAsync("Refresh", data);
         //}
+        private string? SenderName()
+        {
+            return _context.Users.Where(x => x.Id == Service.UserId).Select(x => x.Name).FirstOrDefault();
+        }
     }
 }

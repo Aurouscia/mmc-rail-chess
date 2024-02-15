@@ -21,6 +21,10 @@ namespace RailChess.Models.Game
         }
     }
 
+    /// <summary>
+    /// 游戏事件的类型
+    /// 每次轮到一个玩家，这个玩家必然会执行MoveTo和Stuck中其一，也就是每回合有玩家数量个MoveTo/Stuck事件，用这两种事件来判断玩家先后顺序
+    /// </summary>
     public enum RailChessEventType
     {
         GameStart = 10,

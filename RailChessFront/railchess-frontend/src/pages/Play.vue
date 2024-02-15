@@ -26,7 +26,7 @@ function renderPlayerList(){
     for(var i=0;i<playerList.value.length;i++){
         const p = playerList.value[i];
         const left = playerRenderedWidth*i;
-        const existing = playerRenderedList.value.find(x=>x.p.Id==p.Id);
+        const existing = playerRenderedList.value.find(x=>x.p.id==p.id);
         if(existing){
             if(i==playerList.value.length-1){
                 existing.style.opacity = 0;
@@ -41,7 +41,7 @@ function renderPlayerList(){
                 existing.style.opacity = 1;
                 existing.style.left = left+"px";
                 existing.style.zIndex = 100
-                if(i==0 && me==existing.p.Id){
+                if(i==0 && me==existing.p.id){
                     textAttention(existing.nameStyle);
                 }
             }
@@ -118,7 +118,8 @@ const bgFileName = ref<string>();
 const topoData = ref<RailChessTopo>();
 const gameInfo = ref<RailChessGame>();
 function sync(data:SyncData){
-    playerList.value = data.PlayerStatus;
+    console.log("收到同步数据指令",data)
+    playerList.value = data.playerStatus;
     renderPlayerList();
 }
 async function init(){
@@ -143,34 +144,33 @@ onMounted(async()=>{
     api = injectApi();
     var http = injectHttp();
     jwtToken = http.jwtToken;
-    sgrc = new SignalRClient(jwtToken||"",()=>{});
+    sgrc = new SignalRClient(gameId,jwtToken||"",sync,(d)=>console.log(d));
     const mInfo = await injectUserInfo().getIdentityInfo();
     me = mInfo.Id;
-    init();
+
+    await init();
+    await sgrc.connect();
+    await sgrc.enter();
+
     if(frame.value && arena.value){
         scaler = new Scaler(frame.value,arena.value,renderStaList);
-    }
-
-    if(1/3==8){
-        const a:any={};
-        sync(a);
     }
 })
 var scaler:Scaler|undefined
 
 function temp(){
-    sgrc.join(gameId);
+    sgrc.join();
 }
 </script>
 
 <template>
 <div class="topbar" @click="temp">
     <div class="playerList">
-        <div v-for="p in playerRenderedList" class="player" :key="p.p.Id" :style="p.style">
-            <img :src="avtSrc(p.p.AvtFileName)"/>
+        <div v-for="p in playerRenderedList" class="player" :key="p.p.id" :style="p.style">
+            <img :src="avtSrc(p.p.avtFileName)"/>
             <div>
-                <div :style="p.nameStyle" class="playerName">{{ p.p.Name }}</div>
-                <div class="playerData">{{ p.p.Score }}分 <span v-show="p.p.StuckTimes">卡{{ p.p.StuckTimes }}次</span></div>
+                <div :style="p.nameStyle" class="playerName">{{ p.p.name }}</div>
+                <div class="playerData">{{ p.p.score }}分 <span v-show="p.p.stuckTimes">卡{{ p.p.stuckTimes }}次</span></div>
             </div>
         </div>
     </div>

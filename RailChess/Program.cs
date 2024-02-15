@@ -28,6 +28,9 @@ try
     });
     builder.Services.AddSingleton<PlayInvokeInfoFilter>();
     builder.Services.AddScoped<PlayEventsService>();
+    builder.Services.AddScoped<PlayPlayerService>();
+    builder.Services.AddScoped<PlayGameService>();
+    builder.Services.AddScoped<PlayToposService>();
     builder.Services.AddScoped<PlayService>();
     
     

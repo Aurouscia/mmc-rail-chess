@@ -34,6 +34,8 @@ namespace RailChess.Play.Services
             => OurEvents().FindAll(x => x.PlayerId == UserId);
         public bool MeJoined() 
             => MyEvents().Any(x => x.EventType == RailChessEventType.PlayerJoin);
+        public bool SomeoneJoined(int userId)
+            => OurEvents().Any(x => x.PlayerId==userId && x.EventType == RailChessEventType.PlayerJoin);
         public List<RailChessEvent> PlayersJoinEvents()
             => OurEvents().FindAll(x => x.EventType == RailChessEventType.PlayerJoin);
         public bool GameStarted()
@@ -49,7 +51,24 @@ namespace RailChess.Play.Services
             => OurEvents().FindAll(x => x.EventType == RailChessEventType.PlayerCapture);
         public List<RailChessEvent> PlayerStuckEvents()
             => OurEvents().FindAll(x => x.EventType == RailChessEventType.PlayerStuck);
-
+        public RailChessEvent? LatestOperation()
+        {
+            var operations = OurEvents()
+                .FindAll(x => x.EventType == RailChessEventType.PlayerStuck || x.EventType == RailChessEventType.PlayerStuck);
+            return operations.LastOrDefault();
+        }
+        public int RandedResult()
+        {
+            var operations = OurEvents()
+                .FindAll(x =>
+                    x.EventType == RailChessEventType.PlayerStuck
+                    || x.EventType == RailChessEventType.PlayerStuck
+                    || x.EventType == RailChessEventType.RandNumGened);
+            var last = operations.LastOrDefault();
+            if (last is null || last.EventType != RailChessEventType.RandNumGened)
+                return -1;
+            return last.StationId;
+        }
 
         public void Add(RailChessEventType type, int stationId, bool saveChanges=true)
         {

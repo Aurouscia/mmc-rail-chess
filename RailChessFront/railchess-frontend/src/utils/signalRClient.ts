@@ -1,20 +1,27 @@
 import * as signalR from '@microsoft/signalr'
-import { SyncData } from '../models/play';
+import { SyncData, TextMsg } from '../models/play';
 
 export type SyncCall = (data:SyncData)=>void
+export type TextMsgCall = (data:TextMsg)=>void
 const syncCallMethodName = "sync";
+const textMsgMethodName = "textmsg";
 //const selectMethodName = "Select"
 
 interface RequestModelBase{
     GameId:number
 }
-interface JoinRequest extends RequestModelBase{
+interface JoinRequest extends RequestModelBase{}
+interface EnterRequest extends RequestModelBase{}
+interface SendTextMsgRequest extends RequestModelBase{
+    Content:string
 }
 
 export class SignalRClient{
+    gameId:number
     conn:signalR.HubConnection
-    syncCall:SyncCall
-    constructor(jwtToken:string, syncCall:SyncCall){
+
+    constructor(gameId:number, jwtToken:string, syncCall:SyncCall, textMsgCall:TextMsgCall){
+        this.gameId = gameId;
         const baseUrl = import.meta.env.VITE_BASEURL;
         const url = baseUrl+"/Play";
         this.conn = new signalR.HubConnectionBuilder()
@@ -22,15 +29,29 @@ export class SignalRClient{
             .configureLogging(signalR.LogLevel.Information)
             .withAutomaticReconnect()
             .build();
-        this.syncCall = syncCall;
-        this.conn.on(syncCallMethodName,syncCall);
-
-        this.conn.start();
+        this.conn.on(syncCallMethodName, syncCall);
+        this.conn.on(textMsgMethodName, textMsgCall);
     }
-    join(gameid:number){
+    async connect(){
+        await this.conn.start();
+    }
+    async join(){
         const r:JoinRequest = {
-            GameId: gameid
+            GameId: this.gameId
         }
-        this.conn.invoke("Join",r);
+        await this.conn.invoke("Join",r);
+    }
+    async enter(){
+        const r:EnterRequest = {
+            GameId: this.gameId
+        }
+        await this.conn.invoke("Enter",r);
+    }
+    async sendTextMsg(content:string){
+        const r:SendTextMsgRequest = {
+            GameId: this.gameId,
+            Content: content
+        }
+        await this.conn.invoke("SendTextMsg",r)
     }
 }

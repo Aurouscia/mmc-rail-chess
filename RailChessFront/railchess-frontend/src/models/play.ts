@@ -7,27 +7,33 @@ export interface InitData{
 }
 
 export interface OcpStatus{
-    PlayerId:number,
-    Stas:number[]
+    playerId:number,
+    stas:number[]
 }
 export interface SyncData{
-    PlayerStatus:Player[],
-    RandNumber:number,
-    Ocps:OcpStatus[],
-    NewOcps:OcpStatus,
-    Selections:StepSelection[]
+    playerStatus:Player[],
+    randNumber:number,
+    ocps:OcpStatus[],
+    newOcps:OcpStatus,
+    selections:StepSelection[]
 }
 
 export interface StepSelection{
-    Dest:number
-    Path:number[]
+    dest:number
+    path:number[]
 }
 
 export interface Player{
-    Id:number,
-    Name:string,
-    Score:number,
-    StuckTimes:number,
-    AtSta:number,
-    AvtFileName:string
+    id:number,
+    name:string,
+    score:number,
+    stuckTimes:number,
+    atSta:number,
+    avtFileName:string
+}
+
+export interface TextMsg{
+    content:string
+    sender:string
+    textMsgType:"Plain"|"Important"|"Err"
 }

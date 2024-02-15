@@ -26,6 +26,12 @@ namespace RailChess.Play.Services
             if(res is null)
             {
                 res = _context.Users.Where(x=>ids.Contains(x.Id)).ToList();
+                res.Sort((x, y) =>
+                {
+                    int idx1 = ids.IndexOf(x.Id);
+                    int idx2 = ids.IndexOf(y.Id);
+                    return idx1 - idx2;
+                });
                 _cache.Set<List<User>>(CacheKey(ids), res, new MemoryCacheEntryOptions()
                 {
                     SlidingExpiration = TimeSpan.FromMinutes(35)
@@ -33,5 +39,19 @@ namespace RailChess.Play.Services
             }
             return res;
         }
+        public List<User> GetOrdered(List<int> ids, int lastPlayer = -1)
+        {
+            var users = Get(ids);
+            if (lastPlayer == -1)
+                return users;
+            int idx = users.FindIndex(x=>x.Id==lastPlayer);
+            if (idx == ids.Count - 1)
+                return users;
+            var slice = users.GetRange(0, idx + 1);
+            users.RemoveRange(0, idx + 1);
+            users.AddRange(slice);
+            return users;
+        }
+        
     }
 }

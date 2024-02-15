@@ -5,7 +5,6 @@ using RailChess.Models.Game;
 using RailChess.Play.PlayHubResponseModel;
 using RailChess.Play.Services;
 using RailChess.Utils;
-using static RailChess.Models.Map.RailChessTopo;
 
 namespace RailChess.Play
 {
@@ -14,6 +13,7 @@ namespace RailChess.Play
         private readonly PlayEventsService _eventsService;
         private readonly PlayToposService _topoService;
         private readonly PlayPlayerService _playerService;
+        private readonly PlayGameService _gameService;
         private readonly RailChessContext _context;
         private int _gameId;
         private int _userId;
@@ -23,6 +23,7 @@ namespace RailChess.Play
                 _gameId = value;
                 _eventsService.GameId = value;
                 _topoService.GameId = value;
+                _gameService.GameId = value;
             }
         }
         public int UserId { get => _userId; set
@@ -31,22 +32,36 @@ namespace RailChess.Play
                 _eventsService.UserId = value;
             }
         }
-        public PlayService(PlayEventsService eventsService, PlayToposService toposService, PlayPlayerService playerService, RailChessContext context) 
+        public PlayService(
+            PlayEventsService eventsService,
+            PlayToposService toposService,
+            PlayPlayerService playerService,
+            PlayGameService gameService,
+            RailChessContext context) 
         { 
             _eventsService = eventsService;
             _topoService = toposService;
             _playerService = playerService;
+            _gameService = gameService;
             _context = context;
         }
 
         public SyncData GetSyncData()
         {
-            var playerIds = _eventsService.PlayersJoinEvents().ConvertAll(x => x.PlayerId);
-            var players = _playerService.Get(playerIds);
-            List<Player> playerStatus = new();
+
+            var playerIds = _eventsService.PlayersJoinEvents().ConvertAll(x => x.PlayerId);//已经按加入顺序排列好
+            var latestOp = _eventsService.LatestOperation();
+            int lastPlayer = -1;//默认情况下：还没有任何操作
+            if(latestOp is not null)
+                lastPlayer = latestOp.PlayerId;
+            var players = _playerService.GetOrdered(playerIds,lastPlayer);
+
             var locEvents = _eventsService.PlayerLocateEvents();
             var stuckEvents = _eventsService.PlayerStuckEvents();
             var captureEvents = _eventsService.PlayerCaptureEvents();
+
+            List<Player> playerStatus = new();
+            List<OcpStatus> ocps = new();
             players.ForEach(p =>
             {
                 int atSta = locEvents.OfUser(p.Id).Select(x=>x.StationId).FirstOrDefault();
@@ -62,11 +77,37 @@ namespace RailChess.Play
                     StuckTimes = stuckTimes,
                     Score = _topoService.TotalDirections(hisStations)
                 });
+                ocps.Add(new()
+                {
+                    PlayerId = p.Id,
+                    Stas = hisStations
+                });
             });
+
+            OcpStatus? newOcps = null;
+            if (latestOp is not null)
+            {
+                var lastCaptures = captureEvents.FindAll(x => x.Time >= latestOp.Time);
+                newOcps = new()
+                {
+                    PlayerId = latestOp.PlayerId,
+                    Stas = lastCaptures.ConvertAll(x => x.StationId)
+                };
+            }
+
+            var game = _gameService.Get();
+            int rand = _eventsService.RandedResult();
+            if (rand < 0)
+                rand = RandNum.Uniform(game.RandMin, game.RandMax);
             var res = new SyncData()
             {
                 PlayerStatus = playerStatus,
+                Ocps = ocps,
+                NewOcps = newOcps,
+                RandNumber = rand,
+                Selections = new()
             };
+            return res;
         }
 
         public string? Join()
@@ -104,12 +145,5 @@ namespace RailChess.Play
             return null;
         }
 
-        //public Dictionary<int, int> PlayersOcpStatus()
-        //{
-        //    var moveEvents = _eventsService.OurEvents().Where(x => x.EventType == RailChessEventType.PlayerMoveTo);
-        //    var lastMoves = moveEvents.Reverse().DistinctBy(x => x.PlayerId)
-        //        .Select(x => new { x.PlayerId, x.StationId });
-        //    return lastMoves.ToDictionary(x => x.PlayerId, x => x.StationId);
-        //}
     }
 }
