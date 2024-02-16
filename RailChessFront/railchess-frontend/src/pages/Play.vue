@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CSSProperties, onMounted, ref } from 'vue';
+import { CSSProperties, onMounted, ref, watch } from 'vue';
 import { injectApi, injectHideTopbar, injectHttp, injectUserInfo } from '../provides';
 import { Player, SyncData } from '../models/play';
 import SideBar from '../components/SideBar.vue';
@@ -157,6 +157,14 @@ onMounted(async()=>{
     }
 })
 var scaler:Scaler|undefined
+const scaleBar = ref<number>(0);
+watch(scaleBar,(newVal,oldVal)=>{
+    if(newVal>oldVal){
+        scaler?.scale(1.1);
+    }else if(newVal<oldVal){
+        scaler?.scale(1/1.1);
+    }
+})
 
 function temp(){
     sgrc.join();
@@ -183,26 +191,23 @@ function temp(){
 </div>
 <button class="confirm menuEntry" @click="sidebar?.extend">菜单</button>
 <div class="scaleBtn">
-    <button class="confirm" @click="scaler?.scale(1.2)">+</button>
-    <button class="confirm" @click="scaler?.scale(0.8)">-</button>
+    <input v-model="scaleBar" type="range" min="0" max="1" step="0.05"/>
 </div>
 <SideBar ref="sidebar">
-    提示：PC端可按住ctrl或shift在图上点击来放大缩小
 </SideBar>
 </template>
 
 <style scoped>
-.scaleBtn button{
-    font-size: 30px;
-    line-height: 25px;
-    height: 38px;
+.scaleBtn input[type="range"] {
+  writing-mode:vertical-lr;
+  height: 180px;
 }
 .scaleBtn{
     position: fixed;
     right: 15px;
     bottom: 15px;
     width: 40px;
-    height: 80px;
+    height: 200px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
