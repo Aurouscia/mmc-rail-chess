@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CSSProperties, onMounted, ref, watch } from 'vue';
 import { injectApi, injectHideTopbar, injectHttp, injectUserInfo } from '../provides';
-import { Player, SyncData } from '../models/play';
+import { Player, SyncData, TextMsg } from '../models/play';
 import SideBar from '../components/SideBar.vue';
 import { RailChessTopo,posBase } from '../models/map';
 import { Api } from '../utils/api';
@@ -9,6 +9,7 @@ import { RailChessGame } from '../models/game';
 import { avtSrc,bgSrc } from '../utils/fileSrc';
 import { Scaler } from '../models/scale';
 import { SignalRClient } from '../utils/signalRClient';
+import TextMsgDisplay from '../components/TextMsgDisplay.vue';
 
 const props = defineProps<{id:string}>();
 const gameId = parseInt(props.id);
@@ -41,7 +42,7 @@ function renderPlayerList(){
                 existing.style.opacity = 1;
                 existing.style.left = left+"px";
                 existing.style.zIndex = 100
-                if(i==0 && me==existing.p.id){
+                if(i==0 && me==existing.p.id && gameStarted.value){
                     textAttention(existing.nameStyle);
                 }
             }
@@ -117,10 +118,20 @@ function renderStaList(){
 const bgFileName = ref<string>();
 const topoData = ref<RailChessTopo>();
 const gameInfo = ref<RailChessGame>();
+const meJoined = ref<boolean>(false);
+const gameStarted = ref<boolean>(false);
+const meHost = ref<boolean>(false);
 function sync(data:SyncData){
     console.log("收到同步数据指令",data)
     playerList.value = data.playerStatus;
-    renderPlayerList();
+    meJoined.value = playerList.value.some(x=>x.id==me);
+    meHost.value = gameInfo.value?.HostUserId == me;
+    gameStarted.value = data.gameStarted;
+    if(playerList.value.length==0){
+        playerRenderedList.value = [];
+    }else{
+        renderPlayerList();
+    }
 }
 async function init(){
     const resp = await api.game.init(gameId);
@@ -132,9 +143,20 @@ async function init(){
     setTimeout(()=>{renderStaList()},100)
 }
 
+const sending = ref<string>("");
+function send(){
+    if(sending.value && sending.value.trim()){
+        sgrc.sendTextMsg(sending.value);
+        sending.value = "";
+    }
+}
+
 const sidebar = ref<InstanceType<typeof SideBar>>();
+const msgs = ref<TextMsg[]>([]);
 const frame = ref<HTMLDivElement>();
 const arena = ref<HTMLDivElement>();
+
+
 var api:Api;
 var me:number;
 var jwtToken:string|null;
@@ -144,7 +166,9 @@ onMounted(async()=>{
     api = injectApi();
     var http = injectHttp();
     jwtToken = http.jwtToken;
-    sgrc = new SignalRClient(gameId,jwtToken||"",sync,(d)=>console.log(d));
+    const textMsgCall = (m:TextMsg)=>{msgs.value.push(m)}
+    sgrc = new SignalRClient(gameId,jwtToken||"", sync, textMsgCall);
+
     const mInfo = await injectUserInfo().getIdentityInfo();
     me = mInfo.Id;
 
@@ -155,24 +179,30 @@ onMounted(async()=>{
     if(frame.value && arena.value){
         scaler = new Scaler(frame.value,arena.value,renderStaList);
     }
+
+    window.addEventListener("keypress",(ev)=>{
+        if(ev.key=="Enter"){
+            send();
+        }
+    })
 })
+
 var scaler:Scaler|undefined
 const scaleBar = ref<number>(0);
 watch(scaleBar,(newVal,oldVal)=>{
+    if(newVal==0){
+        scaler?.reset();return;
+    }
     if(newVal>oldVal){
         scaler?.scale(1.1);
     }else if(newVal<oldVal){
         scaler?.scale(1/1.1);
     }
 })
-
-function temp(){
-    sgrc.join();
-}
 </script>
 
 <template>
-<div class="topbar" @click="temp">
+<div class="topbar">
     <div class="playerList">
         <div v-for="p in playerRenderedList" class="player" :key="p.p.id" :style="p.style">
             <img :src="avtSrc(p.p.avtFileName)"/>
@@ -194,10 +224,30 @@ function temp(){
     <input v-model="scaleBar" type="range" min="0" max="1" step="0.05"/>
 </div>
 <SideBar ref="sidebar">
+    <div class="sidebarBtns">
+        <button v-if="!gameStarted && !meJoined" @click="sgrc.join">加入本棋局</button>
+        <button v-if="meJoined" class="minor">已在棋局中</button>
+        <button v-if="meHost && !gameStarted && meJoined" @click="sgrc.gameStart">下令开始棋局</button>
+        <button v-if="gameStarted" class="minor">本棋局已开始</button>
+
+        <button v-show="meHost" class="cancel" @click="sgrc.gameReset">下令重置房间</button>
+    </div>
+    <TextMsgDisplay :msgs="msgs"></TextMsgDisplay>
+    <div>
+        <input v-model="sending" placeholder="说点什么"/>
+        <button @click="send">发送</button>
+    </div>
 </SideBar>
 </template>
 
 <style scoped>
+.sidebarBtns{
+    width: 200px;
+    margin: 0px auto 10px auto;
+    display: flex;
+    flex-direction: column;
+    gap:5px;
+}
 .scaleBtn input[type="range"] {
   writing-mode:vertical-lr;
   height: 180px;

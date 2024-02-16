@@ -15,28 +15,41 @@ namespace RailChess.Play.Services
             _cache = cache;
         }
 
-        private static string CacheKey(List<int> ids)
+        private static string UserIdCacheKey(int id)
         {
-            ids.Sort();
-            return $"users_{string.Concat(ids)}";
+            return $"user_{id}";
         }
         public List<User> Get(List<int> ids)
         {
-            var res = _cache.Get<List<User>>(CacheKey(ids));
-            if(res is null)
+            List<int> notFound = new();
+            List<User> res = new();
+            ids.ForEach(id =>
             {
-                res = _context.Users.Where(x=>ids.Contains(x.Id)).ToList();
-                res.Sort((x, y) =>
-                {
-                    int idx1 = ids.IndexOf(x.Id);
-                    int idx2 = ids.IndexOf(y.Id);
-                    return idx1 - idx2;
-                });
-                _cache.Set<List<User>>(CacheKey(ids), res, new MemoryCacheEntryOptions()
+                var u = _cache.Get<User>(UserIdCacheKey(id));
+                if (u is null)
+                    notFound.Add(id);
+                else
+                    res.Add(u);
+            });
+            if (notFound.Count == 0)
+                return res;
+
+            var notFoundUs = _context.Users.Where(x => notFound.Contains(x.Id)).ToList();
+            notFoundUs.ForEach(u =>
+            {
+                _cache.Set<User>(UserIdCacheKey(u.Id), u, new MemoryCacheEntryOptions()
                 {
                     SlidingExpiration = TimeSpan.FromMinutes(35)
                 });
-            }
+            });
+            res.AddRange(notFoundUs);
+
+            res.Sort((x, y) =>
+            {
+                int idx1 = ids.IndexOf(x.Id);
+                int idx2 = ids.IndexOf(y.Id);
+                return idx1 - idx2;
+            });
             return res;
         }
         public List<User> GetOrdered(List<int> ids, int lastPlayer = -1)
@@ -53,5 +66,34 @@ namespace RailChess.Play.Services
             return users;
         }
         
+        private string ConnUserCacheKey(string connId)
+        {
+            return $"connId_{connId}";
+        }
+        public void InsertByConn(string connectionId, int userId, int gameId)
+        {
+            var u = Get(new() { userId }).FirstOrDefault() ?? throw new Exception("找不到指定用户");
+            var info = new ConnPlayerInfo() {
+                GameId = gameId,
+                UserId = userId,
+                UserName = u.Name
+            };
+            _cache.Set<ConnPlayerInfo>(ConnUserCacheKey(connectionId), info, new MemoryCacheEntryOptions()
+            {
+                SlidingExpiration = TimeSpan.FromMinutes(33)
+            });
+        }
+        public ConnPlayerInfo? GetByConn(string connectionId)
+        {
+            var info = _cache.Get<ConnPlayerInfo>(ConnUserCacheKey(connectionId));
+            return info;
+        }
+    }
+
+    public class ConnPlayerInfo
+    {
+        public int UserId { get; set; }
+        public string? UserName { get; set; }
+        public int GameId { get; set; }
     }
 }

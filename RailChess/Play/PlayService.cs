@@ -99,13 +99,20 @@ namespace RailChess.Play
             int rand = _eventsService.RandedResult();
             if (rand < 0)
                 rand = RandNum.Uniform(game.RandMin, game.RandMax);
+            var selections = new List<StepSelection>();
+            var started = _eventsService.GameStarted();
+            if (started)
+            {
+                //计算selections
+            }
             var res = new SyncData()
             {
                 PlayerStatus = playerStatus,
                 Ocps = ocps,
                 NewOcps = newOcps,
                 RandNumber = rand,
-                Selections = new()
+                Selections = selections,
+                GameStarted = started
             };
             return res;
         }
@@ -132,11 +139,14 @@ namespace RailChess.Play
         public string? StartGame()
         {
             var game = _context.Games.Where(x => x.Id == GameId).FirstOrDefault();
-            if (game is null) throw new Exception("数据异常，找不到房主");
+            if (game is null || game.HostUserId==0) throw new Exception("数据异常，找不到房主");
             if (game.Started)
                 return "对局已开始过";
             if (UserId != game.HostUserId)
                 return "只有房主能开始对局";
+            var playersCount = _eventsService.PlayersJoinEvents().Count;
+            if (playersCount == 0)
+                return "没有玩家加入的游戏不能开始";
 
             _eventsService.Add(RailChessEventType.GameStart, 0, false);
             game.Started = true;
@@ -144,6 +154,18 @@ namespace RailChess.Play
             _context.SaveChanges();
             return null;
         }
+        public string? ResetGame()
+        {
+            var game = _context.Games.Where(x => x.Id == GameId).FirstOrDefault() ?? throw new Exception("数据异常，找不到棋局");
+            if (game.Ended)
+                return "对局已结束，不允许重置";
+            game.Started = false;
 
+            var events = _eventsService.OurEvents();
+            _context.RemoveRange(events);
+            _eventsService.ClearOurEventsCache();
+            _context.SaveChanges();
+            return null;
+        }
     }
 }

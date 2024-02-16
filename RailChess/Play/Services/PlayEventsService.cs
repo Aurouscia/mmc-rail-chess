@@ -30,6 +30,10 @@ namespace RailChess.Play.Services
             }
             return list;
         }
+        public void ClearOurEventsCache()
+        {
+            _cache.Remove(EventsCacheKey());
+        }
         public List<RailChessEvent> MyEvents() 
             => OurEvents().FindAll(x => x.PlayerId == UserId);
         public bool MeJoined() 

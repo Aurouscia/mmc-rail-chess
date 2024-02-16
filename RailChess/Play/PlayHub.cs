@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using RailChess.Models.DbCtx;
 using RailChess.Play.PlayHubRequestModel;
 using RailChess.Play.PlayHubResponseModel;
+using RailChess.Play.Services;
 
 namespace RailChess.Play
 {
@@ -10,17 +11,34 @@ namespace RailChess.Play
     public class PlayHub : Hub
     {
         public PlayService Service { get; }
-        public string GroupName => $"gameGroup_{Service.GameId}";
+        private readonly PlayPlayerService _playerService;
+        private readonly PlayEventsService _eventsService;
+
         public IClientProxy Group => Clients.Group(GroupName);
 
-        private string textMsgMethod = "textmsg";
-        private string syncMethod = "sync";
-        private readonly RailChessContext _context;
+        private const string textMsgMethod = "textmsg";
+        private const string syncMethod = "sync";
+        private const string defaultSender = "服务器";
         
-        public PlayHub(PlayService playService, RailChessContext context)
+        public PlayHub(PlayService playService, PlayPlayerService playerService, PlayEventsService eventsService)
         {
             Service = playService;
-            _context = context;
+            _playerService = playerService;
+            _eventsService = eventsService;
+        }
+        public string GroupName
+        {
+            get
+            {
+                int gameId = Service.GameId;
+                if (gameId == 0)
+                {
+                    var info = _playerService.GetByConn(Context.ConnectionId);
+                    if(info is not null)
+                        gameId = info.GameId;
+                }
+                return $"gameGroup_{gameId}";
+            }
         }
 
         public async Task Join(JoinRequest _)
@@ -28,16 +46,37 @@ namespace RailChess.Play
             var errmsg = Service.Join();
             if(errmsg is null)
             {
-                //无报错信息，成功加入，需要让房间里所有人
-                var data = Service.GetSyncData();
-                await Group.SendAsync(syncMethod,data);
-                await SendTextMsg($"用户[{SenderName()}]加入了棋局","服务器", TextMsgType.Important);
+                //无报错信息，成功加入，需要让房间里所有人同步
+                await SyncAll();
+                await SendTextMsg($"用户<b>{SenderName()}</b>加入了棋局",defaultSender, TextMsgType.Important);
             }
             else
             {
                 //有报错信息，未能加入
-                await SendTextMsg(errmsg, "服务器", TextMsgType.Err, Clients.Caller);
+                await SendTextMsg(errmsg, defaultSender, TextMsgType.Err, Clients.Caller);
             }
+        }
+        public async Task GameStart(GameStartRequest _)
+        {
+            var errmsg = Service.StartGame();
+            if (errmsg is null)
+            {
+                await SyncAll();
+                await SendTextMsg("房主已下令棋局开始",defaultSender,TextMsgType.Important);
+            }
+            else
+                await SendTextMsg(errmsg, defaultSender, TextMsgType.Err, Clients.Caller);
+        }
+        public async Task GameReset(GameResetRequest _)
+        {
+            var errmsg = Service.ResetGame();
+            if (errmsg is null)
+            {
+                await SyncAll();
+                await SendTextMsg("房主已下令棋局重置，需要所有玩家重新加入", defaultSender, TextMsgType.Err);
+            }
+            else
+                await SendTextMsg(errmsg, defaultSender, TextMsgType.Err, Clients.Caller);
         }
 
         //public async Task SendMessage(MsgInputModel model)
@@ -132,7 +171,7 @@ namespace RailChess.Play
                 return;
             await SendTextMsg(request.Content, senderName);
         }
-        private async Task SendTextMsg(string str, string sender = "服务器", TextMsgType type = TextMsgType.Plain, IClientProxy? to = null)
+        private async Task SendTextMsg(string str, string sender = defaultSender, TextMsgType type = TextMsgType.Plain, IClientProxy? to = null)
         {
             to ??= Group;
             await to.SendAsync(textMsgMethod, new TextMsg(str, sender, type));
@@ -141,21 +180,24 @@ namespace RailChess.Play
         {
             if (Service.UserId == 0)
             {
-                await SendTextMsg("请先登录再进入房间","服务器",TextMsgType.Err, Clients.Caller);
+                await SendTextMsg("请先登录再进入房间",defaultSender,TextMsgType.Err, Clients.Caller);
                 Context.Abort();
                 return;
             }
+            _playerService.InsertByConn(Context.ConnectionId, Service.UserId, Service.GameId);
 
             await Groups.AddToGroupAsync(Context.ConnectionId, GroupName);
-
             await Clients.Caller.SendAsync(syncMethod, Service.GetSyncData());
 
-            await SendTextMsg("欢迎来到轨交棋", "服务器", TextMsgType.Plain, Clients.Caller);
-            await SendTextMsg($"用户[{SenderName()}]进入房间观战", "服务器", TextMsgType.Important, Clients.OthersInGroup(GroupName));
+            bool meJoined = _eventsService.MeJoined();
+            string callerMsg = meJoined ? "您已成功返回房间，请继续游戏" : "您已进入房间观战";
+            string othersMsg = meJoined ? $"玩家<b>{SenderName()}</b>已返回房间" : $"<b>{SenderName()}</b>已进入房间观战";
+            await SendTextMsg(callerMsg, defaultSender, TextMsgType.Plain, Clients.Caller);
+            await SendTextMsg(othersMsg, defaultSender, TextMsgType.Important, Clients.OthersInGroup(GroupName));
         }
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            await SendTextMsg($"用户[{SenderName()}]离开房间", "服务器", TextMsgType.Important, Clients.OthersInGroup(GroupName));
+            await SendTextMsg($"用户<b>{SenderName()}</b>离开房间", defaultSender, TextMsgType.Important);
         }
         //public async Task RefreshAll()
         //{
@@ -196,9 +238,17 @@ namespace RailChess.Play
         //    await SendMessageExe($"<u><span style=\"color:green\">{_userName}</span>因为没有可走的站点，<span style=\"color:red\">受伤一次</span>，接下来轮到：<span style=\"color:greenyellow\">{nowPlaying}</span>，随机数是{data.RandRes}</u>");
         //    await Clients.Group(_gameId.ToString()).SendAsync("Refresh", data);
         //}
+        private async Task SyncAll()
+        {
+            var data = Service.GetSyncData();
+            await Group.SendAsync(syncMethod, data);
+        }
         private string? SenderName()
         {
-            return _context.Users.Where(x => x.Id == Service.UserId).Select(x => x.Name).FirstOrDefault();
+            var u = _playerService.GetByConn(Context.ConnectionId);
+            if (u is not null)
+                return u.UserName;
+            return null;
         }
     }
 }

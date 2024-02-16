@@ -15,7 +15,8 @@ export interface SyncData{
     randNumber:number,
     ocps:OcpStatus[],
     newOcps:OcpStatus,
-    selections:StepSelection[]
+    selections:StepSelection[],
+    gameStarted:boolean
 }
 
 export interface StepSelection{
@@ -32,8 +33,10 @@ export interface Player{
     avtFileName:string
 }
 
+export type TextMsgType = 0|1|2
 export interface TextMsg{
     content:string
     sender:string
-    textMsgType:"Plain"|"Important"|"Err"
+    time:string,
+    type:TextMsgType
 }

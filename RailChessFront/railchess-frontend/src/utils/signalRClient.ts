@@ -5,13 +5,14 @@ export type SyncCall = (data:SyncData)=>void
 export type TextMsgCall = (data:TextMsg)=>void
 const syncCallMethodName = "sync";
 const textMsgMethodName = "textmsg";
-//const selectMethodName = "Select"
 
 interface RequestModelBase{
     GameId:number
 }
 interface JoinRequest extends RequestModelBase{}
 interface EnterRequest extends RequestModelBase{}
+interface GameStartRequest extends RequestModelBase{}
+interface GameResetRequest extends RequestModelBase{}
 interface SendTextMsgRequest extends RequestModelBase{
     Content:string
 }
@@ -30,7 +31,10 @@ export class SignalRClient{
             .withAutomaticReconnect()
             .build();
         this.conn.on(syncCallMethodName, syncCall);
-        this.conn.on(textMsgMethodName, textMsgCall);
+        this.conn.on(textMsgMethodName, (m)=>{
+            console.log("展示信息",m)
+            textMsgCall(m)
+        });
     }
     async connect(){
         await this.conn.start();
@@ -53,5 +57,17 @@ export class SignalRClient{
             Content: content
         }
         await this.conn.invoke("SendTextMsg",r)
+    }
+    async gameStart(){
+        const r:GameStartRequest = {
+            GameId: this.gameId
+        }
+        await this.conn.invoke("GameStart",r);
+    }
+    async gameReset(){
+        const r:GameResetRequest = {
+            GameId: this.gameId
+        }
+        await this.conn.invoke("GameReset",r);
     }
 }

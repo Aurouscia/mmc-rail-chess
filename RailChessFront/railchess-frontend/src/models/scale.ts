@@ -21,6 +21,8 @@ export class Scaler{
             }
         })
         
+        window.addEventListener("resize",()=>{this.reset()});
+
         // window.addEventListener("touchmove",this.touchHandler)
         // window.addEventListener("touchend",()=>{this.dist=0})
     }
@@ -75,6 +77,11 @@ export class Scaler{
         const hGrowth = h*(ratio-1);
         this.frame.scrollLeft += wGrowth*x
         this.frame.scrollTop += hGrowth*y
+        this.callBack();
+    }
+    reset(){
+        const ww = window.innerWidth;
+        this.arena.style.width = ww+'px';
         this.callBack();
     }
 }
