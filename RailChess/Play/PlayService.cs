@@ -132,7 +132,8 @@ namespace RailChess.Play
             if (!available.Any())
                 throw new Exception("房间已满，无法加入");
             int startAt = available.RandomSelect();
-            _eventsService.Add(RailChessEventType.PlayerJoin, startAt);
+            _eventsService.Add(RailChessEventType.PlayerJoin, startAt,false);
+            _eventsService.Add(RailChessEventType.PlayerCapture, startAt);
             return null;
         }
 

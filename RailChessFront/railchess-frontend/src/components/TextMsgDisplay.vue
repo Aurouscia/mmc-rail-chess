@@ -59,7 +59,7 @@ function msgTypeClassName(t:TextMsgType){
     border-radius: 5px;
 }
 .msgs{
-    height: 500px;
+    height: calc(100vh - 300px);
     width: 270px;
     overflow-x: hidden;
     overflow-y: scroll;

@@ -88,17 +88,29 @@ function renderStaList(){
     const ah = arena.value.clientHeight;
     for(var i=0;i<topoData.value.Stations.length;i++){
         const s = topoData.value.Stations[i];
+        const id = s[0];
         const x = s[1]/posBase*aw;
         const y = s[2]/posBase*ah;
-        const side = 30;
-        const style = {
+        var side = 30;
+        var backgroundImage:string|undefined = undefined;
+        var zIndex = 1;
+
+        var atByPlayer = playerList.value.find(x=>x.atSta==id);
+        if(atByPlayer){
+            side = 60;
+            backgroundImage = `url("${avtSrc(atByPlayer.avtFileName)}")`;
+            zIndex += 1;
+        }
+        const style:CSSProperties = {
             left:x-side/2+'px',
             top:y-side/2+'px',
             width:side-4+'px',
             height:side-4+'px',
-            borderWidth:'2px'
+            borderWidth:'2px',
+            backgroundImage,
+            zIndex
         };
-        const existing = staRenderedList.value.find(x=>x.id==s[0]);
+        const existing = staRenderedList.value.find(x=>x.id==id);
         if(existing){
             existing.x = x;
             existing.y = y;
@@ -106,8 +118,7 @@ function renderStaList(){
             existing.style = style;
         }else{
             staRenderedList.value.push({
-                id:s[0],
-                x,y,
+                id,x,y,
                 side,
                 style
             })
@@ -132,6 +143,7 @@ function sync(data:SyncData){
     }else{
         renderPlayerList();
     }
+    renderStaList();
 }
 async function init(){
     const resp = await api.game.init(gameId);
@@ -155,6 +167,7 @@ const sidebar = ref<InstanceType<typeof SideBar>>();
 const msgs = ref<TextMsg[]>([]);
 const frame = ref<HTMLDivElement>();
 const arena = ref<HTMLDivElement>();
+const bgOpacity = ref<number>(1);
 
 
 var api:Api;
@@ -171,6 +184,8 @@ onMounted(async()=>{
 
     const mInfo = await injectUserInfo().getIdentityInfo();
     me = mInfo.Id;
+    
+    bgOpacity.value = parseFloat(localStorage.getItem(opacityStoreKey)||"1")||1;
 
     await init();
     await sgrc.connect();
@@ -199,6 +214,11 @@ watch(scaleBar,(newVal,oldVal)=>{
         scaler?.scale(1/1.1);
     }
 })
+
+const opacityStoreKey = "bgOpacity";
+watch(bgOpacity,(newVal)=>{
+    localStorage.setItem(opacityStoreKey,String(newVal));
+})
 </script>
 
 <template>
@@ -207,7 +227,7 @@ watch(scaleBar,(newVal,oldVal)=>{
         <div v-for="p in playerRenderedList" class="player" :key="p.p.id" :style="p.style">
             <img :src="avtSrc(p.p.avtFileName)"/>
             <div>
-                <div :style="p.nameStyle" class="playerName">{{ p.p.name }}</div>
+                <div :style="p.nameStyle" class="playerName" :class="{meName:me==p.p.id}">{{ p.p.name }}</div>
                 <div class="playerData">{{ p.p.score }}分 <span v-show="p.p.stuckTimes">卡{{ p.p.stuckTimes }}次</span></div>
             </div>
         </div>
@@ -215,7 +235,7 @@ watch(scaleBar,(newVal,oldVal)=>{
 </div>
 <div class="frame" ref="frame">
     <div class="arena" ref="arena">
-        <img :src="bgSrc(bgFileName||'')"/>
+        <img :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
         <div v-for="s in staRenderedList" :style="s.style" class="station"></div>
     </div>
 </div>
@@ -224,18 +244,21 @@ watch(scaleBar,(newVal,oldVal)=>{
     <input v-model="scaleBar" type="range" min="0" max="1" step="0.05"/>
 </div>
 <SideBar ref="sidebar">
-    <div class="sidebarBtns">
-        <button v-if="!gameStarted && !meJoined" @click="sgrc.join">加入本棋局</button>
-        <button v-if="meJoined" class="minor">已在棋局中</button>
-        <button v-if="meHost && !gameStarted && meJoined" @click="sgrc.gameStart">下令开始棋局</button>
-        <button v-if="gameStarted" class="minor">本棋局已开始</button>
-
-        <button v-show="meHost" class="cancel" @click="sgrc.gameReset">下令重置房间</button>
-    </div>
     <TextMsgDisplay :msgs="msgs"></TextMsgDisplay>
     <div>
         <input v-model="sending" placeholder="说点什么"/>
         <button @click="send">发送</button>
+    </div>
+    <div class="sidebarBtns">
+        <div style="text-align: center;">
+            背景不透明度
+            <input type="range" v-model="bgOpacity" min="0" max="1" step="0.1" style="margin: 0px;">
+        </div>
+        <button v-show="!gameStarted && !meJoined" @click="sgrc.join">加入本棋局</button>
+        <button v-show="meJoined" class="minor">已在棋局中</button>
+        <button v-show="meHost && !gameStarted && meJoined" @click="sgrc.gameStart">下令开始棋局</button>
+        <button v-show="gameStarted" class="minor">本棋局已开始</button>
+        <button v-show="meHost" class="cancel" @click="sgrc.gameReset">下令重置房间</button>
     </div>
 </SideBar>
 </template>
@@ -267,6 +290,8 @@ watch(scaleBar,(newVal,oldVal)=>{
     position: absolute;
     border:2px solid black;
     background-color: #ccc;
+    background-position: center;
+    background-size: contain;
     border-radius: 1000px;
 }
 .arena img{
@@ -294,6 +319,9 @@ watch(scaleBar,(newVal,oldVal)=>{
 .playerData{
     font-size: 14px;
     color:#999
+}
+.meName{
+    text-decoration: underline;
 }
 .playerName{
     padding: 2px;

@@ -13,7 +13,7 @@ export class Scaler{
             const fh = this.frame.clientHeight;
             const ax = x/fw;
             const ay = y/fh;
-            console.log(ax,ay);
+            //console.log(ax,ay);
             if(e.shiftKey){
                 this.scale(1.2,{x:ax,y:ay});
             }else if(e.ctrlKey){
@@ -54,7 +54,8 @@ export class Scaler{
     //     return{cx,cy,dist}
     // }
     scale(ratio:number,anchor?:{x:number,y:number}){
-        const ww = window.innerWidth;
+        const ww = this.frame.clientWidth;
+        const hh = this.frame.clientHeight;
         const w = this.arena.clientWidth;
         const h = this.arena.clientHeight
         var x:number;
@@ -63,8 +64,8 @@ export class Scaler{
             x = anchor.x;
             y = anchor.y;
         }else{
-            x = 0.5;
-            y = 0.5;
+            x = (this.frame.scrollLeft+ww/2)/w;
+            y = (this.frame.scrollTop+hh/2)/h;
         }
         if(w<ww && ratio<1){
             return;
@@ -75,7 +76,8 @@ export class Scaler{
         this.arena.style.width = w*ratio+'px';
         const wGrowth = w*(ratio-1);
         const hGrowth = h*(ratio-1);
-        this.frame.scrollLeft += wGrowth*x
+        //console.log(wGrowth,x,hGrowth,y)
+        this.frame.scrollLeft += wGrowth*x;
         this.frame.scrollTop += hGrowth*y
         this.callBack();
     }
