@@ -3,7 +3,18 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34322.80
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RailChess", "RailChess\RailChess.csproj", "{4B84E9BB-4A19-40B4-98E3-EFA427B96679}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RailChess", "RailChess\RailChess.csproj", "{4B84E9BB-4A19-40B4-98E3-EFA427B96679}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RailChess.Core.Abstractions", "RailChess.Core.Abstractions\RailChess.Core.Abstractions.csproj", "{CF2CAE7C-B7CA-45AD-B22F-778BDD77986C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RailChess.Core", "RailChess.Core\RailChess.Core.csproj", "{0B055269-D77F-438D-8ACC-0989F2FCD6EB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CF2CAE7C-B7CA-45AD-B22F-778BDD77986C} = {CF2CAE7C-B7CA-45AD-B22F-778BDD77986C}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RailChess.GraphDefinition", "RailChess.GraphDefinition\RailChess.GraphDefinition.csproj", "{B2B1FB7C-565A-4D02-89F4-006CC46139DB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RailChess.Core.Test", "RailChess.Core.Test\RailChess.Core.Test.csproj", "{91F81FAA-5D03-4530-855E-6A4DA35424C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +26,22 @@ Global
 		{4B84E9BB-4A19-40B4-98E3-EFA427B96679}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4B84E9BB-4A19-40B4-98E3-EFA427B96679}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4B84E9BB-4A19-40B4-98E3-EFA427B96679}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF2CAE7C-B7CA-45AD-B22F-778BDD77986C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF2CAE7C-B7CA-45AD-B22F-778BDD77986C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF2CAE7C-B7CA-45AD-B22F-778BDD77986C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF2CAE7C-B7CA-45AD-B22F-778BDD77986C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B055269-D77F-438D-8ACC-0989F2FCD6EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B055269-D77F-438D-8ACC-0989F2FCD6EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B055269-D77F-438D-8ACC-0989F2FCD6EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B055269-D77F-438D-8ACC-0989F2FCD6EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2B1FB7C-565A-4D02-89F4-006CC46139DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2B1FB7C-565A-4D02-89F4-006CC46139DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2B1FB7C-565A-4D02-89F4-006CC46139DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2B1FB7C-565A-4D02-89F4-006CC46139DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91F81FAA-5D03-4530-855E-6A4DA35424C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91F81FAA-5D03-4530-855E-6A4DA35424C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91F81FAA-5D03-4530-855E-6A4DA35424C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91F81FAA-5D03-4530-855E-6A4DA35424C1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

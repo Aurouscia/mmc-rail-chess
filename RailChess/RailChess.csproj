@@ -29,6 +29,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RailChess.Core\RailChess.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Data\fcloud3.db">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>

@@ -15,17 +15,14 @@ namespace RailChess.Play.Services
             _context = context;
             _cache = cache;
         }
-        private string MapCacheKey()
-        {
-            return $"topoOfGame_{GameId}";
-        }
+        private string TopoCacheKey() => $"topoOfGame_{GameId}";
         private string DirectionsCacheKey()
         {
             return $"dirsOfGame_{GameId}";
         }
         public RailChessTopo OurTopo()
         {
-            string key = MapCacheKey();
+            string key = TopoCacheKey();
             var topo = _cache.Get<RailChessTopo>(key);
             if (topo is null)
             {
@@ -67,7 +64,6 @@ namespace RailChess.Play.Services
             terminals.RemoveAll(blackList.Contains);
             return terminals;
         }
-
         public Dictionary<int,int> StationDirections()
         {
             var dict = _cache.Get<Dictionary<int, int>>(DirectionsCacheKey());
@@ -92,10 +88,10 @@ namespace RailChess.Play.Services
                         }
                     }
                 });
+                _cache.Set(DirectionsCacheKey(), dict);
             }
             return dict;
         }
-
         public int TotalDirections(List<int> staIds)
         {
             var dirDict = StationDirections();

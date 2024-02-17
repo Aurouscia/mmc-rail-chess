@@ -1,17 +1,20 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using RailChess.Models.DbCtx;
 using RailChess.Models.Game;
+using RailChess.Utils;
 
 namespace RailChess.Play.Services
 {
     public class PlayEventsService
     {
+        private readonly PlayGameService _gameService;
         private readonly RailChessContext _context;
         private readonly IMemoryCache _cache;
         public int GameId { get; set; }
         public int UserId { get; set; }
-        public PlayEventsService(RailChessContext context, IMemoryCache cache)
+        public PlayEventsService(PlayGameService gameService, RailChessContext context, IMemoryCache cache)
         {
+            _gameService = gameService;
             _context = context;
             _cache = cache;
         }
@@ -63,6 +66,7 @@ namespace RailChess.Play.Services
         }
         public int RandedResult()
         {
+            int rand;
             var operations = OurEvents()
                 .FindAll(x =>
                     x.EventType == RailChessEventType.PlayerStuck
@@ -70,8 +74,14 @@ namespace RailChess.Play.Services
                     || x.EventType == RailChessEventType.RandNumGened);
             var last = operations.LastOrDefault();
             if (last is null || last.EventType != RailChessEventType.RandNumGened)
-                return -1;
-            return last.StationId;
+            {
+                var ourGame = _gameService.Get();
+                rand = RandNum.Uniform(ourGame.RandMin, ourGame.RandMax);
+                Add(RailChessEventType.RandNumGened, rand, true);
+            }
+            else 
+                rand = last.StationId;
+            return rand;
         }
 
         public void Add(RailChessEventType type, int stationId, bool saveChanges=true)
