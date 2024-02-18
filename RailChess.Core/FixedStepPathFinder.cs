@@ -5,10 +5,11 @@ namespace RailChess.Core
 {
     public class FixedStepPathFinder : IFixedStepPathFinder
     {
-        public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, int from, int steps)
+        public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, int steps)
         {
             List<Sta> active = new();
             List<List<Sta>> paths = new();
+            int from = graph.UserPosition[userId];
             var startPoint = graph.Stations.Find(x => x.Id == from) ?? throw new Exception("算路异常:找不到指定起始点");
             active.Add(startPoint);
 
@@ -26,7 +27,7 @@ namespace RailChess.Core
                     if (aPath is null) continue;
                     foreach(var n in a.Neighbors)
                     {
-                        if (n.Owner != userId) continue;
+                        if (n.Owner!=0 && n.Owner != userId) continue;//不是自己的/空的就不能往这走
                         if (aPath.Count >= 2)
                         {
                             var lastButOne = aPath[^2];
@@ -39,7 +40,7 @@ namespace RailChess.Core
                 step++;
                 paths.RemoveAll(x => x.Count != step + 1);
                 if (paths.Count == 0) break;
-                paths = paths.DistinctBy(x => x.Last().Id).ToList();
+                paths = paths.DistinctBy(x => x.Last().Id).ToList();//去除当前终点相同的路径
                 active = paths.ConvertAll(x => x.Last());
             }
 

@@ -3,16 +3,23 @@
     public class Graph
     {
         public List<Sta> Stations { get; }
+        public Dictionary<int, int> UserPosition { get; }
         public Graph(List<Sta> stations)
         {
             Stations = stations;
+            UserPosition = new();
+        }
+        public Graph(List<Sta> stations, Dictionary<int, int> userPosition)
+        {
+            Stations = stations;
+            UserPosition = userPosition;
         }
     }
     public class Sta
     {
         public int Id { get; }
         public int Owner { get; set; }
-        public List<Sta> Neighbors { get; }
+        public List<Sta> Neighbors { get; private set; }
         public Sta(int id)
         {
             Id = id;

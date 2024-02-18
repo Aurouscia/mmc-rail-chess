@@ -27,6 +27,10 @@ namespace RailChess.Play.Services.CoreCall
                 if (sta is not null)
                     sta.Owner = o.PlayerId;
             });
+            _eventsService.PlayerLocateEvents().ForEach(x =>
+            {
+                graph.UserPosition.Add(x.PlayerId, x.StationId);
+            });
             return graph;
         }
         private Graph GetPlainGraph()
@@ -73,7 +77,7 @@ namespace RailChess.Play.Services.CoreCall
                             var ns = ss.Find(s => s.Id == n);
                             if (ns is not null)
                             {
-                                target.TwowayConnect(ns);
+                                target.Neighbors.Add(ns);
                             }
                         });
                     }
