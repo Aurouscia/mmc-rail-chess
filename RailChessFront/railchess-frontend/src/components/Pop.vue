@@ -60,8 +60,7 @@ defineExpose({ show })
         width: (-rightDefault) + 'px',
         top: height*index + 100 + 'px'
          }" :class="box.type">
-         <div>
-            {{ box.msg }}
+        <div v-html="box.msg">
         </div>
     </div>
 </template>

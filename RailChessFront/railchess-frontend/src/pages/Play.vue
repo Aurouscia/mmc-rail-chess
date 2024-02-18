@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { CSSProperties, onMounted, ref, watch } from 'vue';
-import { injectApi, injectHideTopbar, injectHttp, injectUserInfo } from '../provides';
+import { injectApi, injectHideTopbar, injectHttp, injectPop, injectUserInfo } from '../provides';
 import { Player, SyncData, TextMsg } from '../models/play';
 import SideBar from '../components/SideBar.vue';
 import { RailChessTopo,posBase } from '../models/map';
@@ -11,6 +11,8 @@ import { Scaler } from '../models/scale';
 import { SignalRClient } from '../utils/signalRClient';
 import TextMsgDisplay from '../components/TextMsgDisplay.vue';
 import { useAnimator, AnimNode } from '../utils/pathAnim';
+import _ from 'lodash'
+import { boxTypes } from '../components/Pop.vue';
 
 const props = defineProps<{id:string}>();
 const gameId = parseInt(props.id);
@@ -229,13 +231,26 @@ onMounted(async()=>{
     injectHideTopbar()();
     api = injectApi();
     var http = injectHttp();
+    const pop = injectPop();
     jwtToken = http.jwtToken;
-    const textMsgCall = (m:TextMsg)=>{msgs.value.push(m)}
-    sgrc = new SignalRClient(gameId,jwtToken||"", sync, textMsgCall);
-
+    
     const mInfo = await injectUserInfo().getIdentityInfo();
     me = mInfo.Id;
-    
+    const textMsgCall = (m:TextMsg)=>{
+        msgs.value.push(m);
+        var t:boxTypes;
+        if(m.type==0){
+            t = "info"
+        }else if(m.type==1){
+            t = "warning"
+        }else{
+            t = "failed"
+        }
+        if(m.sender!=mInfo.Name)
+            pop.value.show(_.truncate(m.sender+"："+m.content, {length:23}), t)
+    }
+    sgrc = new SignalRClient(gameId,jwtToken||"", sync, textMsgCall);
+
     bgOpacity.value = parseFloat(localStorage.getItem(opacityStoreKey)||"1")||1;
 
     await init();
