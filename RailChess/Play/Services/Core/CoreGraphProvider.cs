@@ -27,7 +27,8 @@ namespace RailChess.Play.Services.Core
                 if (sta is not null)
                     sta.Owner = o.PlayerId;
             });
-            _eventsService.PlayerLocateEvents().ForEach(x =>
+            var locEvents = _eventsService.PlayerLocateEvents();
+            locEvents.ForEach(x =>
             {
                 graph.UserPosition.Add(x.PlayerId, x.StationId);
             });
@@ -44,6 +45,7 @@ namespace RailChess.Play.Services.Core
                     SlidingExpiration = TimeSpan.FromMinutes(30)
                 });
             }
+            plainGraph.UserPosition.Clear();
             return plainGraph;
         }
         private Graph BuildPlainGraph()

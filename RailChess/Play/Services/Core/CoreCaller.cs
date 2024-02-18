@@ -29,7 +29,7 @@ namespace RailChess.Play.Services.Core
         /// <returns>可选路线</returns>
         public IEnumerable<IEnumerable<int>> GetSelections()
         {
-            var players = _playerService.GetOrdered();
+            //var players = _playerService.GetOrdered();
             var randNum = _eventsService.RandedResult();
             var graph = _graphProvider.GetGraph();
             var currentUser = _eventsService.UserId;

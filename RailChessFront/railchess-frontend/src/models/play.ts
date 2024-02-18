@@ -15,7 +15,7 @@ export interface SyncData{
     randNumber:number,
     ocps:OcpStatus[],
     newOcps:OcpStatus,
-    selections:number[][],
+    selections?:number[][],
     gameStarted:boolean
 }
 

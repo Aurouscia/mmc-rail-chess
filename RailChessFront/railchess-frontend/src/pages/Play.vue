@@ -10,6 +10,7 @@ import { avtSrc,bgSrc } from '../utils/fileSrc';
 import { Scaler } from '../models/scale';
 import { SignalRClient } from '../utils/signalRClient';
 import TextMsgDisplay from '../components/TextMsgDisplay.vue';
+import { useAnimator, AnimNode } from '../utils/pathAnim';
 
 const props = defineProps<{id:string}>();
 const gameId = parseInt(props.id);
@@ -74,11 +75,9 @@ function textAttention(style:CSSProperties){
     },200)
 }
 
+const staRenderedWidth = 30;
 interface StaRendered{
     id:number,
-    x:number,
-    y:number,
-    side:number,
     style:CSSProperties
 }
 const staRenderedList = ref<StaRendered[]>([]);
@@ -91,15 +90,15 @@ function renderStaList(){
         const id = s[0];
         const x = s[1]/posBase*aw;
         const y = s[2]/posBase*ah;
-        var side = 30;
+        var side = staRenderedWidth;
         var backgroundImage:string|undefined = undefined;
-        var zIndex = 1;
+        var zIndex = undefined;
 
         var atByPlayer = playerList.value.find(x=>x.atSta==id);
         if(atByPlayer){
             side = 60;
             backgroundImage = `url("${avtSrc(atByPlayer.avtFileName)}")`;
-            zIndex += 1;
+            zIndex = 20;
         }
         const style:CSSProperties = {
             left:x-side/2+'px',
@@ -112,18 +111,59 @@ function renderStaList(){
         };
         const existing = staRenderedList.value.find(x=>x.id==id);
         if(existing){
-            existing.x = x;
-            existing.y = y;
-            existing.side = side;
             existing.style = style;
         }else{
             staRenderedList.value.push({
-                id,x,y,
-                side,
+                id,
                 style
             })
         }
     }
+}
+
+const pathAnimRenderedWidth = 26;
+const { animatorRendered, setPaths } = useAnimator();
+const selectedDist = ref<number|undefined>();
+function renderPathAnims() {
+    if (!topoData.value || !arena.value) { return; }
+    if(!currentSelections.value || selectedDist.value===undefined){return;}
+    const path = currentSelections.value.find(s=>s[s.length-1] == selectedDist.value);
+    if(!path){return;}
+    var backgroundImage: string | undefined = undefined;
+    var side = pathAnimRenderedWidth;
+    var nodes: AnimNode[] = [];
+    const getPos = (sta:number)=>{
+            const s = topoData.value!.Stations.find(x=>x[0]==sta);
+            if(!s)return undefined
+            const x = s[1] / posBase * arena.value!.clientWidth;
+            const y = s[2] / posBase * arena.value!.clientHeight;
+            const left = x - side / 2 + 'px';
+            const top = y - side / 2 + 'px';
+            return {left, top}
+    }
+    path.forEach(sta => {
+        nodes.push({getPos,sta});
+    });
+    const styleBase: CSSProperties = {
+        width: side - 4 + 'px',
+        height: side - 4 + 'px',
+        borderWidth: '2px',
+        backgroundImage,
+    };
+    const animPath = {
+        dist:path[path.length-1],
+        styleBase,
+        nodes: nodes
+    }
+    setPaths(animPath);
+}
+function clickStation(id:number){
+    if(!clickableStations.value.includes(id)){
+        selectedDist.value = undefined;
+        return;
+    }
+    selectedDist.value = id
+    renderPathAnims();
 }
 
 const bgFileName = ref<string>();
@@ -132,18 +172,29 @@ const gameInfo = ref<RailChessGame>();
 const meJoined = ref<boolean>(false);
 const gameStarted = ref<boolean>(false);
 const meHost = ref<boolean>(false);
+const currentSelections = ref<number[][]|undefined>([])
+const clickableStations = ref<number[]>([])
 function sync(data:SyncData){
     console.log("收到同步数据指令",data)
     playerList.value = data.playerStatus;
     meJoined.value = playerList.value.some(x=>x.id==me);
     meHost.value = gameInfo.value?.HostUserId == me;
     gameStarted.value = data.gameStarted;
+    currentSelections.value = data.selections;
+    if(currentSelections.value){
+        renderPathAnims();
+        clickableStations.value = currentSelections.value.map(x=>x[x.length-1]);
+    }else{
+        animatorRendered.value = undefined
+        clickableStations.value = []
+    }
     if(playerList.value.length==0){
         playerRenderedList.value = [];
     }else{
         renderPlayerList();
     }
     renderStaList();
+    selectedDist.value = undefined;
 }
 async function init(){
     const resp = await api.game.init(gameId);
@@ -236,13 +287,17 @@ watch(bgOpacity,(newVal)=>{
 <div class="frame" ref="frame">
     <div class="arena" ref="arena">
         <img :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
-        <div v-for="s in staRenderedList" :style="s.style" class="station"></div>
+        <div v-for="s in staRenderedList" :style="s.style" 
+            :class="{clickable:clickableStations.includes(s.id), selected:selectedDist==s.id}" 
+            :key="s.id" class="station" @click="clickStation(s.id)"></div>
+        <div v-if="animatorRendered" :style="animatorRendered.style" class="pathAnim">{{ animatorRendered.step }}</div>
     </div>
 </div>
 <button class="confirm menuEntry" @click="sidebar?.extend">菜单</button>
 <div class="scaleBtn">
     <input v-model="scaleBar" type="range" min="0" max="1" step="0.05"/>
 </div>
+<button v-show="selectedDist" class="decideBtn">确认选择</button>
 <SideBar ref="sidebar">
     <TextMsgDisplay :msgs="msgs"></TextMsgDisplay>
     <div>
@@ -271,6 +326,11 @@ watch(bgOpacity,(newVal)=>{
     flex-direction: column;
     gap:5px;
 }
+.decideBtn{
+    position: fixed;
+    left:15px;
+    bottom: 30px;
+}
 .scaleBtn input[type="range"] {
   writing-mode:vertical-lr;
   height: 180px;
@@ -285,6 +345,31 @@ watch(bgOpacity,(newVal)=>{
     flex-direction: column;
     overflow: hidden;
     gap:0px;
+}
+.pathAnim{
+    position: absolute;
+    border:2px solid black;
+    background-color: black;
+    background-position: center;
+    background-size: contain;
+    border-radius: 1000px;
+    z-index: 11;
+    left: -100px;
+    color:white;
+    line-height: 26px;
+    font-size: 20px;
+    text-align: center;
+}
+.station.clickable{
+    border-color: cadetblue;
+    background-color: rgb(66, 117, 119);
+    cursor: pointer;
+    z-index: 10;
+}
+.station.selected{
+    border-color: green;
+    background-color: rgb(0, 77, 0);
+    z-index: 12;
 }
 .station{
     position: absolute;
