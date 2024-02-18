@@ -6,11 +6,13 @@ namespace RailChess.Play.Services
 {
     public class PlayPlayerService
     {
+        private readonly PlayEventsService _eventsService;
         private readonly RailChessContext _context;
         private readonly IMemoryCache _cache;
 
-        public PlayPlayerService(RailChessContext context, IMemoryCache cache)
+        public PlayPlayerService(PlayEventsService eventsService, RailChessContext context, IMemoryCache cache)
         {
+            _eventsService = eventsService;
             _context = context;
             _cache = cache;
         }
@@ -19,7 +21,7 @@ namespace RailChess.Play.Services
         {
             return $"user_{id}";
         }
-        public List<User> Get(List<int> ids)
+        private List<User> Get(List<int> ids)
         {
             List<int> notFound = new();
             List<User> res = new();
@@ -39,7 +41,7 @@ namespace RailChess.Play.Services
             {
                 _cache.Set<User>(UserIdCacheKey(u.Id), u, new MemoryCacheEntryOptions()
                 {
-                    SlidingExpiration = TimeSpan.FromMinutes(35)
+                    SlidingExpiration = TimeSpan.FromMinutes(30)
                 });
             });
             res.AddRange(notFoundUs);
@@ -52,7 +54,7 @@ namespace RailChess.Play.Services
             });
             return res;
         }
-        public List<User> GetOrdered(List<int> ids, int lastPlayer = -1)
+        private List<User> GetOrdered(List<int> ids, int lastPlayer = -1)
         {
             var users = Get(ids);
             if (lastPlayer == -1)
@@ -64,6 +66,23 @@ namespace RailChess.Play.Services
             users.RemoveRange(0, idx + 1);
             users.AddRange(slice);
             return users;
+        }
+        public List<User> GetOrdered()
+        {
+            var latestOp = _eventsService.LatestOperation();
+            int lastPlayer = -1;//默认情况下：还没有任何操作
+            if (latestOp is not null)
+                lastPlayer = latestOp.PlayerId;
+            var playerIds = _eventsService.PlayersJoinEvents().ConvertAll(x => x.PlayerId);//已经按加入顺序排列好
+            var players = GetOrdered(playerIds, lastPlayer);
+            return players;
+        }
+        public int CurrentPlayer()
+        {
+            var list = GetOrdered();
+            if (list.Count == 0)
+                throw new Exception("无玩家加入");
+            return list[0].Id;
         }
         
         private string ConnUserCacheKey(string connId)

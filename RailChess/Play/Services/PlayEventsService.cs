@@ -61,7 +61,7 @@ namespace RailChess.Play.Services
         public RailChessEvent? LatestOperation()
         {
             var operations = OurEvents()
-                .FindAll(x => x.EventType == RailChessEventType.PlayerStuck || x.EventType == RailChessEventType.PlayerStuck);
+                .FindAll(x => x.EventType == RailChessEventType.PlayerMoveTo || x.EventType == RailChessEventType.PlayerStuck);
             return operations.LastOrDefault();
         }
         public int RandedResult()
@@ -75,7 +75,7 @@ namespace RailChess.Play.Services
             var last = operations.LastOrDefault();
             if (last is null || last.EventType != RailChessEventType.RandNumGened)
             {
-                var ourGame = _gameService.Get();
+                var ourGame = _gameService.OurGame();
                 rand = RandNum.Uniform(ourGame.RandMin, ourGame.RandMax);
                 Add(RailChessEventType.RandNumGened, rand, true);
             }

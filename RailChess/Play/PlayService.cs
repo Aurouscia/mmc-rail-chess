@@ -4,17 +4,20 @@ using RailChess.Models.DbCtx;
 using RailChess.Models.Game;
 using RailChess.Play.PlayHubResponseModel;
 using RailChess.Play.Services;
+using RailChess.Play.Services.Core;
 using RailChess.Utils;
 
 namespace RailChess.Play
 {
     public class PlayService
     {
+        private readonly CoreCaller _coreCaller;
         private readonly PlayEventsService _eventsService;
         private readonly PlayToposService _topoService;
         private readonly PlayPlayerService _playerService;
         private readonly PlayGameService _gameService;
         private readonly RailChessContext _context;
+        
         private int _gameId;
         private int _userId;
         public int GameId { get => _gameId; set 
@@ -33,12 +36,14 @@ namespace RailChess.Play
             }
         }
         public PlayService(
+            CoreCaller coreCaller,
             PlayEventsService eventsService,
             PlayToposService toposService,
             PlayPlayerService playerService,
             PlayGameService gameService,
             RailChessContext context) 
-        { 
+        {
+            _coreCaller = coreCaller;
             _eventsService = eventsService;
             _topoService = toposService;
             _playerService = playerService;
@@ -48,17 +53,11 @@ namespace RailChess.Play
 
         public SyncData GetSyncData()
         {
-
-            var playerIds = _eventsService.PlayersJoinEvents().ConvertAll(x => x.PlayerId);//已经按加入顺序排列好
-            var latestOp = _eventsService.LatestOperation();
-            int lastPlayer = -1;//默认情况下：还没有任何操作
-            if(latestOp is not null)
-                lastPlayer = latestOp.PlayerId;
-            var players = _playerService.GetOrdered(playerIds,lastPlayer);
-
+            var players = _playerService.GetOrdered();
             var locEvents = _eventsService.PlayerLocateEvents();
             var stuckEvents = _eventsService.PlayerStuckEvents();
             var captureEvents = _eventsService.PlayerCaptureEvents();
+            var latestOp = _eventsService.LatestOperation();
 
             List<Player> playerStatus = new();
             List<OcpStatus> ocps = new();
@@ -79,7 +78,7 @@ namespace RailChess.Play
                 });
                 ocps.Add(new()
                 {
-                    PlayerId = p.Id,
+                    PlayerId = p!.Id,
                     Stas = hisStations
                 });
             });
@@ -95,15 +94,21 @@ namespace RailChess.Play
                 };
             }
 
-            var game = _gameService.Get();
-            int rand = _eventsService.RandedResult();
-            if (rand < 0)
-                rand = RandNum.Uniform(game.RandMin, game.RandMax);
-            var selections = new List<StepSelection>();
+            var game = _gameService.OurGame();
+            int rand = 0;
+            var selections = new List<List<int>>();
             var started = _eventsService.GameStarted();
             if (started)
             {
-                //计算selections
+                var paths = _coreCaller.GetSelections().ToList();
+                paths.ForEach(p =>
+                {
+                    if (!p.Any())
+                        return;
+                    selections.Add(p.ToList());
+                });
+
+                rand = _eventsService.RandedResult();
             }
             var res = new SyncData()
             {
@@ -139,7 +144,7 @@ namespace RailChess.Play
 
         public string? StartGame()
         {
-            var game = _context.Games.Where(x => x.Id == GameId).FirstOrDefault();
+            var game = _gameService.OurGame();
             if (game is null || game.HostUserId==0) throw new Exception("数据异常，找不到房主");
             if (game.Started)
                 return "对局已开始过";
@@ -152,12 +157,13 @@ namespace RailChess.Play
             _eventsService.Add(RailChessEventType.GameStart, 0, false);
             game.Started = true;
             game.StartTime = DateTime.Now;
+            _context.Update(game);
             _context.SaveChanges();
             return null;
         }
         public string? ResetGame()
         {
-            var game = _context.Games.Where(x => x.Id == GameId).FirstOrDefault() ?? throw new Exception("数据异常，找不到棋局");
+            var game = _gameService.OurGame();
             if (game.Ended)
                 return "对局已结束，不允许重置";
             game.Started = false;
@@ -165,6 +171,7 @@ namespace RailChess.Play
             var events = _eventsService.OurEvents();
             _context.RemoveRange(events);
             _eventsService.ClearOurEventsCache();
+            _context.Update(game);
             _context.SaveChanges();
             return null;
         }

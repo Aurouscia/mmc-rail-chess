@@ -15,13 +15,8 @@ export interface SyncData{
     randNumber:number,
     ocps:OcpStatus[],
     newOcps:OcpStatus,
-    selections:StepSelection[],
+    selections:number[][],
     gameStarted:boolean
-}
-
-export interface StepSelection{
-    dest:number
-    path:number[]
 }
 
 export interface Player{

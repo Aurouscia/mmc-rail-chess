@@ -18,7 +18,7 @@ namespace RailChess.Play.Services
         {
             return $"gameMeta_{GameId}";
         }
-        public RailChessGame Get() 
+        public RailChessGame OurGame() 
         {
             RailChessGame? game = _cache.Get<RailChessGame>(CacheKey());
             if(game is null)

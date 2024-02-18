@@ -6,7 +6,7 @@
         public int RandNumber { get; set; }
         public List<OcpStatus>? Ocps { get; set; }
         public OcpStatus? NewOcps { get; set; }
-        public List<StepSelection>? Selections { get; set; }
+        public List<List<int>>? Selections { get; set; }
         public bool GameStarted { get; set; }
     }
 
@@ -18,12 +18,6 @@
         public int StuckTimes { get; set; }
         public int AtSta { get; set; }
         public string? AvtFileName { get; set; }
-    }
-
-    public class StepSelection
-    {
-        public int Dest { get; set; }
-        public List<int>? Path { get; set; }
     }
     public class OcpStatus
     {

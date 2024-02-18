@@ -1,15 +1,15 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using RailChess.GraphDefinition;
 
-namespace RailChess.Play.Services.CoreCall
+namespace RailChess.Play.Services.Core
 {
-    public class GraphProvider
+    public class CoreGraphProvider
     {
         private readonly PlayEventsService _eventsService;
         private readonly PlayToposService _topoService;
         private readonly IMemoryCache _cache;
 
-        public GraphProvider(PlayEventsService eventsService, PlayToposService toposService, IMemoryCache cache) 
+        public CoreGraphProvider(PlayEventsService eventsService, PlayToposService toposService, IMemoryCache cache) 
         {
             _eventsService = eventsService;
             _topoService = toposService;
