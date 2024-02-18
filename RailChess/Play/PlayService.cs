@@ -98,7 +98,7 @@ namespace RailChess.Play
             int rand = 0;
             var selections = new List<List<int>>();
             var started = _eventsService.GameStarted();
-            if (started)
+            if (started && UserId == players[0].Id)
             {
                 var paths = _coreCaller.GetSelections().ToList();
                 paths.ForEach(p =>

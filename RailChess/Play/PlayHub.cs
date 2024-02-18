@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using RailChess.Models.DbCtx;
 using RailChess.Play.PlayHubRequestModel;
 using RailChess.Play.PlayHubResponseModel;
 using RailChess.Play.Services;
