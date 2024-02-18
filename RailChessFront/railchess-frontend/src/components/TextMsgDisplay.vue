@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { nextTick, ref, watch } from 'vue';
 import { TextMsg, TextMsgType } from '../models/play';
 
 const props = defineProps<{
@@ -10,11 +11,18 @@ function msgTypeClassName(t:TextMsgType){
     if(t==1)return "important";
     if(t==2)return "err";
 }
+
+const msgs = ref<HTMLDivElement>();
+watch(props,async(_newVal)=>{
+    await nextTick();
+    if(msgs.value)
+        msgs.value.scrollTop = 10000000000;
+})
 </script>
 
 <template>
-<div class="msgs">
-    <div v-for="m in props.msgs" :key="m.time" class="msg">
+<div class="msgs" ref="msgs">
+    <div v-for="m in props.msgs" :key="m.time" class="msg" >
         <div class="meta">
             <div class="sender">{{ m.sender }}</div>
             <div class="time">{{ m.time }}</div>
