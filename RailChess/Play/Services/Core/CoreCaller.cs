@@ -32,7 +32,7 @@ namespace RailChess.Play.Services.Core
             //var players = _playerService.GetOrdered();
             var randNum = _eventsService.RandedResult();
             var graph = _graphProvider.GetGraph();
-            var currentUser = _eventsService.UserId;
+            var currentUser = _playerService.CurrentPlayer();
             var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, randNum);
             return allPaths;
         }
@@ -61,8 +61,8 @@ namespace RailChess.Play.Services.Core
         public IEnumerable<int> AutoCapturables()
         {
             var graph = _graphProvider.GetGraph();
-            var currentUser = _eventsService.UserId;
-            return _exclusiveStasFinder.FindExclusiveStas(graph, currentUser);
+            var lastMovedUser = _eventsService.UserId;
+            return _exclusiveStasFinder.FindExclusiveStas(graph, lastMovedUser);
         }
     }
 }

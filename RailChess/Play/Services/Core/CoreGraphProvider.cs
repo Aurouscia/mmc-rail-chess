@@ -46,6 +46,7 @@ namespace RailChess.Play.Services.Core
                 });
             }
             plainGraph.UserPosition.Clear();
+            plainGraph.Stations.ForEach(x => x.Owner = 0);
             return plainGraph;
         }
         private Graph BuildPlainGraph()
