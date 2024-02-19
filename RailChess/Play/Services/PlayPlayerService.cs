@@ -61,14 +61,25 @@ namespace RailChess.Play.Services
         private List<User> GetOrdered(List<int> ids, int lastPlayer = -1)
         {
             var users = Get(ids);
-            if (lastPlayer == -1)
+            if (lastPlayer != -1)
+            {
+                int idx = users.FindIndex(x => x.Id == lastPlayer);
+                if (idx != ids.Count - 1)
+                {
+                    var slice = users.GetRange(0, idx + 1);
+                    users.RemoveRange(0, idx + 1);
+                    users.AddRange(slice);
+                }
+            }
+            var outPlayers = _eventsService.PlayerOutEvents().ConvertAll(x=>x.PlayerId).Distinct().ToList();
+            if (outPlayers.Count == ids.Count || outPlayers.Count==0)
                 return users;
-            int idx = users.FindIndex(x=>x.Id==lastPlayer);
-            if (idx == ids.Count - 1)
-                return users;
-            var slice = users.GetRange(0, idx + 1);
-            users.RemoveRange(0, idx + 1);
-            users.AddRange(slice);
+            int firstNotOut = users.FindIndex(x=>!outPlayers.Contains(x.Id));
+            if(firstNotOut == -1)return users;
+            var slice2 = users.GetRange(0, firstNotOut);
+            users.RemoveRange(0, firstNotOut);
+            users.AddRange(slice2);
+
             return users;
         }
         public List<User> GetOrdered()

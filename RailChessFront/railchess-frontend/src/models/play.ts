@@ -26,7 +26,8 @@ export interface Player{
     score:number,
     stuckTimes:number,
     atSta:number,
-    avtFileName:string
+    avtFileName:string,
+    out:boolean
 }
 
 export type TextMsgType = 0|1|2

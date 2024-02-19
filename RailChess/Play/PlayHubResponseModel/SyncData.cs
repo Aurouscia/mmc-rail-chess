@@ -18,6 +18,7 @@
         public int StuckTimes { get; set; }
         public int AtSta { get; set; }
         public string? AvtFileName { get; set; }
+        public bool Out { get; set; }
     }
     public class OcpStatus
     {

@@ -57,7 +57,9 @@ namespace RailChess.Play
             var locEvents = _eventsService.PlayerLocateEvents();
             var stuckEvents = _eventsService.PlayerStuckEvents();
             var captureEvents = _eventsService.PlayerCaptureEvents();
+            var outEvents = _eventsService.PlayerOutEvents();
             var latestOp = _eventsService.LatestOperation();
+            var game = _gameService.OurGame();
 
             List<Player> playerStatus = new();
             List<OcpStatus> ocps = new();
@@ -74,7 +76,8 @@ namespace RailChess.Play
                     AtSta = atSta,
                     AvtFileName = p?.AvatarName ?? "???",
                     StuckTimes = stuckTimes,
-                    Score = _topoService.TotalDirections(hisStations)
+                    Score = _topoService.TotalDirections(hisStations),
+                    Out = outEvents.Any(x => p is not null && x.PlayerId == p.Id)
                 });
                 ocps.Add(new()
                 {
@@ -82,6 +85,19 @@ namespace RailChess.Play
                     Stas = hisStations
                 });
             });
+            bool ended = false;
+            if (playerStatus.Count>0 && playerStatus.All(x => x.Out == true))
+            {
+                ended = true;
+                if (!_eventsService.GamedEnded())
+                {
+                    _eventsService.Add(RailChessEventType.GameEnd, 0, false);
+                    game.Ended = true;
+                    game.DurationMins = (int)(DateTime.Now - game.StartTime).TotalMinutes;
+                    _context.Update(game);
+                    _context.SaveChanges();
+                }
+            }
 
             OcpStatus? newOcps = null;
             if (latestOp is not null)
@@ -94,11 +110,10 @@ namespace RailChess.Play
                 };
             }
 
-            var game = _gameService.OurGame();
             int rand = 0;
             var selections = new List<List<int>>();
             var started = _eventsService.GameStarted();
-            if (started)
+            if (started && !ended)
             {
                 var paths = _coreCaller.GetSelections().ToList();
                 paths.ForEach(p =>
@@ -151,8 +166,8 @@ namespace RailChess.Play
             if (UserId != game.HostUserId)
                 return "只有房主能开始对局";
             var playersCount = _eventsService.PlayersJoinEvents().Count;
-            if (playersCount == 0)
-                return "没有玩家加入的游戏不能开始";
+            if (playersCount <= 1)
+                return "至少需要两人加入(在顶部显示)";
 
             _eventsService.Add(RailChessEventType.GameStart, 0, false);
             game.Started = true;
@@ -194,6 +209,11 @@ namespace RailChess.Play
             }
             _context.SaveChanges();
             captured = captures.Count + 1;
+            return null;
+        }
+        public string? Leave()
+        {
+            _eventsService.Add(RailChessEventType.PlayerOut, 0, true);
             return null;
         }
     }

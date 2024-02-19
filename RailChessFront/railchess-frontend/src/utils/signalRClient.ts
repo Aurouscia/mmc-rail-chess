@@ -19,6 +19,7 @@ interface SendTextMsgRequest extends RequestModelBase{
 interface SelectRequest extends RequestModelBase{
     Path:number[]
 }
+interface OutRequest extends RequestModelBase{}
 
 export class SignalRClient{
     gameId:number
@@ -83,5 +84,11 @@ export class SignalRClient{
             Path: path
         }
         await this.conn.invoke("Select",r)
+    }
+    async out(){
+        const r:OutRequest = {
+            GameId: this.gameId
+        };
+        await this.conn.invoke("Out",r);
     }
 }

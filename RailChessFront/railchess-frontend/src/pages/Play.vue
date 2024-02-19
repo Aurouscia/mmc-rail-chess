@@ -33,17 +33,18 @@ function renderPlayerList(){
         const left = playerRenderedWidth*i;
         const existing = playerRenderedList.value.find(x=>x.p.id==p.id);
         if(existing){
+            existing.p = p;
             if(i==playerList.value.length-1){
                 existing.style.opacity = 0;
                 existing.style.zIndex = 0;
                 setTimeout(()=>{
                     existing.style.left = left+"px"
                     setTimeout(()=>{
-                        existing.style.opacity = 1;
+                        existing.style.opacity = undefined;
                     },500)
                 },500)
             }else{
-                existing.style.opacity = 1;
+                existing.style.opacity = undefined;
                 existing.style.left = left+"px";
                 existing.style.zIndex = 100
                 if(i==0 && me==existing.p.id && gameStarted.value){
@@ -211,6 +212,7 @@ const bgFileName = ref<string>();
 const topoData = ref<RailChessTopo>();
 const gameInfo = ref<RailChessGame>();
 const meJoined = ref<boolean>(false);
+const meOut = ref<boolean>(false);
 const gameStarted = ref<boolean>(false);
 const meHost = ref<boolean>(false);
 const currentSelections = ref<number[][]|undefined>([])
@@ -218,6 +220,7 @@ const clickableStations = ref<number[]>([])
 const ocpStatus = ref<OcpStatus[]>([])
 const newOcps = ref<OcpStatus|undefined>();
 const randNum = ref<number>(0);
+const ended = ref<boolean>(false);
 async function sync(data:SyncData){
     console.log("收到同步数据指令",data)
     const lastPlayer = playerList.value[0];
@@ -227,7 +230,10 @@ async function sync(data:SyncData){
     renderPathAnims();
     await sleep(100);
 
-    meJoined.value = playerList.value.some(x=>x.id==me);
+    const meInList = playerList.value.find(x=>x.id==me);
+    meJoined.value = !!meInList;
+    meOut.value = meInList?.out||false;
+    ended.value = playerList.value.length>0 && playerList.value.every(x=>x.out);
     meHost.value = gameInfo.value?.HostUserId == me;
     gameStarted.value = data.gameStarted;
     currentSelections.value = data.selections;
@@ -343,7 +349,7 @@ watch(bgOpacity,(newVal)=>{
 <template>
 <div class="topbar">
     <div class="playerList">
-        <div v-for="p in playerRenderedList" class="player" :key="p.p.id" :style="p.style">
+        <div v-for="p in playerRenderedList" class="player" :class="{outPlayer:p.p.out}" :key="p.p.id" :style="p.style">
             <img :src="avtSrc(p.p.avtFileName)"/>
             <div>
                 <div :style="p.nameStyle" class="playerName" :class="{meName:me==p.p.id}">{{ p.p.name }}</div>
@@ -353,9 +359,10 @@ watch(bgOpacity,(newVal)=>{
     </div>
 </div>    
 <div class="randNumOuter">
-    <div v-show="gameStarted" class="randNum" :style="randNumStyle">{{ randNum }}</div>
-    <div v-show="gameStarted" class="status">{{playerList[0]?.id!=me ? '▲等待玩家': '▲轮到你了'}}</div>
-    <div v-show="!gameStarted" class="status">等待房主开始中</div>
+    <div v-show="gameStarted && !ended" class="randNum" :style="randNumStyle">{{ randNum }}</div>
+    <div v-show="gameStarted && !ended" class="status">{{playerList[0]?.id!=me ? '▲等待玩家': '▲轮到你了'}}</div>
+    <div v-show="!gameStarted && !ended" class="status">等待房主开始中</div>
+    <div v-show="ended" class=status>本对局已经结束</div>
 </div>
 <div class="frame" ref="frame">
     <div class="arena" ref="arena">
@@ -370,8 +377,8 @@ watch(bgOpacity,(newVal)=>{
 <div class="scaleBtn">
     <input v-model="scaleBar" type="range" min="0" max="1" step="0.05"/>
 </div>
-<button v-show="selectedDist" class="decideBtn" @click="select">确认选择</button>
-<button v-show="gameStarted && playerList[0]?.id==me && !currentSelections?.length" class="cancel decideBtn" @click="select">无路可走</button>
+<button v-show="selectedDist && !ended" class="decideBtn" @click="select">确认选择</button>
+<button v-show="gameStarted && !ended && playerList[0]?.id==me && !currentSelections?.length" class="cancel decideBtn" @click="select">无路可走</button>
 <SideBar ref="sidebar">
     <TextMsgDisplay :msgs="msgs"></TextMsgDisplay>
     <div>
@@ -384,10 +391,12 @@ watch(bgOpacity,(newVal)=>{
             <input type="range" v-model="bgOpacity" min="0" max="1" step="0.1" style="margin: 0px;">
         </div>
         <button v-show="!gameStarted && !meJoined" @click="sgrc.join">加入本棋局</button>
-        <button v-show="meJoined" class="minor">已在棋局中</button>
+        <button v-show="meJoined && !meOut" class="cancel" @click="sgrc.out">退出本棋局</button>
+        <button v-show="meOut" class="minor">已退出本棋局</button>
         <button v-show="meHost && !gameStarted && meJoined" @click="sgrc.gameStart">下令开始棋局</button>
         <button v-show="gameStarted" class="minor">本棋局已开始</button>
         <button v-show="meHost" class="cancel" @click="sgrc.gameReset">下令重置房间</button>
+        <button class="off" @click="$router.push('/')">返回主菜单</button>
     </div>
 </SideBar>
 </template>
@@ -537,6 +546,9 @@ watch(bgOpacity,(newVal)=>{
     border-radius: 1000px;
     border:1px solid #ccc;
     flex-shrink: 0;
+}
+.outPlayer{
+    opacity: 0.4;;
 }
 .player{
     width: 146px;

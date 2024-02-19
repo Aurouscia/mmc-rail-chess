@@ -58,6 +58,10 @@ namespace RailChess.Play.Services
             => OurEvents().FindAll(x => x.EventType == RailChessEventType.PlayerCapture);
         public List<RailChessEvent> PlayerStuckEvents()
             => OurEvents().FindAll(x => x.EventType == RailChessEventType.PlayerStuck);
+        public List<RailChessEvent> PlayerOutEvents()
+            => OurEvents().FindAll(x=>x.EventType == RailChessEventType.PlayerOut);
+        public bool GamedEnded()
+            => OurEvents().Any(x => x.EventType == RailChessEventType.GameEnd);
         public RailChessEvent? LatestOperation()
         {
             var operations = OurEvents()

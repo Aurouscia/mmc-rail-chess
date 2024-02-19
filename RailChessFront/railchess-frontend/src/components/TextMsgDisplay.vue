@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
 import { TextMsg, TextMsgType } from '../models/play';
 
 const props = defineProps<{
@@ -14,6 +14,11 @@ function msgTypeClassName(t:TextMsgType){
 
 const msgs = ref<HTMLDivElement>();
 watch(props,async(_newVal)=>{
+    await nextTick();
+    if(msgs.value)
+        msgs.value.scrollTop = 10000000000;
+})
+onMounted(async()=>{
     await nextTick();
     if(msgs.value)
         msgs.value.scrollTop = 10000000000;
@@ -67,7 +72,7 @@ watch(props,async(_newVal)=>{
     border-radius: 5px;
 }
 .msgs{
-    height: calc(100vh - 300px);
+    height: calc(100vh - 350px);
     width: 270px;
     overflow-x: hidden;
     overflow-y: scroll;
