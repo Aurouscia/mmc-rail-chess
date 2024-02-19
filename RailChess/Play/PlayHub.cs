@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using RailChess.Models.Game;
 using RailChess.Play.PlayHubRequestModel;
 using RailChess.Play.PlayHubResponseModel;
 using RailChess.Play.Services;
@@ -198,31 +199,34 @@ namespace RailChess.Play
         {
             await SendTextMsg($"用户<b>{SenderName()}</b>离开房间", defaultSender, TextMsgType.Important);
         }
-        //public async Task RefreshAll()
-        //{
-        //    await Clients.Group(_gameId.ToString()).SendAsync(RefreshData.InvokeMethod, new RefreshData(_eq,_ea));
-        //}
-        //public async Task UpdatePlayerList()
-        //{
-        //    await Clients.Group(_gameId.ToString()).SendAsync(PlayerStaticData.InvokeMethod, new PlayerStaticData(_eq));
-        //}
-
 
         /// <summary>
         /// 由当前轮到的玩家唤起的方法，表示自己选好了怎么移动
         /// </summary>
         /// <param name="selection">选择的选项</param>
         /// <returns></returns>
-        //public async Task Select(MoveCapturePair selection)
-        //{
-        //    _ea.PlayerSelect(selection.moveTo, selection.occupy);
-        //    _eq.ClearLazy(x => x.Events);
-        //    _eq.ClearLazy(x => x.StationStatusAttr);
-        //    RefreshData data = new(_eq, _ea);
-        //    string nowPlaying = _userNameDic.Get(data.ActivePlayerId);
-        //    await SendMessageExe($"<u><span style=\"color:green\">{_userName}</span>刚刚走了一步，接下来轮到：<span style=\"color:greenyellow\">{nowPlaying}</span>，随机数是{data.RandRes}</u>");
-        //    await Clients.Group(_gameId.ToString()).SendAsync("Refresh",data);
-        //}
+        public async Task Select(SelectRequest request)
+        {
+            int userId = Service.UserId;
+            if(userId != _playerService.CurrentPlayer())
+            {
+                await SendTextMsg("不是你的回合",defaultSender, TextMsgType.Err, Clients.Caller);
+                return;
+            }
+            if (request.Path is null || request.Path.Count<=1)
+            {
+                var loc = _eventsService.PlayerLocateEvents().Where(x => x.PlayerId == userId).Select(x=>x.StationId).FirstOrDefault();
+                _eventsService.Add(RailChessEventType.PlayerStuck, loc, true);
+                return;
+            }
+            string? errmsg = Service.Select(request.Path.Last());
+            if (errmsg is not null) 
+            {
+                await SendTextMsg(errmsg, defaultSender, TextMsgType.Err, Clients.Caller);
+                return;
+            }
+            await SyncAll();
+        }
         /// <summary>
         /// 表示当前玩家没有可以选择的路径点，只能放弃
         /// </summary>

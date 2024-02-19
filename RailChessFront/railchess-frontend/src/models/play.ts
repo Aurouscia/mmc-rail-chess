@@ -1,3 +1,4 @@
+import { getTimeStr } from "../utils/timeStamp"
 import { RailChessGame } from "./game"
 
 export interface InitData{
@@ -34,4 +35,12 @@ export interface TextMsg{
     sender:string
     time:string,
     type:TextMsgType
+}
+export function getLocalTextMsg(content:string, type:0|1|2):TextMsg{
+    return{
+        content,
+        sender:"客户端",
+        time:getTimeStr(),
+        type
+    }
 }

@@ -175,5 +175,20 @@ namespace RailChess.Play
             _context.SaveChanges();
             return null;
         }
+
+        public string? Select(int dist)
+        {
+            if (!_coreCaller.IsValidMove(dist))
+                return "移动不合法";
+            _eventsService.Add(RailChessEventType.PlayerMoveTo, dist, false);
+            _eventsService.Add(RailChessEventType.PlayerCapture, dist, true);
+            var captures = _coreCaller.AutoCapturables();
+            foreach(var capture in captures)
+            {
+                _eventsService.Add(RailChessEventType.PlayerCapture, capture, false);
+            }
+            _context.SaveChanges();
+            return null;
+        }
     }
 }

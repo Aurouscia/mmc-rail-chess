@@ -1,5 +1,5 @@
 import * as signalR from '@microsoft/signalr'
-import { SyncData, TextMsg } from '../models/play';
+import { SyncData, TextMsg, getLocalTextMsg } from '../models/play';
 
 export type SyncCall = (data:SyncData)=>void
 export type TextMsgCall = (data:TextMsg)=>void
@@ -16,6 +16,9 @@ interface GameResetRequest extends RequestModelBase{}
 interface SendTextMsgRequest extends RequestModelBase{
     Content:string
 }
+interface SelectRequest extends RequestModelBase{
+    Path:number[]
+}
 
 export class SignalRClient{
     gameId:number
@@ -30,6 +33,8 @@ export class SignalRClient{
             .configureLogging(signalR.LogLevel.Information)
             .withAutomaticReconnect()
             .build();
+        this.conn.onreconnecting(()=>textMsgCall(getLocalTextMsg("正在重新连接",2)))
+        this.conn.onreconnected(()=>textMsgCall(getLocalTextMsg("成功重新连接",1)));
         this.conn.on(syncCallMethodName, syncCall);
         this.conn.on(textMsgMethodName, (m)=>{
             console.log("展示信息",m)
@@ -69,5 +74,12 @@ export class SignalRClient{
             GameId: this.gameId
         }
         await this.conn.invoke("GameReset",r);
+    }
+    async select(path:number[]){
+        const r:SelectRequest = {
+            GameId: this.gameId,
+            Path: path
+        }
+        await this.conn.invoke("Select",r)
     }
 }

@@ -49,7 +49,8 @@ namespace RailChess.Core
 
         public bool IsValidMove(Graph graph, int userId, int from, int to, int steps)
         {
-            throw new NotImplementedException();
+            var paths = FindAllPaths(graph, userId, steps);
+            return paths.Any(x => x.FirstOrDefault() == from && x.LastOrDefault() == to);
         }
     }
 }

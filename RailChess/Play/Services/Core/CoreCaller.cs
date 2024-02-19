@@ -55,7 +55,7 @@ namespace RailChess.Play.Services.Core
         }
 
         /// <summary>
-        /// 玩家做出选择且已实际移动后，给出其他玩家再也无法占领的站，并占领之
+        /// 玩家做出选择且已实际移动后，给出其他玩家再也无法占领的站
         /// </summary>
         /// <returns>已自动占领站id</returns>
         public IEnumerable<int> AutoCapturables()

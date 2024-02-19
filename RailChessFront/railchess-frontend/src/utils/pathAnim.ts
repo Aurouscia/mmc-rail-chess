@@ -25,9 +25,11 @@ export function useAnimator() {
     var runningTimer: number;
     var animatorRendered = ref<AnimItem | undefined>();
 
-    function setPaths(p: AnimPath) {
+    function setPaths(p?: AnimPath,single?:boolean) {
         window.clearInterval(runningTimer);
         animatorRendered.value = undefined;
+
+        if(!p){return};
 
         const stepCount = p.nodes.length - 1;
         if (stepCount == 0) return;
@@ -58,7 +60,9 @@ export function useAnimator() {
             }
         }
         updateCall();
-        runningTimer = window.setInterval(updateCall, loopTime)
+        if(!single){
+            runningTimer = window.setInterval(updateCall, loopTime)
+        }
     };
     return { animatorRendered, setPaths }
 }

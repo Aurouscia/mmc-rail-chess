@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CSSProperties, onMounted, ref, watch } from 'vue';
 import { injectApi, injectHideTopbar, injectHttp, injectPop, injectUserInfo } from '../provides';
-import { Player, SyncData, TextMsg } from '../models/play';
+import { OcpStatus, Player, SyncData, TextMsg } from '../models/play';
 import SideBar from '../components/SideBar.vue';
 import { RailChessTopo,posBase } from '../models/map';
 import { Api } from '../utils/api';
@@ -97,10 +97,19 @@ function renderStaList(){
         var zIndex = undefined;
 
         var atByPlayer = playerList.value.find(x=>x.atSta==id);
+        var occupiedByPlayer = ocpStatus.value.find(x=>x.stas.includes(id));
         if(atByPlayer){
-            side = 60;
+            side = staRenderedWidth * 2;
             backgroundImage = `url("${avtSrc(atByPlayer.avtFileName)}")`;
             zIndex = 20;
+        }
+        else if(occupiedByPlayer){
+            const player = playerList.value.find(x=>x.id==occupiedByPlayer?.playerId);
+            if(player){
+                side = staRenderedWidth *1.5;
+                backgroundImage = `url("${avtSrc(player.avtFileName)}")`;
+                zIndex = 19;
+            }
         }
         const style:CSSProperties = {
             left:x-side/2+'px',
@@ -167,6 +176,17 @@ function clickStation(id:number){
     selectedDist.value = id
     renderPathAnims();
 }
+async function select(){
+    if(!currentSelections.value || currentSelections.value.length==0){
+        await sgrc.select([]);
+        return;
+    }
+    const path = currentSelections.value.find(x=>x.length>1 && x[x.length-1]==selectedDist.value);
+    if(path){
+        await sgrc.select(path);
+        setPaths();
+    }
+}
 
 const bgFileName = ref<string>();
 const topoData = ref<RailChessTopo>();
@@ -176,6 +196,8 @@ const gameStarted = ref<boolean>(false);
 const meHost = ref<boolean>(false);
 const currentSelections = ref<number[][]|undefined>([])
 const clickableStations = ref<number[]>([])
+const ocpStatus = ref<OcpStatus[]>([])
+const newOcps = ref<OcpStatus|undefined>();
 function sync(data:SyncData){
     console.log("收到同步数据指令",data)
     playerList.value = data.playerStatus;
@@ -183,6 +205,8 @@ function sync(data:SyncData){
     meHost.value = gameInfo.value?.HostUserId == me;
     gameStarted.value = data.gameStarted;
     currentSelections.value = data.selections;
+    ocpStatus.value = data.ocps;
+    newOcps.value = data.newOcps;
     if(currentSelections.value){
         renderPathAnims();
         clickableStations.value = currentSelections.value.map(x=>x[x.length-1]);
@@ -220,7 +244,7 @@ const sidebar = ref<InstanceType<typeof SideBar>>();
 const msgs = ref<TextMsg[]>([]);
 const frame = ref<HTMLDivElement>();
 const arena = ref<HTMLDivElement>();
-const bgOpacity = ref<number>(1);
+const bgOpacity = ref<number>(0.5);
 
 
 var api:Api;
@@ -304,7 +328,7 @@ watch(bgOpacity,(newVal)=>{
         <img :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
         <div v-for="s in staRenderedList" :style="s.style" 
             :class="{clickable:clickableStations.includes(s.id), selected:selectedDist==s.id}" 
-            :key="s.id" class="station" @click="clickStation(s.id)"></div>
+            :key="s.id" class="station" @click="clickStation(s.id)">{{ s.id }}</div>
         <div v-if="animatorRendered" :style="animatorRendered.style" class="pathAnim">{{ animatorRendered.step }}</div>
     </div>
 </div>
@@ -312,7 +336,7 @@ watch(bgOpacity,(newVal)=>{
 <div class="scaleBtn">
     <input v-model="scaleBar" type="range" min="0" max="1" step="0.05"/>
 </div>
-<button v-show="selectedDist" class="decideBtn">确认选择</button>
+<button v-show="selectedDist" class="decideBtn" @click="select">确认选择</button>
 <SideBar ref="sidebar">
     <TextMsgDisplay :msgs="msgs"></TextMsgDisplay>
     <div>
