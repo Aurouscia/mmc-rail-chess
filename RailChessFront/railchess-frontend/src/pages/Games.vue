@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue';
 import SideBar from '../components/SideBar.vue';
 import { GameActiveResult, RailChessGame } from '../models/game';
 import { Api } from '../utils/api';
-import { injectApi } from '../provides';
+import { injectApi, injectUserInfo } from '../provides';
 import Loading from '../components/Loading.vue';
 import Search from '../components/Search.vue';
 import { router } from '../main';
@@ -30,9 +30,15 @@ async function create(){
 function enter(id:number){
     router.push({name:'play',params:{id}});
 }
+async function deleteGame(id:number){
+    await api.game.delete(id);
+    await loadActive();
+}
 var api:Api
+const me = ref<number>(0);
 onMounted(async ()=>{
     api = injectApi();
+    me.value = (await injectUserInfo().getIdentityInfo()).Id;
     await loadActive();
     creating.value = {
         UseMapId: 0,
@@ -50,12 +56,18 @@ onMounted(async ()=>{
 <h1>正在进行</h1>
 <button class="confirm" @click="sidebar?.extend">新建棋局</button>
 <table v-if="active" class="list">
-    <tr><th class="mapCol">棋盘</th><th>房主</th></tr>
+    <tr><th class="mapCol">棋盘</th><th></th> <th>房主</th></tr>
     <tr v-for="g in active.Items">
         <td>
-            <div class="mapName" @click="enter(g.Data.Id||0)">{{ g.MapName }}</div>
+            <div class="mapName">
+                {{ g.MapName }}
+            </div>
             <div v-if="g.StartedMins>=0" class="gameStatus">已开始{{ g.StartedMins }}分钟</div>
             <div v-else class="gameStatus">正在等人</div>
+        </td>
+        <td>
+            <button @click="enter(g.Data.Id||0)">进入</button>
+            <button v-if="g.Data.HostUserId==me" @click="deleteGame(g.Data.Id||0)" class="cancel">删除</button>
         </td>
         <td>
             {{ g.HostUserName }}
@@ -79,14 +91,14 @@ onMounted(async ()=>{
                 <input v-model="creating.StucksToLose" type="number">
             </td>
         </tr>
-        <tr>
+        <!-- <tr>
             <td>终点折返</td>
             <td><input type="checkbox" v-model="creating.AllowReverseAtTerminal"/></td>
         </tr>
         <tr>
             <td>中途换乘</td>
             <td><input type="checkbox" v-model="creating.AllowTransfer"></td>
-        </tr>
+        </tr> -->
         <tr>
             <td colspan="2">
                 <Search :source="api.map.quickSearch" :allow-free-input="false" 
@@ -98,9 +110,6 @@ onMounted(async ()=>{
 </template>
 
 <style scoped>
-.mapName:hover{
-    text-decoration: underline;
-}
 .mapName{
     font-weight: bold;
     cursor: pointer;
@@ -113,7 +122,7 @@ input[type=number]{
     width: 80px;
 }
 .mapCol{
-    width: 60%;
+    width: 50%;
 }
 table.list{
     table-layout: fixed;

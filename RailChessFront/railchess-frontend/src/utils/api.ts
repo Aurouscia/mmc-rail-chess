@@ -165,6 +165,7 @@ export class Api{
             }
         },
         delete:async(id:number)=>{
+            if(!window.confirm("确认删除")){return;}
             const resp = await this.httpClient.request(
                 "/api/Game/Delete",
                 "get",

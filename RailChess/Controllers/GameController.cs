@@ -64,6 +64,8 @@ namespace RailChess.Controllers
             var g = _context.Games.Find(id);
             if (g is null)
                 return this.ApiFailedResp("找不到指定棋局");
+            if (g.HostUserId != _userId)
+                return this.ApiFailedResp("只有创建者能删除");
             g.Deleted = true;
             _context.SaveChanges();
             return this.ApiResp();
