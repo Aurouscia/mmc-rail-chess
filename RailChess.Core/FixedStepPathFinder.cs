@@ -33,6 +33,8 @@ namespace RailChess.Core
                             var lastButOne = aPath[^2];
                             if (lastButOne.Id == n.Id) continue;
                         }
+                        if (DuplicatePathRange(aPath, n))
+                            continue;//不准走已经走过的区间
                         List<Sta> newPath = new(aPath){ n };
                         paths.Add(newPath);
                     }
@@ -51,6 +53,18 @@ namespace RailChess.Core
         {
             var paths = FindAllPaths(graph, userId, steps);
             return paths.Any(x => x.FirstOrDefault() == from && x.LastOrDefault() == to);
+        }
+
+        private bool DuplicatePathRange(List<Sta> currentPath, Sta newPoint)
+        {
+            for(int i=0;i<currentPath.Count-1;i++)
+            {
+                int a = currentPath[i].Id;
+                int b = currentPath[i+1].Id;
+                if (a == currentPath[^1].Id && b == newPoint.Id)
+                    return true;
+            }
+            return false;
         }
     }
 }
