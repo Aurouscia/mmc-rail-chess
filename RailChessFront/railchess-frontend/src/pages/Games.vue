@@ -73,6 +73,7 @@ onMounted(async ()=>{
             {{ g.HostUserName }}
         </td>
     </tr>
+    <tr><td colspan="3">已结束的棋局会被封存，敬请期待回放功能</td></tr>
 </table>
 <Loading v-else></Loading>
 <SideBar ref="sidebar">
@@ -91,14 +92,24 @@ onMounted(async ()=>{
                 <input v-model="creating.StucksToLose" type="number">
             </td>
         </tr>
-        <!-- <tr>
-            <td>终点折返</td>
-            <td><input type="checkbox" v-model="creating.AllowReverseAtTerminal"/></td>
+        <tr>
+            <td>可终点折返</td>
+            <td>暂不支持设定</td>
+            <!-- <td><input type="checkbox" v-model="creating.AllowReverseAtTerminal"/></td> -->
         </tr>
         <tr>
-            <td>中途换乘</td>
-            <td><input type="checkbox" v-model="creating.AllowTransfer"></td>
-        </tr> -->
+            <td>可中途换乘</td>
+            <td>暂不支持设定</td>
+            <!-- <td><input type="checkbox" v-model="creating.AllowTransfer"></td> -->
+        </tr>
+        <tr>
+            <td>允许跨过<br/>其他玩家<br/>占领车站</td>
+            <td>暂不支持设定</td>
+        </tr>
+        <tr>
+            <td>每回合瞬移</td>
+            <td>暂不支持设定</td>
+        </tr>
         <tr>
             <td colspan="2">
                 <Search :source="api.map.quickSearch" :allow-free-input="false" 
