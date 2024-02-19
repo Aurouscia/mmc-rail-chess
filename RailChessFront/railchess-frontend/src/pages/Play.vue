@@ -11,8 +11,9 @@ import { Scaler } from '../models/scale';
 import { SignalRClient } from '../utils/signalRClient';
 import TextMsgDisplay from '../components/TextMsgDisplay.vue';
 import { useAnimator, AnimNode } from '../utils/pathAnim';
-import _ from 'lodash'
+import _, { truncate } from 'lodash'
 import { boxTypes } from '../components/Pop.vue';
+import { sleep } from '../utils/sleep';
 
 const props = defineProps<{id:string}>();
 const gameId = parseInt(props.id);
@@ -95,20 +96,26 @@ function renderStaList(){
         var side = staRenderedWidth;
         var backgroundImage:string|undefined = undefined;
         var zIndex = undefined;
+        var shadow = undefined;
 
         var atByPlayer = playerList.value.find(x=>x.atSta==id);
         var occupiedByPlayer = ocpStatus.value.find(x=>x.stas.includes(id));
+        var isNewOcp = newOcps.value?.stas.includes(id);
         if(atByPlayer){
             side = staRenderedWidth * 2;
             backgroundImage = `url("${avtSrc(atByPlayer.avtFileName)}")`;
-            zIndex = 20;
+            zIndex = 21;
         }
         else if(occupiedByPlayer){
             const player = playerList.value.find(x=>x.id==occupiedByPlayer?.playerId);
             if(player){
-                side = staRenderedWidth *1.5;
+                side = staRenderedWidth *1.3;
                 backgroundImage = `url("${avtSrc(player.avtFileName)}")`;
-                zIndex = 19;
+                zIndex = 13;
+                if(isNewOcp){
+                    zIndex = 14;
+                    shadow = "0px 0px 5px 5px orange"
+                }
             }
         }
         const style:CSSProperties = {
@@ -116,8 +123,8 @@ function renderStaList(){
             top:y-side/2+'px',
             width:side-4+'px',
             height:side-4+'px',
-            borderWidth:'2px',
             backgroundImage,
+            boxShadow:shadow,
             zIndex
         };
         const existing = staRenderedList.value.find(x=>x.id==id);
@@ -188,6 +195,18 @@ async function select(){
     }
 }
 
+const randNumStyle = ref<CSSProperties>({});
+function changeRandNum(to:number){
+    if(!randNumStyle.value){
+        randNumStyle.value = {};
+    }
+    randNumStyle.value.opacity = 0;
+    setTimeout(()=>{
+        randNum.value = to;
+        randNumStyle.value.opacity = 1;
+    },500)
+}
+
 const bgFileName = ref<string>();
 const topoData = ref<RailChessTopo>();
 const gameInfo = ref<RailChessGame>();
@@ -198,24 +217,34 @@ const currentSelections = ref<number[][]|undefined>([])
 const clickableStations = ref<number[]>([])
 const ocpStatus = ref<OcpStatus[]>([])
 const newOcps = ref<OcpStatus|undefined>();
-function sync(data:SyncData){
+const randNum = ref<number>(0);
+async function sync(data:SyncData){
     console.log("收到同步数据指令",data)
+    const lastPlayer = playerList.value[0];
     playerList.value = data.playerStatus;
+    const newPos = playerList.value.find(x=>x.id==lastPlayer?.id)?.atSta;
+    selectedDist.value = newPos;
+    renderPathAnims();
+    await sleep(100);
+
     meJoined.value = playerList.value.some(x=>x.id==me);
     meHost.value = gameInfo.value?.HostUserId == me;
     gameStarted.value = data.gameStarted;
     currentSelections.value = data.selections;
     ocpStatus.value = data.ocps;
     newOcps.value = data.newOcps;
+    changeRandNum(data.randNumber);
     if(currentSelections.value){
         renderPathAnims();
         clickableStations.value = currentSelections.value.map(x=>x[x.length-1]);
+        console.log("更新可点击车站", clickableStations.value)
     }else{
         animatorRendered.value = undefined
         clickableStations.value = []
     }
     if(playerList.value.length==0){
         playerRenderedList.value = [];
+        animatorRendered.value = undefined
     }else{
         renderPlayerList();
     }
@@ -271,7 +300,7 @@ onMounted(async()=>{
             t = "failed"
         }
         if(m.sender!=mInfo.Name)
-            pop.value.show(_.truncate(m.sender+"："+m.content, {length:23}), t)
+            pop.value.show(truncate(m.sender+"："+m.content, {length:30}), t)
     }
     sgrc = new SignalRClient(gameId,jwtToken||"", sync, textMsgCall);
 
@@ -322,12 +351,17 @@ watch(bgOpacity,(newVal)=>{
             </div>
         </div>
     </div>
+</div>    
+<div class="randNumOuter">
+    <div v-show="gameStarted" class="randNum" :style="randNumStyle">{{ randNum }}</div>
+    <div v-show="gameStarted" class="status">{{playerList[0]?.id!=me ? '▲等待玩家': '▲轮到你了'}}</div>
+    <div v-show="!gameStarted" class="status">等待房主开始中</div>
 </div>
 <div class="frame" ref="frame">
     <div class="arena" ref="arena">
         <img :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
         <div v-for="s in staRenderedList" :style="s.style" 
-            :class="{clickable:clickableStations.includes(s.id), selected:selectedDist==s.id}" 
+            :class="{clickable:clickableStations.includes(s.id)&&playerList[0]?.id==me, selected:selectedDist==s.id}" 
             :key="s.id" class="station" @click="clickStation(s.id)">{{ s.id }}</div>
         <div v-if="animatorRendered" :style="animatorRendered.style" class="pathAnim">{{ animatorRendered.step }}</div>
     </div>
@@ -337,6 +371,7 @@ watch(bgOpacity,(newVal)=>{
     <input v-model="scaleBar" type="range" min="0" max="1" step="0.05"/>
 </div>
 <button v-show="selectedDist" class="decideBtn" @click="select">确认选择</button>
+<button v-show="gameStarted && playerList[0]?.id==me && !currentSelections?.length" class="cancel decideBtn" @click="select">无路可走</button>
 <SideBar ref="sidebar">
     <TextMsgDisplay :msgs="msgs"></TextMsgDisplay>
     <div>
@@ -358,6 +393,34 @@ watch(bgOpacity,(newVal)=>{
 </template>
 
 <style scoped>
+.status{
+    color:white;
+    white-space: nowrap;
+}
+.randNumOuter{
+    position: fixed;
+    top:70px;
+    left:8px;
+    width: 160px;
+    height: 50px;
+    background-color: cornflowerblue;
+    border: 2px solid white;
+    border-radius: 1000px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    gap:10px;
+    box-sizing: border-box;
+    padding: 0px 10px 0px 20px;
+    overflow: hidden;
+}
+.randNum{
+    text-align: center;
+    font-size: 35px;
+    color:white;
+    transition: 500ms;
+}
 .sidebarBtns{
     width: 200px;
     margin: 0px auto 10px auto;
@@ -392,7 +455,7 @@ watch(bgOpacity,(newVal)=>{
     background-position: center;
     background-size: contain;
     border-radius: 1000px;
-    z-index: 11;
+    z-index: 50;
     left: -100px;
     color:white;
     line-height: 26px;
@@ -400,15 +463,26 @@ watch(bgOpacity,(newVal)=>{
     text-align: center;
 }
 .station.clickable{
-    border-color: cadetblue;
-    background-color: rgb(66, 117, 119);
+    border-color: rgb(71, 171, 174);
+    background-color: rgb(51, 118, 120);
+    
+    animation-duration: 1s;
+    animation-name: stationSpark;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
     cursor: pointer;
     z-index: 10;
 }
 .station.selected{
-    border-color: green;
-    background-color: rgb(0, 77, 0);
-    z-index: 12;
+    border-color: rgb(0, 201, 0);
+    background-color: green;
+    box-shadow: 0px 0px 15px 10px green;
+    animation: none;
+    z-index: 20 !important;
+}
+@keyframes stationSpark {
+  from {box-shadow:0px 0px 5px 5px cadetblue}
+  to {box-shadow:0px 0px 10px 10px cadetblue}
 }
 .station{
     position: absolute;
@@ -445,7 +519,9 @@ watch(bgOpacity,(newVal)=>{
     color:#999
 }
 .meName{
-    text-decoration: underline;
+    background-color: black;
+    color:white;
+    border-radius: 5px;
 }
 .playerName{
     padding: 2px;
