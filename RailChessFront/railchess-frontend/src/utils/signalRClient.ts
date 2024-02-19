@@ -73,7 +73,9 @@ export class SignalRClient{
         const r:GameResetRequest = {
             GameId: this.gameId
         }
-        await this.conn.invoke("GameReset",r);
+        if(window.confirm("是否重置本局游戏")){
+            await this.conn.invoke("GameReset",r);
+        }
     }
     async select(path:number[]){
         const r:SelectRequest = {

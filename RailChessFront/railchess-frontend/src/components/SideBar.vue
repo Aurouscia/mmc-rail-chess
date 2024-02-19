@@ -59,7 +59,7 @@ const emit = defineEmits<{
 
 <template>
 <div class="sidebarOuter">
-    <div class="cover" :style="coverStyle"></div>
+    <div class="cover" :style="coverStyle" @click="fold"></div>
     <div class="sideBar" :style="barStyle">
         <div class="offBtn"><button class="cancel" @click="fold">关闭</button></div>
         <div class="body">
