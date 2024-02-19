@@ -334,9 +334,9 @@ watch(scaleBar,(newVal,oldVal)=>{
         scaler?.reset();return;
     }
     if(newVal>oldVal){
-        scaler?.scale(1.1);
+        scaler?.scale(1.4);
     }else if(newVal<oldVal){
-        scaler?.scale(1/1.1);
+        scaler?.scale(1/1.4);
     }
 })
 
@@ -369,13 +369,13 @@ watch(bgOpacity,(newVal)=>{
         <img :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
         <div v-for="s in staRenderedList" :style="s.style" 
             :class="{clickable:clickableStations.includes(s.id)&&playerList[0]?.id==me, selected:selectedDist==s.id}" 
-            :key="s.id" class="station" @click="clickStation(s.id)">{{ s.id }}</div>
+            :key="s.id" class="station" @click="clickStation(s.id)"></div>
         <div v-if="animatorRendered" :style="animatorRendered.style" class="pathAnim">{{ animatorRendered.step }}</div>
     </div>
 </div>
 <button class="confirm menuEntry" @click="sidebar?.extend">菜单</button>
 <div class="scaleBtn">
-    <input v-model="scaleBar" type="range" min="0" max="1" step="0.05"/>
+    <input v-model="scaleBar" type="range" min="0" max="1" step="0.1"/>
 </div>
 <button v-show="selectedDist && !ended" class="decideBtn" @click="select">确认选择</button>
 <button v-show="gameStarted && !ended && playerList[0]?.id==me && !currentSelections?.length" class="cancel decideBtn" @click="select">无路可走</button>

@@ -159,7 +159,7 @@ namespace RailChess.Play
                 await SendTextMsg(errmsg, defaultSender, TextMsgType.Err, Clients.Caller);
                 return;
             }
-            await SendTextMsg($"<b>{name}</b>已落子，新占领{captured}个车站", defaultSender, TextMsgType.Important);
+            await SendTextMsg($"<b>{name}</b>已落子，新占领{captured}个车站");
             await SyncAll();
         }
         public async Task Out(OutRequest _)
