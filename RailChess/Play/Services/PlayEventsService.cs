@@ -70,7 +70,7 @@ namespace RailChess.Play.Services
             var operations = OurEvents()
                 .FindAll(x =>
                     x.EventType == RailChessEventType.PlayerStuck
-                    || x.EventType == RailChessEventType.PlayerStuck
+                    || x.EventType == RailChessEventType.PlayerCapture
                     || x.EventType == RailChessEventType.RandNumGened);
             var last = operations.LastOrDefault();
             if (last is null || last.EventType != RailChessEventType.RandNumGened)

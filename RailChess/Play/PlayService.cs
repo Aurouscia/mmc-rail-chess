@@ -98,7 +98,7 @@ namespace RailChess.Play
             int rand = 0;
             var selections = new List<List<int>>();
             var started = _eventsService.GameStarted();
-            if (started && UserId == players[0].Id)
+            if (started)
             {
                 var paths = _coreCaller.GetSelections().ToList();
                 paths.ForEach(p =>
@@ -176,18 +176,24 @@ namespace RailChess.Play
             return null;
         }
 
-        public string? Select(int dist)
+        public string? Select(int dist, out int captured)
         {
             if (!_coreCaller.IsValidMove(dist))
+            {
+                captured = 0;
                 return "移动不合法";
+            }
             _eventsService.Add(RailChessEventType.PlayerMoveTo, dist, false);
             _eventsService.Add(RailChessEventType.PlayerCapture, dist, true);
-            var captures = _coreCaller.AutoCapturables();
+            var existing = _eventsService.PlayerCaptureEvents().ConvertAll(x=>x.StationId);
+            var captures = _coreCaller.AutoCapturables().ToList();
+            captures.RemoveAll(existing.Contains);
             foreach(var capture in captures)
             {
                 _eventsService.Add(RailChessEventType.PlayerCapture, capture, false);
             }
             _context.SaveChanges();
+            captured = captures.Count + 1;
             return null;
         }
     }

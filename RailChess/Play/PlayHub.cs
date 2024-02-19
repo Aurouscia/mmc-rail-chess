@@ -213,18 +213,22 @@ namespace RailChess.Play
                 await SendTextMsg("不是你的回合",defaultSender, TextMsgType.Err, Clients.Caller);
                 return;
             }
+            var name = _playerService.Get(userId).Name;
             if (request.Path is null || request.Path.Count<=1)
             {
                 var loc = _eventsService.PlayerLocateEvents().Where(x => x.PlayerId == userId).Select(x=>x.StationId).FirstOrDefault();
                 _eventsService.Add(RailChessEventType.PlayerStuck, loc, true);
+                await SendTextMsg($"<b>{name}</b>无路可走，卡住一次",defaultSender,TextMsgType.Important);
+                await SyncAll();
                 return;
             }
-            string? errmsg = Service.Select(request.Path.Last());
+            string? errmsg = Service.Select(request.Path.Last(), out int captured);
             if (errmsg is not null) 
             {
                 await SendTextMsg(errmsg, defaultSender, TextMsgType.Err, Clients.Caller);
                 return;
             }
+            await SendTextMsg($"<b>{name}</b>已落子，新占领{captured}个车站", defaultSender, TextMsgType.Important);
             await SyncAll();
         }
         /// <summary>

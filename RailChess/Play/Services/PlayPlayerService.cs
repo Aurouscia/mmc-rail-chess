@@ -21,7 +21,7 @@ namespace RailChess.Play.Services
         {
             return $"user_{id}";
         }
-        private List<User> Get(List<int> ids)
+        public List<User> Get(List<int> ids)
         {
             List<int> notFound = new();
             List<User> res = new();
@@ -53,6 +53,10 @@ namespace RailChess.Play.Services
                 return idx1 - idx2;
             });
             return res;
+        }
+        public User Get(int id)
+        {
+            return Get(new List<int> { id }).FirstOrDefault() ?? throw new Exception("找不到指定玩家");
         }
         private List<User> GetOrdered(List<int> ids, int lastPlayer = -1)
         {
@@ -91,7 +95,7 @@ namespace RailChess.Play.Services
         }
         public void InsertByConn(string connectionId, int userId, int gameId)
         {
-            var u = Get(new() { userId }).FirstOrDefault() ?? throw new Exception("找不到指定用户");
+            var u = Get(userId);
             var info = new ConnPlayerInfo() {
                 GameId = gameId,
                 UserId = userId,
