@@ -12,9 +12,9 @@
             本软件为轨交棋的第二代线上游戏实现，相比第一代有更友好的UI和动画，也更便于部署和维护。
         </p>
     </div>
-    
-    <div class="gitee">
-        <div id="osc-gitee-widget-tag"></div>
+
+    <div class="gitInfo">
+        <iframe src="/gitInfo.html"></iframe>
     </div>
 
     <div>
@@ -22,16 +22,17 @@
     </div>
 </template>
 
-<style>
-.osc_pro_color {color: #4183c4 !important;}
-.osc_panel_color {background-color: #ffffff !important;}
-.osc_background_color {background-color: #ffffff !important;}
-.osc_border_color {border-color: #e3e9ed !important;}
-.osc_desc_color {color: #666666 !important;}
-.osc_link_color * {color: #9b9b9b !important;}
-</style>
 <style scoped>
-.gitee{
+iframe{
+    width: 100%;
+    max-width: 600px;
+    height: 260px;
+    border: none;
+}
+.gitInfo{
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin: 20px 0px 20px 0px;
 }
 h1{
