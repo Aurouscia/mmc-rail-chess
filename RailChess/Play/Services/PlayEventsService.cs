@@ -74,7 +74,7 @@ namespace RailChess.Play.Services
             var operations = OurEvents()
                 .FindAll(x =>
                     x.EventType == RailChessEventType.PlayerStuck
-                    || x.EventType == RailChessEventType.PlayerCapture
+                    || x.EventType == RailChessEventType.PlayerMoveTo
                     || x.EventType == RailChessEventType.RandNumGened);
             var last = operations.LastOrDefault();
             if (last is null || last.EventType != RailChessEventType.RandNumGened)
@@ -88,13 +88,13 @@ namespace RailChess.Play.Services
             return rand;
         }
 
-        public void Add(RailChessEventType type, int stationId, bool saveChanges=true)
+        public void Add(RailChessEventType type, int stationId, int userId, bool saveChanges=true)
         {
             RailChessEvent ev = new()
             {
                 EventType = type,
                 GameId = this.GameId,
-                PlayerId = this.UserId,
+                PlayerId = userId,
                 StationId = stationId,
                 Time = DateTime.Now
             };
@@ -103,6 +103,11 @@ namespace RailChess.Play.Services
                 _context.SaveChanges();
             var list = OurEvents();
             list.Add(ev);
+        }
+
+        public void Add(RailChessEventType type, int stationId, bool saveChanges = true)
+        {
+            Add(type, stationId, this.UserId, saveChanges);
         }
     }
 

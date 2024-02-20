@@ -60,6 +60,7 @@ namespace RailChess.Play
             var outEvents = _eventsService.PlayerOutEvents();
             var latestOp = _eventsService.LatestOperation();
             var game = _gameService.OurGame();
+            var ourTopo = _topoService.OurTopo();
 
             List<Player> playerStatus = new();
             List<OcpStatus> ocps = new();
@@ -86,11 +87,22 @@ namespace RailChess.Play
                 });
             });
             bool ended = false;
-            if (playerStatus.Count>0 && playerStatus.All(x => x.Out == true))
+            bool playerAllOut = playerStatus.Count > 0 && playerStatus.All(x => x.Out == true);
+            if (ourTopo.Stations is null)
+                throw new Exception("无车站，无法进行游戏");
+            bool stationAllCaptured = captureEvents.Count >= ourTopo.Stations.Count;
+            if (playerAllOut || stationAllCaptured)
             {
                 ended = true;
                 if (!_eventsService.GamedEnded())
                 {
+                    var notOutPlayers = playerStatus.FindAll(x => x.Out == false);
+                    notOutPlayers.ForEach(x =>
+                    {
+                        x.Out = true;
+                        _eventsService.Add(RailChessEventType.PlayerOut, 0, x.Id, false);
+                    });
+
                     _eventsService.Add(RailChessEventType.GameEnd, 0, false);
                     game.Ended = true;
                     game.DurationMins = (int)(DateTime.Now - game.StartTime).TotalMinutes;
@@ -199,7 +211,8 @@ namespace RailChess.Play
                 return "移动不合法";
             }
             _eventsService.Add(RailChessEventType.PlayerMoveTo, dist, false);
-            _eventsService.Add(RailChessEventType.PlayerCapture, dist, true);
+            if (!_eventsService.PlayerCaptureEvents().Any(x => x.StationId == dist))
+                _eventsService.Add(RailChessEventType.PlayerCapture, dist, true);
             var existing = _eventsService.PlayerCaptureEvents().ConvertAll(x=>x.StationId);
             var captures = _coreCaller.AutoCapturables().ToList();
             captures.RemoveAll(existing.Contains);
