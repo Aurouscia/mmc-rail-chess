@@ -9,6 +9,7 @@ import { router } from '../main';
 import { AurStateStore } from '@aurouscia/au-undo-redo'
 import { bgSrc } from '../utils/fileSrc';
 import { posBase } from '../models/map';
+import { clone, pullAt } from 'lodash';
 
 const props = defineProps<{
   id:string
@@ -104,7 +105,13 @@ function Render(){
       ctx.clearRect(0,0,cvsWidth.value,cvsHeight.value);
       ctx.strokeStyle="#008800";
       ctx.lineWidth=2;
-      lines.value.forEach(line=>{
+      const linesCopy = clone(lines.value);
+      const selectedIdx = linesCopy.findIndex(x=>x.Id==selectedLineId.value);
+      if(selectedIdx!=-1){
+        const selectedOne = pullAt(linesCopy, selectedIdx);
+        linesCopy.push(...selectedOne);
+      }
+      linesCopy.forEach(line=>{
         if(line.Id==selectedLineId.value){
           ctx.strokeStyle="#ff0000";
           ctx.lineWidth=3;
@@ -367,7 +374,7 @@ onUnmounted(()=>{
 <template>
   <div class="topbar">
     <div class="lineList">
-      <div v-for="line,idx in lines" @click="SelectLine(line.Id)" :class="line.Id == selectedLineId ? 'selected btn' : 'btn'">
+      <div v-for="line,idx in lines" @click="SelectLine(line.Id)" :class="line.Id == selectedLineId ? 'selected btn' : 'btn'" :key="line.Id">
         [{{ idx }}]{{ line.Stas.length }}站
       </div>
       <div class="btn" @click="AddLine()" style="background-color: olivedrab;color:white">
