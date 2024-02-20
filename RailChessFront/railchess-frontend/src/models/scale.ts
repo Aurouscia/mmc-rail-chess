@@ -21,7 +21,7 @@ export class Scaler{
             }
         })
         
-        window.addEventListener("resize",()=>{this.reset()});
+        window.addEventListener("resize",()=>{this.widthReset()});
 
         // window.addEventListener("touchmove",this.touchHandler)
         // window.addEventListener("touchend",()=>{this.dist=0})
@@ -76,14 +76,37 @@ export class Scaler{
         this.arena.style.width = w*ratio+'px';
         const wGrowth = w*(ratio-1);
         const hGrowth = h*(ratio-1);
-        //console.log(wGrowth,x,hGrowth,y)
-        this.frame.scrollLeft += wGrowth*x;
+        this.frame.scrollLeft += wGrowth*x
         this.frame.scrollTop += hGrowth*y
         this.callBack();
     }
-    reset(){
-        const ww = window.innerWidth;
-        this.arena.style.width = ww+'px';
+    widthReset(mutiple?:number){
+        mutiple = mutiple || 1;
+        const ww = this.frame.clientWidth;
+        const w = this.arena.clientWidth;
+        const ratio = w/ww;
+        this.scale(1/ratio*mutiple);
         this.callBack();
+    }
+    heightReset(mutiple?:number){
+        mutiple = mutiple || 1;
+        const hh = this.frame.clientHeight;
+        const h = this.arena.clientHeight;
+        const ratio = h/hh;
+        this.scale(1/ratio*mutiple);
+        this.callBack();
+    }
+    autoMutiple(mutiple?:number, flag?:boolean){
+        const frameWHRatio = this.frame.clientWidth / this.frame.clientHeight;
+        const arenaWHRatio = this.arena.clientWidth / this.arena.clientHeight;
+        var arenaWider = arenaWHRatio > frameWHRatio;
+        if(flag){
+            arenaWider = !arenaWider;
+        }
+        if(arenaWider){
+            this.heightReset(mutiple);
+        }else{
+            this.widthReset(mutiple);
+        }
     }
 }

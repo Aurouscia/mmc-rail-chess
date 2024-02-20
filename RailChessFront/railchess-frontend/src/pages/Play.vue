@@ -306,7 +306,7 @@ onMounted(async()=>{
             t = "failed"
         }
         if(m.sender!=mInfo.Name)
-            pop.value.show(truncate(m.sender+"："+m.content, {length:30}), t)
+            pop.value.show(truncate(m.sender+":"+m.content, {length:30}), t)
     }
     sgrc = new SignalRClient(gameId,jwtToken||"", sync, textMsgCall);
 
@@ -327,18 +327,18 @@ onMounted(async()=>{
     })
 })
 
-var scaler:Scaler|undefined
-const scaleBar = ref<number>(0);
-watch(scaleBar,(newVal,oldVal)=>{
-    if(newVal==0){
-        scaler?.reset();return;
+var scaler:Scaler|undefined;
+const scalerPosRight = ref<number>(-100);
+var scalerFolded:boolean = true;
+function toggleScaler(){
+    scalerFolded = !scalerFolded;
+    if(scalerFolded){
+        scalerPosRight.value = -100;
+    }else{
+        scalerPosRight.value = 15;
     }
-    if(newVal>oldVal){
-        scaler?.scale(1.4);
-    }else if(newVal<oldVal){
-        scaler?.scale(1/1.4);
-    }
-})
+}
+
 
 const opacityStoreKey = "bgOpacity";
 watch(bgOpacity,(newVal)=>{
@@ -374,8 +374,13 @@ watch(bgOpacity,(newVal)=>{
     </div>
 </div>
 <button class="confirm menuEntry" @click="sidebar?.extend">菜单</button>
-<div class="scaleBtn">
-    <input v-model="scaleBar" type="range" min="0" max="1" step="0.1"/>
+<div class="scaleBtn" :style="{right:scalerPosRight+'px'}">
+    <button class="scaleFold off" @click="toggleScaler">缩放</button>
+    <button @click="scaler?.autoMutiple(5)">500%</button>
+    <button @click="scaler?.autoMutiple(3)">300%</button>
+    <button @click="scaler?.autoMutiple(2)">200%</button>
+    <button @click="scaler?.autoMutiple(1)">占满</button>
+    <button @click="scaler?.autoMutiple(1,true)">总览</button>
 </div>
 <button v-show="selectedDist && !ended" class="decideBtn" @click="select">确认选择</button>
 <button v-show="gameStarted && !ended && playerList[0]?.id==me && !currentSelections?.length" class="cancel decideBtn" @click="select">无路可走</button>
@@ -442,20 +447,21 @@ watch(bgOpacity,(newVal)=>{
     left:15px;
     bottom: 30px;
 }
-.scaleBtn input[type="range"] {
-  writing-mode:vertical-lr;
-  height: 180px;
+.scaleFold{
+    position: absolute;
+    bottom:0px;
+    left:-50px;
 }
 .scaleBtn{
     position: fixed;
     right: 15px;
     bottom: 15px;
-    width: 40px;
-    height: 200px;
+    width: 100px;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
     gap:0px;
+    transition: 0.5s;
 }
 .pathAnim{
     position: absolute;
