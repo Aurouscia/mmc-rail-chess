@@ -117,7 +117,8 @@ namespace RailChess.Play
                 string callerMsg = meJoined ? "您已成功返回房间，请继续游戏" : "您已进入房间观战";
 
                 var g = _gameService.OurGame();
-                string rules = $"<br/>本对局允许每回合换乘<b>{g.AllowTransfer}</b>次";
+                string rules = $"<br/>随机数范围<b>{g.RandMin}-{g.RandMax}</b>";
+                rules += $"<br/>允许每回合换乘<b>{g.AllowTransfer}</b>次";
                 callerMsg += rules;
 
                 string othersMsg = meJoined ? $"玩家<b>{SenderName()}</b>已返回房间" : $"<b>{SenderName()}</b>已进入房间观战";
