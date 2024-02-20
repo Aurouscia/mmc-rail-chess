@@ -13,7 +13,7 @@ export interface RailChessGame{
     RandMax:number
     StucksToLose:number
     AllowReverseAtTerminal:boolean
-    AllowTransfer:boolean
+    AllowTransfer:number
 }
 
 export interface GameActiveResult{

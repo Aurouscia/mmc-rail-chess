@@ -47,7 +47,7 @@ onMounted(async ()=>{
         RandMax: 12,
         StucksToLose: 5,
         AllowReverseAtTerminal:true,
-        AllowTransfer:true
+        AllowTransfer:1
     }
 })
 </script>
@@ -99,8 +99,7 @@ onMounted(async ()=>{
         </tr>
         <tr>
             <td>可中途换乘</td>
-            <td>暂不支持设定</td>
-            <!-- <td><input type="checkbox" v-model="creating.AllowTransfer"></td> -->
+            <td><input type="number" v-model="creating.AllowTransfer"></td>
         </tr>
         <tr>
             <td>允许跨过<br/>其他玩家<br/>占领车站</td>

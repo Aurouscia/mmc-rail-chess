@@ -16,7 +16,7 @@
         public int RandMax { get; set; }
         public int StucksToLose { get; set; }
         public bool AllowReverseAtTerminal { get; set; }
-        public bool AllowTransfer { get; set; }
+        public int AllowTransfer { get; set; }
 
         public bool Deleted { get;set; }
     }
