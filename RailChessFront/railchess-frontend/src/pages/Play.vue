@@ -89,12 +89,14 @@ function renderStaList(){
     if(!topoData.value || !arena.value){return;}
     const aw = arena.value.clientWidth;
     const ah = arena.value.clientHeight;
+    autoStaSize();
+    const size = staRenderedWidth*staSize.value;
     for(var i=0;i<topoData.value.Stations.length;i++){
         const s = topoData.value.Stations[i];
         const id = s[0];
         const x = s[1]/posBase*aw;
         const y = s[2]/posBase*ah;
-        var side = staRenderedWidth;
+        var side = size;
         var backgroundImage:string|undefined = undefined;
         var zIndex = undefined;
         var shadow = undefined;
@@ -103,14 +105,14 @@ function renderStaList(){
         var occupiedByPlayer = ocpStatus.value.find(x=>x.stas.includes(id));
         var isNewOcp = newOcps.value?.stas.includes(id);
         if(atByPlayer){
-            side = staRenderedWidth * 2;
+            side = size * 2;
             backgroundImage = `url("${avtSrc(atByPlayer.avtFileName)}")`;
             zIndex = 21;
         }
         else if(occupiedByPlayer){
             const player = playerList.value.find(x=>x.id==occupiedByPlayer?.playerId);
             if(player){
-                side = staRenderedWidth *1.3;
+                side = size *1.3;
                 backgroundImage = `url("${avtSrc(player.avtFileName)}")`;
                 zIndex = 13;
                 if(isNewOcp){
@@ -280,7 +282,30 @@ const msgs = ref<TextMsg[]>([]);
 const frame = ref<HTMLDivElement>();
 const arena = ref<HTMLDivElement>();
 const bgOpacity = ref<number>(0.5);
-
+const staSize = ref<number>(1);
+const staSizeAuto = ref<boolean|undefined>(true);
+function autoStaSize(){
+    if(!staSizeAuto.value){return;}
+    if(!frame.value || !arena.value){return;}
+    const frameWHRatio = frame.value.clientWidth / frame.value.clientHeight;
+    const arenaWHRatio = arena.value.clientWidth / arena.value.clientHeight;
+    var arenaWider = arenaWHRatio > frameWHRatio;
+    var ratio:number;
+    if(arenaWider){
+        ratio = arena.value.clientHeight / frame.value.clientHeight;
+    }else{
+        ratio = arena.value.clientWidth / frame.value.clientWidth;
+    }
+    if(ratio<1.05){
+        staSize.value = 0.4;
+        return;
+    }
+    if(ratio<4){
+        staSize.value = 0.7;
+        return;
+    }
+    staSize.value = 1.0;
+}
 
 var api:Api;
 var me:number;
@@ -311,6 +336,8 @@ onMounted(async()=>{
     sgrc = new SignalRClient(gameId,jwtToken||"", sync, textMsgCall);
 
     bgOpacity.value = parseFloat(localStorage.getItem(opacityStoreKey)||"1")||1;
+    staSize.value = parseFloat(localStorage.getItem(staSizeStoreKey)||"1")||1;
+    staSizeAuto.value = !!localStorage.getItem(staSizeAutoStoreKey);
 
     await init();
     await sgrc.connect();
@@ -339,10 +366,19 @@ function toggleScaler(){
     }
 }
 
-
 const opacityStoreKey = "bgOpacity";
 watch(bgOpacity,(newVal)=>{
     localStorage.setItem(opacityStoreKey,String(newVal));
+})
+const staSizeStoreKey = "staSize";
+watch(staSize,(newVal)=>{
+    localStorage.setItem(staSizeStoreKey,String(newVal));
+    renderStaList();
+})
+const staSizeAutoStoreKey = "staSizeAuto";
+watch(staSizeAuto,(newVal)=>{
+    localStorage.setItem(staSizeAutoStoreKey,newVal ? "yes" : "")
+    renderStaList();
 })
 </script>
 
@@ -391,10 +427,6 @@ watch(bgOpacity,(newVal)=>{
         <button @click="send">发送</button>
     </div>
     <div class="sidebarBtns">
-        <div style="text-align: center;">
-            背景不透明度
-            <input type="range" v-model="bgOpacity" min="0" max="1" step="0.1" style="margin: 0px;">
-        </div>
         <button v-show="!gameStarted && !meJoined" @click="sgrc.join">加入本棋局</button>
         <button v-show="meJoined && !meOut" class="cancel" @click="sgrc.out">退出本棋局</button>
         <button v-show="meOut" class="minor">已退出本棋局</button>
@@ -402,11 +434,23 @@ watch(bgOpacity,(newVal)=>{
         <button v-show="gameStarted" class="minor">本棋局已开始</button>
         <button v-show="meHost" class="cancel" @click="sgrc.gameReset">下令重置房间</button>
         <button class="off" @click="$router.push('/')">返回主菜单</button>
+        <div class="sideBarSlideOuter">
+            背景不透明度：{{ bgOpacity }}
+            <input type="range" v-model="bgOpacity" min="0" max="1" step="0.1">
+        </div>
+        <div class="sideBarSlideOuter">
+            站点标记尺寸：{{ staSize }}
+            <input type="range" :disabled="staSizeAuto" v-model="staSize" min="0.4" max="1.6" step="0.3"><br/>
+            <input type="checkbox" v-model="staSizeAuto"/>自动
+        </div>
     </div>
 </SideBar>
 </template>
 
 <style scoped>
+canvas{
+    position: absolute;
+}
 .status{
     color:white;
     white-space: nowrap;
@@ -434,6 +478,14 @@ watch(bgOpacity,(newVal)=>{
     font-size: 35px;
     color:white;
     transition: 500ms;
+}
+.sideBarSlideOuter input{
+    margin: 0px;
+}
+.sideBarSlideOuter{
+    text-align: center;
+    border-top: 1px solid #ccc;
+    padding-top: 5px;
 }
 .sidebarBtns{
     width: 200px;
