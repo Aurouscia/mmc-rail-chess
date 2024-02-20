@@ -20,6 +20,7 @@ interface SelectRequest extends RequestModelBase{
     Path:number[]
 }
 interface OutRequest extends RequestModelBase{}
+interface SyncMeRequest extends RequestModelBase{}
 
 export class SignalRClient{
     gameId:number
@@ -35,7 +36,10 @@ export class SignalRClient{
             .withAutomaticReconnect()
             .build();
         this.conn.onreconnecting(()=>textMsgCall(getLocalTextMsg("正在重新连接",2)))
-        this.conn.onreconnected(()=>textMsgCall(getLocalTextMsg("成功重新连接",1)));
+        this.conn.onreconnected(()=>{
+            textMsgCall(getLocalTextMsg("成功重新连接",1))
+            this.syncMe();
+        });
         this.conn.on(syncCallMethodName, syncCall);
         this.conn.on(textMsgMethodName, (m)=>{
             console.log("展示信息",m)
@@ -90,5 +94,11 @@ export class SignalRClient{
             GameId: this.gameId
         };
         await this.conn.invoke("Out",r);
+    }
+    async syncMe(){
+        const r:SyncMeRequest = {
+            GameId: this.gameId
+        };
+        await this.conn.invoke("SyncMe",r)
     }
 }

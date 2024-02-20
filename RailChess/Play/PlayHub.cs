@@ -175,6 +175,11 @@ namespace RailChess.Play
             await SyncAll();
         }
 
+        public async Task SyncMe(SyncMeRequest _)
+        {
+            var data = Service.GetSyncData();
+            await Clients.Caller.SendAsync(syncMethod, data);
+        }
         private async Task SyncAll()
         {
             var data = Service.GetSyncData();
