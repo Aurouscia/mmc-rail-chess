@@ -6,6 +6,7 @@ namespace RailChess.Play.Services.Core
     {
         private readonly PlayEventsService _eventsService;
         private readonly PlayPlayerService _playerService;
+        private readonly PlayGameService _gameService;
         private readonly CoreGraphProvider _graphProvider;
         private readonly IFixedStepPathFinder _fixedStepPathFinder;
         private readonly IExclusiveStasFinder _exclusiveStasFinder;
@@ -15,13 +16,15 @@ namespace RailChess.Play.Services.Core
             IFixedStepPathFinder fixedStepPathFinder,
             IExclusiveStasFinder exclusiveStasFinder,
             PlayEventsService eventsService,
-            PlayPlayerService playerService) 
+            PlayPlayerService playerService,
+            PlayGameService gameService) 
         {
             _graphProvider = graphProvider;
             _fixedStepPathFinder = fixedStepPathFinder;
             _exclusiveStasFinder = exclusiveStasFinder;
             _eventsService = eventsService;
             _playerService = playerService;
+            _gameService = gameService;
         }
         /// <summary>
         /// 轮到某玩家时，根据随机出的步数数字，提供可选的路线
@@ -33,7 +36,9 @@ namespace RailChess.Play.Services.Core
             var randNum = _eventsService.RandedResult();
             var graph = _graphProvider.GetGraph();
             var currentUser = _playerService.CurrentPlayer();
-            var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, randNum);
+            var game = _gameService.OurGame();
+
+            var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, randNum, game.AllowTransfer);
             return allPaths;
         }
 
@@ -46,12 +51,13 @@ namespace RailChess.Play.Services.Core
         {
             var currentUser = _eventsService.UserId;
             var graph = _graphProvider.GetGraph();
+            var game = _gameService.OurGame();
             var locationEvents = _eventsService.PlayerLocateEvents();
             var locationEvent = locationEvents.Where(x => x.PlayerId == currentUser).LastOrDefault();
             if (locationEvent is null) throw new Exception("找不到玩家位置(未加入)");
             int location = locationEvent.StationId;
             var randNum = _eventsService.RandedResult();
-            return _fixedStepPathFinder.IsValidMove(graph, currentUser, location, selected, randNum);
+            return _fixedStepPathFinder.IsValidMove(graph, currentUser, selected, randNum, game.AllowTransfer);
         }
 
         /// <summary>

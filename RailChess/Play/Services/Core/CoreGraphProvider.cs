@@ -55,24 +55,24 @@ namespace RailChess.Play.Services.Core
             if (topo.Lines is null || topo.Stations is null) throw new Exception("地图数据异常(无法构建图)");
 
             List<Sta> ss = topo.Stations.ConvertAll(x => new Sta(x.Id));
-            topo.Lines.ForEach(x =>
+            topo.Lines.ForEach(line =>
             {
-                if (x.Stas is not null && x.Stas.Count > 1)
+                if (line.Stas is not null && line.Stas.Count > 1)
                 {
-                    for (int i = 0; i < x.Stas.Count; i++)
+                    for (int i = 0; i < line.Stas.Count; i++)
                     {
-                        int staId = x.Stas[i];
+                        int staId = line.Stas[i];
                         var target = ss.Find(x => x.Id == staId);
                         if (target is null) continue;
                         List<int> neighborHere = new(2);
                         if (i == 0)
-                            neighborHere.Add(x.Stas[1]);//至少有两个站才会进来，1肯定有东西
-                        else if (i == x.Stas.Count - 1)
-                            neighborHere.Add(x.Stas[^2]);
+                            neighborHere.Add(line.Stas[1]);//至少有两个站才会进来，1肯定有东西
+                        else if (i == line.Stas.Count - 1)
+                            neighborHere.Add(line.Stas[^2]);
                         else
                         {
-                            neighborHere.Add(x.Stas[i - 1]);
-                            neighborHere.Add(x.Stas[i + 1]);
+                            neighborHere.Add(line.Stas[i - 1]);
+                            neighborHere.Add(line.Stas[i + 1]);
                         }
                         
                         neighborHere.ForEach(n =>
@@ -80,7 +80,7 @@ namespace RailChess.Play.Services.Core
                             var ns = ss.Find(s => s.Id == n);
                             if (ns is not null)
                             {
-                                target.Neighbors.Add(ns);
+                                target.Neighbors.Add(new(line.Id, ns));
                             }
                         });
                     }

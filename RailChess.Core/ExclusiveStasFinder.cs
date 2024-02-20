@@ -28,12 +28,12 @@ namespace RailChess.Core
                     var a = active.Dequeue();
                     foreach (var n in a.Neighbors)
                     {
-                        if (capturedByOthers.Contains(n.Id))
+                        if (capturedByOthers.Contains(n.Station.Id))
                             continue;//不能往其他人占了的点走
-                        if (hisReachable.Contains(n.Id))
+                        if (hisReachable.Contains(n.Station.Id))
                             continue;//不能往回走
-                        hisReachable.Add(n.Id);
-                        active.Enqueue(n);
+                        hisReachable.Add(n.Station.Id);
+                        active.Enqueue(n.Station);
                     }
                     if (active.Count == 0) break;
                 }

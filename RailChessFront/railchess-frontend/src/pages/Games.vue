@@ -99,7 +99,7 @@ onMounted(async ()=>{
         </tr>
         <tr>
             <td>可中途换乘</td>
-            <td><input type="number" v-model="creating.AllowTransfer"></td>
+            <td><input type="number" v-model="creating.AllowTransfer" min="0" max="10"></td>
         </tr>
         <tr>
             <td>允许跨过<br/>其他玩家<br/>占领车站</td>

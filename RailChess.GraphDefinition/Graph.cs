@@ -15,11 +15,34 @@
             UserPosition = userPosition;
         }
     }
+    public class LinedSta
+    {
+        public int LineId { get; set; }
+        public Sta Station { get; set; }
+        public LinedSta(int lineId, Sta station)
+        {
+            LineId = lineId;
+            Station = station;
+        }
+        public override bool Equals(object? obj)
+        {
+            if (obj is LinedSta otherSta)
+            {
+                return this.Station.Id == otherSta.Station.Id && this.LineId == otherSta.LineId;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return this.Station.Id.GetHashCode() + this.LineId.GetHashCode();
+        }
+    }
     public class Sta
     {
         public int Id { get; }
         public int Owner { get; set; }
-        public List<Sta> Neighbors { get; private set; }
+        public List<LinedSta> Neighbors { get; private set; }
         public Sta(int id)
         {
             Id = id;
@@ -32,21 +55,15 @@
             Owner = owner;
             Neighbors = new(2);
         }
-        public Sta(int id, int owner, List<Sta> neighbors)
-        {
-            Id = id;
-            Owner = owner;
-            Neighbors = neighbors;
-        }
 
-        public void TwowayConnect(Sta other)
+        public void TwowayConnect(Sta other, int line = 0)
         {
             if (other.Id != this.Id)
             {
-                if(!this.Neighbors.Any(x=>x.Id == other.Id))
-                    this.Neighbors.Add(other);
-                if(!other.Neighbors.Any(x=>x.Id == this.Id))
-                    other.Neighbors.Add(this);
+                if(!this.Neighbors.Any(x=>x.Station.Id == other.Id && x.LineId == line))
+                    this.Neighbors.Add(new(line, other));
+                if(!other.Neighbors.Any(x=>x.Station.Id == this.Id && x.LineId == line))
+                    other.Neighbors.Add(new(line, this));
             }
         }
 
