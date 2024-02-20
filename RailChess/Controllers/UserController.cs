@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using RailChess.Models;
 using RailChess.Models.DbCtx;
+using RailChess.Play.Services;
 using RailChess.Services;
 using RailChess.Utils;
 using SixLabors.ImageSharp;
@@ -14,11 +16,13 @@ namespace RailChess.Controllers
     {
         private readonly RailChessContext _context;
         private readonly int _userId;
+        private readonly IMemoryCache _cache;
 
-        public UserController(RailChessContext context, HttpUserIdProvider httpUserIdProvider)
+        public UserController(RailChessContext context, HttpUserIdProvider httpUserIdProvider,IMemoryCache cache)
         {
             _context = context;
             _userId = httpUserIdProvider.Get();
+            _cache = cache;
         }
         public IActionResult Add(string? userName, string? password)
         {
@@ -88,6 +92,7 @@ namespace RailChess.Controllers
                 _context.Users.Where(x=>x.Id==u.Id)
                     .ExecuteUpdate(x => x.SetProperty(a => a.Name, u.Name).SetProperty(a=>a.Pwd, pwdMd5));
             }
+            PlayPlayerService.ClearCache(_cache, u.Id);
             return this.ApiResp();
         }
 
@@ -134,6 +139,7 @@ namespace RailChess.Controllers
                     originalAvt.Delete();
                 }
             }
+            PlayPlayerService.ClearCache(_cache, u.Id);
             return this.ApiResp();
         }
 

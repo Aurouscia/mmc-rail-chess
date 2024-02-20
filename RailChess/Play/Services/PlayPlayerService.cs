@@ -17,9 +17,13 @@ namespace RailChess.Play.Services
             _cache = cache;
         }
 
-        private static string UserIdCacheKey(int id)
+        public static string UserIdCacheKey(int id)
         {
             return $"user_{id}";
+        }
+        public static void ClearCache(IMemoryCache cacheInstance, int id)
+        {
+            cacheInstance.Remove(UserIdCacheKey(id));
         }
         public List<User> Get(List<int> ids)
         {

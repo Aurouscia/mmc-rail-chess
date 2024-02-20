@@ -73,7 +73,7 @@ export class Scaler{
         if(w>ww*10 && ratio>1){
             return;
         }
-        this.arena.style.width = w*ratio+'px';
+        this.arena.style.width = w*ratio-1+'px';
         const wGrowth = w*(ratio-1);
         const hGrowth = h*(ratio-1);
         this.frame.scrollLeft += wGrowth*x
