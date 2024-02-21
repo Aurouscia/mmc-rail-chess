@@ -12,6 +12,7 @@ namespace RailChess.Play
     public class PlayService
     {
         private readonly CoreCaller _coreCaller;
+        private readonly CoreGraphProvider _coreGraphProvider;
         private readonly PlayEventsService _eventsService;
         private readonly PlayToposService _topoService;
         private readonly PlayPlayerService _playerService;
@@ -37,6 +38,7 @@ namespace RailChess.Play
         }
         public PlayService(
             CoreCaller coreCaller,
+            CoreGraphProvider coreGraphProvider,
             PlayEventsService eventsService,
             PlayToposService toposService,
             PlayPlayerService playerService,
@@ -44,6 +46,7 @@ namespace RailChess.Play
             RailChessContext context) 
         {
             _coreCaller = coreCaller;
+            _coreGraphProvider = coreGraphProvider;
             _eventsService = eventsService;
             _topoService = toposService;
             _playerService = playerService;
@@ -64,6 +67,7 @@ namespace RailChess.Play
 
             List<Player> playerStatus = new();
             List<OcpStatus> ocps = new();
+            var dirDict = _coreGraphProvider.StationDirections();
             players.ForEach(p =>
             {
                 int atSta = locEvents.OfUser(p.Id).Select(x=>x.StationId).FirstOrDefault();
@@ -77,7 +81,7 @@ namespace RailChess.Play
                     AtSta = atSta,
                     AvtFileName = p?.AvatarName ?? "???",
                     StuckTimes = stuckTimes,
-                    Score = _topoService.TotalDirections(hisStations),
+                    Score = _coreGraphProvider.TotalDirections(hisStations, dirDict),
                     Out = outEvents.Any(x => p is not null && x.PlayerId == p.Id)
                 });
                 ocps.Add(new()
@@ -157,7 +161,7 @@ namespace RailChess.Play
                 return "对局已开始，不能加入";
             if (_eventsService.MeJoined())
                 return "已在对局中";
-            var pureTerminals = _topoService.PureTerminalIds();
+            var pureTerminals = _coreGraphProvider.PureTerminals();
             var otherPlayersJoinEvents = _eventsService.PlayersJoinEvents();
             var occupiedStations = otherPlayersJoinEvents.ConvertAll(x => x.StationId);
             var available = pureTerminals.Except(occupiedStations).ToList();
