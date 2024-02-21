@@ -55,6 +55,8 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
 
+    app.UseSerilogRequestLogging();
+
     app.MapHub<PlayHub>("play");
     app.MapControllerRoute(
         name: "default",

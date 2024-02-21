@@ -15,6 +15,7 @@ namespace RailChess.Play
         private readonly PlayPlayerService _playerService;
         private readonly PlayEventsService _eventsService;
         private readonly PlayGameService _gameService;
+        private ILogger _logger;
 
         public IClientProxy Group => Clients.Group(GroupName);
 
@@ -26,12 +27,14 @@ namespace RailChess.Play
             PlayService playService,
             PlayPlayerService playerService,
             PlayEventsService eventsService,
-            PlayGameService gameService)
+            PlayGameService gameService,
+            ILogger<PlayHub> logger)
         {
             Service = playService;
             _playerService = playerService;
             _eventsService = eventsService;
             _gameService = gameService;
+            _logger = logger;
         }
         public string GroupName
         {
@@ -95,6 +98,7 @@ namespace RailChess.Play
         private async Task SendTextMsg(string str, string sender = defaultSender, TextMsgType type = TextMsgType.Plain, IClientProxy? to = null)
         {
             to ??= Group;
+            _logger.LogDebug("游戏[{gameId}]_发送者[{sender}]_{str}", Service.GameId, sender, str);
             await to.SendAsync(textMsgMethod, new TextMsg(str, sender, type));
         }
         public async Task Enter(EnterRequest _)
@@ -183,8 +187,10 @@ namespace RailChess.Play
         }
         private async Task SyncAll()
         {
+            _logger.LogInformation("游戏[{gameId}]_开始同步所有人",Service.GameId);
             var data = Service.GetSyncData();
             await Group.SendAsync(syncMethod, data);
+            _logger.LogInformation("游戏[{gameId}]_成功同步所有人", Service.GameId);
         }
         private string? SenderName()
         {
