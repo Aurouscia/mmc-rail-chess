@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CSSProperties, onMounted, ref, watch } from 'vue';
+import { CSSProperties, onMounted, onUnmounted, ref, watch } from 'vue';
 import { injectApi, injectHideTopbar, injectHttp, injectPop, injectUserInfo } from '../provides';
 import { OcpStatus, Player, SyncData, TextMsg } from '../models/play';
 import SideBar from '../components/SideBar.vue';
@@ -353,6 +353,9 @@ onMounted(async()=>{
         }
     })
 })
+onUnmounted(()=>{
+    sgrc.conn.stop();
+})
 
 var scaler:Scaler|undefined;
 const scalerPosRight = ref<number>(-100);
@@ -379,6 +382,11 @@ const staSizeAutoStoreKey = "staSizeAuto";
 watch(staSizeAuto,(newVal)=>{
     localStorage.setItem(staSizeAutoStoreKey,newVal ? "yes" : "")
     renderStaList();
+})
+
+watch(props,()=>{
+    sgrc.conn.stop();
+    window.location.reload();
 })
 </script>
 
