@@ -96,6 +96,7 @@ async function deleteMap(id:number) {
     }
 }
 
+const baseUrl = import.meta.env.VITE_BASEURL;
 var api:Api;
 onMounted(async()=>{
     api = injectApi()
@@ -178,6 +179,11 @@ onMounted(async()=>{
     <div class="iptOuter">
         <button v-if="editing && editing.Id>0" class="minor" @click="clickIpt">导入数据</button>
         <input type="file" ref="ipt" @change="iptChange" accept=".json"/>
+    </div>
+    <div class="iptOuter">
+        <a v-if="editing && editing.Id>0" :href="`${baseUrl}/api/Map/ExportTopo?id=${editing.Id}`">
+            <button class="minor">导出数据</button>
+        </a>
     </div>
     <div class="iptOuter">
         <button v-if="editing && editing.Id>0" class="danger" @click="deleteMap(editing.Id)">删除</button>

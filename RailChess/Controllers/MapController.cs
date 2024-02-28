@@ -5,7 +5,7 @@ using RailChess.Models.COM;
 using RailChess.Models.DbCtx;
 using RailChess.Models.Map;
 using RailChess.Services;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace RailChess.Controllers
 {
@@ -180,6 +180,17 @@ namespace RailChess.Controllers
             map.TopoData = json;
             _context.SaveChanges();
             return this.ApiResp();
+        }
+        [AllowAnonymous]
+        public IActionResult ExportTopo(int id)
+        {
+            RailChessMap? map = _context.Maps.Find(id);
+            if (map is null)
+                return this.ApiFailedResp("找不到指定棋盘");
+            if (map.TopoData is null)
+                return this.ApiFailedResp("棋盘数据为空");
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(map.TopoData);
+            return File(bytes, Application.Octet, $"{map.Title}_{DateTime.Now:MMdd_HHmm}_地图数据.json");
         }
 
         public IActionResult Delete(int id)
