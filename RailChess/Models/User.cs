@@ -6,5 +6,6 @@
         public string? Name { get; set; }
         public string? Pwd { get; set; }
         public string? AvatarName { get; set; }
+        public int Elo { get; set; }
     }
 }
