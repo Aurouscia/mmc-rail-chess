@@ -15,6 +15,7 @@ namespace RailChess.Play
             services.AddScoped<PlayPlayerService>();
             services.AddScoped<PlayToposService>();
             services.AddScoped<PlayEventsService>();
+            services.AddScoped<PlayResultService>();
 
             services.AddScoped<IExclusiveStasFinder, ExclusiveStasFinder>();
             services.AddScoped<IFixedStepPathFinder, FixedStepPathFinder>();

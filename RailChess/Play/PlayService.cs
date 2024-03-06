@@ -17,6 +17,7 @@ namespace RailChess.Play
         private readonly PlayToposService _topoService;
         private readonly PlayPlayerService _playerService;
         private readonly PlayGameService _gameService;
+        private readonly PlayResultService _resultService;
         private readonly RailChessContext _context;
         
         private int _gameId;
@@ -43,6 +44,7 @@ namespace RailChess.Play
             PlayToposService toposService,
             PlayPlayerService playerService,
             PlayGameService gameService,
+            PlayResultService resultService,
             RailChessContext context) 
         {
             _coreCaller = coreCaller;
@@ -51,10 +53,11 @@ namespace RailChess.Play
             _topoService = toposService;
             _playerService = playerService;
             _gameService = gameService;
+            _resultService = resultService;
             _context = context;
         }
 
-        public SyncData GetSyncData()
+        public SyncData GetSyncData(bool onlyWriteResult = false)
         {
             var players = _playerService.GetOrdered();
             var locEvents = _eventsService.PlayerLocateEvents();
@@ -95,7 +98,7 @@ namespace RailChess.Play
             if (ourTopo.Stations is null)
                 throw new Exception("无车站，无法进行游戏");
             bool stationAllCaptured = captureEvents.Count >= ourTopo.Stations.Count;
-            if (playerAllOut || stationAllCaptured)
+            if (playerAllOut || stationAllCaptured || game.Ended)
             {
                 ended = true;
                 if (!_eventsService.GamedEnded())
@@ -112,6 +115,12 @@ namespace RailChess.Play
                     game.DurationMins = (int)(DateTime.Now - game.StartTime).TotalMinutes;
                     _context.Update(game);
                     _context.SaveChanges();
+                }
+                if(!_context.GameResults.Any(x=>x.GameId == GameId))
+                {
+                    _resultService.RunFor(GameId, playerStatus);
+                    if (onlyWriteResult)
+                        return new();
                 }
             }
 

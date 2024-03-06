@@ -143,6 +143,18 @@ namespace RailChess.Controllers
             return this.ApiResp();
         }
 
+        public IActionResult RecalculateElo()
+        {
+            var rs = _context.GameResults.ToList();
+            var users = _context.Users.ToList();
+            foreach(var u in users)
+            {
+                var ur = rs.FindAll(x => x.UserId == u.Id);
+                u.Elo = ur.Select(x => x.EloDelta).Sum();
+            }
+            return this.ApiResp();
+        }
+
         private readonly static List<string> supportedAvatarExts = new() { ".png", ".jpg", ".jpeg" };
         private const int avatarSide = 64;
     }
