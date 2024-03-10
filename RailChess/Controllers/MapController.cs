@@ -12,6 +12,7 @@ namespace RailChess.Controllers
     [Authorize]
     public class MapController : Controller
     {
+        private const int mapBgFileMaxSize = 5 * 1000 * 1000;
         private readonly RailChessContext _context;
         private readonly int _userId;
         private const string myMaps = "我上传的";
@@ -90,7 +91,7 @@ namespace RailChess.Controllers
 
             if (file is not null)
             {
-                if (file.Length > 1 * 1000 * 1000)
+                if (file.Length > mapBgFileMaxSize)
                     return this.ApiFailedResp("请勿上传过大图片");
 
                 string ext = Path.GetExtension(file.FileName);
