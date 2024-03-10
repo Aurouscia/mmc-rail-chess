@@ -22,7 +22,7 @@
     </div>
     <div class="topbar-item">
       <div>
-        <RouterLink to="/results/ofPlayer">战绩</RouterLink>
+        <RouterLink to="/ranking">战绩</RouterLink>
       </div>
     </div>
   </div>

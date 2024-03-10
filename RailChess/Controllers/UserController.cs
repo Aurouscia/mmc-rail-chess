@@ -155,6 +155,13 @@ namespace RailChess.Controllers
             return this.ApiResp();
         }
 
+        public IActionResult RankingList()
+        {
+            var res = _context.Users.Where(x=>x.Elo!=0).OrderByDescending(x => x.Elo).ToList();
+            res.ForEach(x => x.Pwd = "");
+            return this.ApiResp(res);
+        }
+
         private readonly static List<string> supportedAvatarExts = new() { ".png", ".jpg", ".jpeg" };
         private const int avatarSide = 64;
     }

@@ -64,6 +64,14 @@ export class Api{
                     {avatar},
                     "上传成功");
                 return res.success
+            },
+            rankingList: async()=>{
+                var res = await this.httpClient.request(
+                    "/api/User/RankingList",
+                    "get")
+                if(res.success){
+                    return res.data as User[]
+                }
             }
         }
     }

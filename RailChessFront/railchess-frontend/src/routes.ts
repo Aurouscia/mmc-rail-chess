@@ -7,6 +7,7 @@ import Games from './pages/Games.vue'
 import Play from './pages/Play.vue'
 import GameResults from './pages/GameResults.vue'
 import GameResultsOfGame from './pages/GameResultsOfGame.vue'
+import RankingList from './pages/RankingList.vue'
 
 export const routes = [
     {
@@ -44,5 +45,9 @@ export const routes = [
         component: GameResultsOfGame,
         props:true,
         name:'resultsOfGame'
+    },{
+        path: '/ranking',
+        component: RankingList,
+        name: 'ranking'
     }
 ]

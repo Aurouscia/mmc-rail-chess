@@ -44,26 +44,34 @@ namespace RailChess.Play.Services
                     Rank = rank
                 };
                 rank += 1;
-                var u = users.First(x=>x.Id == player.Id);
-                results.Add(u, result);
+                var u = users.FirstOrDefault(x=>x.Id == player.Id);
+                if(u is not null)
+                    results.Add(u, result);
             }
             for (int i = 1; i < playersStatus.Count; i++)
             {
-                var pa = playersStatus[i]; 
-                User a = users.First(x=>x.Id == pa.Id);
-                GameResult resA = results[a];
-                for (int j = 0; j < i; j++)
+                try
                 {
-                    //j<i，b排名肯定排a前面
-                    var pb = playersStatus[j];
-                    User b = users.First(x => x.Id == pb.Id);
-                    GameResult resB = results[b];
-                    int delta = EloAlg.Delta(a.Elo, b.Elo, pa.Score, pb.Score);
+                    var pa = playersStatus[i];
+                    User a = users.First(x => x.Id == pa.Id);
+                    GameResult resA = results[a];
+                    for (int j = 0; j < i; j++)
+                    {
+                        //j<i，b排名肯定排a前面
+                        var pb = playersStatus[j];
+                        User b = users.First(x => x.Id == pb.Id);
+                        GameResult resB = results[b];
+                        int delta = EloAlg.Delta(a.Elo, b.Elo, pa.Score, pb.Score);
 
-                    resB.EloDelta -= delta;
-                    resA.EloDelta += delta;
-                    b.Elo -= delta;
-                    a.Elo += delta;
+                        resB.EloDelta -= delta;
+                        resA.EloDelta += delta;
+                        b.Elo -= delta;
+                        a.Elo += delta;
+                    }
+                }
+                catch
+                {
+                    continue;
                 }
             }
             foreach (var item in results)

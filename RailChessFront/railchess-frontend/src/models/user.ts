@@ -2,5 +2,6 @@ export interface User{
     Id:number,
     Name?:string,
     Pwd:string,
-    AvatarName?:string
+    AvatarName?:string,
+    Elo:number
 }
