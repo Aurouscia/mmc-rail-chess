@@ -22,6 +22,7 @@ namespace RailChess.Play
         
         private int _gameId;
         private int _userId;
+        private const int timeoutMins = 180;
         public int GameId { get => _gameId; set 
             {
                 if (value <= 0) throw new Exception("请从正确入口进入");
@@ -98,7 +99,10 @@ namespace RailChess.Play
             if (ourTopo.Stations is null)
                 throw new Exception("无车站，无法进行游戏");
             bool stationAllCaptured = captureEvents.Count >= ourTopo.Stations.Count;
-            if (playerAllOut || stationAllCaptured || game.Ended)
+
+            bool timeout = latestOp is not null && (DateTime.Now - latestOp.Time).TotalMinutes > timeoutMins;
+
+            if (timeout || playerAllOut || stationAllCaptured || game.Ended)
             {
                 ended = true;
                 if (!_eventsService.GamedEnded())
