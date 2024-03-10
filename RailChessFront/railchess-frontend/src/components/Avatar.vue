@@ -51,6 +51,8 @@ const colorList = ref<string[]>(["#000000"]);
 const cvs = ref<HTMLCanvasElement>();
 const cvsSide = 256;
 const startAngle = ref<number>(0);
+const xOffset = ref<number>(0);
+const yOffset = ref<number>(0);
 const text = ref<string>("");
 const textColor = ref<string>("#ffffff");
 function addColor(){
@@ -83,7 +85,6 @@ function render(){
         ctx.moveTo(cvsSide/2,cvsSide/2);
         var s = start+counter*angleEach;
         var e = start+(counter+1)*angleEach;
-        console.log(s,e,c)
         ctx.arc(cvsSide/2,cvsSide/2,cvsSide/2,s,e,false)
         ctx.fillStyle = c;
         ctx.fill();
@@ -93,7 +94,7 @@ function render(){
     ctx.font = `${cvsSide*0.8}px msyh`;
     ctx.textAlign = 'center'
     ctx.textBaseline = 'hanging'
-    ctx.fillText(text.value, cvsSide/2, cvsSide*0.1);
+    ctx.fillText(text.value, cvsSide/2 + xOffset.value/3, cvsSide*0.1 + yOffset.value/3);
 }
 function done(){
     if(cvs.value){
@@ -140,7 +141,9 @@ const emit = defineEmits<{
             <div>
                 <button @click="addColor" v-show="colorList.length<4" class="minor">添加颜色</button>
             </div>
-            <div>角度偏移<input v-model="startAngle" type="range" min="0" max="360" @input="tryRender" @blur="render"></div>
+            <div>背景角度偏移<input v-model="startAngle" type="range" min="0" max="360" @input="tryRender" @blur="render"></div>
+            <div>文字横向偏移<input v-model="xOffset" type="range" :min="-cvsSide/2" :max="cvsSide/2" step="1" @input="tryRender" @blur="render"></div>
+            <div>文字纵向偏移<input v-model="yOffset" type="range" :min="-cvsSide/2" :max="cvsSide/2" step="1" @input="tryRender" @blur="render"></div>
             <div>
                 <input v-model="text" maxlength="1" placeholder="写字" style="width: 50px;" @blur="render"/>
                 <input v-model="textColor" type="color" @input="tryRender" @blur="render">
