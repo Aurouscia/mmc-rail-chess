@@ -30,9 +30,11 @@ namespace RailChess.Play.Services.Core
                     sta.Owner = o.PlayerId;
             });
             var locEvents = _eventsService.PlayerLocateEvents();
+            var outPlayerIds = _eventsService.PlayerOutEvents().ConvertAll(x=>x.PlayerId);
             locEvents.ForEach(x =>
             {
-                graph.UserPosition.Add(x.PlayerId, x.StationId);
+                if (!outPlayerIds.Contains(x.PlayerId))
+                    graph.UserPosition.Add(x.PlayerId, x.StationId);
             });
             return graph;
         }
