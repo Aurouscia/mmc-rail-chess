@@ -20,20 +20,42 @@ namespace RailChess.Controllers
             _cache = cache;
         }
 
-        public IActionResult UserGameLog(int userId)
+        public IActionResult OfUser(int userId)
         {
             var data = (
                 from r in _context.GameResults
+                from m in _context.Maps
                 from g in _context.Games
                 where r.UserId == userId
                 where r.GameId == g.Id
-                orderby g.StartTime
-                select new { r.Rank, r.GameId, g.StartTime, r.EloDelta }).ToList();
+                where g.UseMapId == m.Id
+                select new { r.Rank, r.GameId, g.StartTime, r.EloDelta, MapName = m.Title }).ToList();
+            data.Sort((x, y) => DateTime.Compare(y.StartTime, x.StartTime));
             var userName = _context.Users.Where(x => x.Id == userId).Select(x => x.Name).FirstOrDefault();
-            var res = new UserGameLogResult(userName ?? "");
+            var res = new GameResultListResponse();
             data.ForEach(d =>
             {
-                res.Logs.Add(new(d.Rank, d.GameId, d.StartTime, d.EloDelta));
+                res.Logs.Add(new(d.Rank, d.GameId, d.StartTime, d.EloDelta, d.MapName, userName??"??", userId));
+            });
+            return this.ApiResp(res);
+        }
+        public IActionResult OfGame(int gameId)
+        {
+            var data = (
+                from r in _context.GameResults
+                from u in _context.Users
+                where r.GameId == gameId
+                where r.UserId == u.Id
+                select new { r.Rank, r.GameId, r.EloDelta, UserName = u.Name, UserId = u.Id}).ToList();
+            var game = _context.Games.Where(x => x.Id == gameId).Select(x => new { x.StartTime, x.UseMapId }).FirstOrDefault();
+            if (game is null)
+                return this.ApiFailedResp("找不到指定棋局");
+            var mapName = _context.Maps.Where(x=>x.Id == game.UseMapId).Select(x=>x.Title).FirstOrDefault();
+            var res = new GameResultListResponse();
+            data.Sort((x, y) => x.Rank - y.Rank);
+            data.ForEach(d =>
+            {
+                res.Logs.Add(new(d.Rank, d.GameId, game.StartTime, d.EloDelta, mapName ?? "??", d.UserName, d.UserId));
             });
             return this.ApiResp(res);
         }
@@ -58,28 +80,33 @@ namespace RailChess.Controllers
             return this.ApiResp();
         }
 
-        public class UserGameLogResult
+        public class GameResultListResponse
         {
-            public List<UserGameLogResultItem> Logs { get; set; }
-            public string UserName { get; set; }
-            public UserGameLogResult(string userName)
+            public List<GameResultListItem> Logs { get; set; }
+            public GameResultListResponse()
             {
                 Logs = new();
-                UserName = userName;
             }
-            public class UserGameLogResultItem
+            public class GameResultListItem
             {
-                public UserGameLogResultItem(int rank, int gameId, DateTime startTime, int eloDelta)
+                public GameResultListItem(
+                    int rank, int gameId, DateTime startTime, int eloDelta, string mapName, string userName, int userId)
                 {
                     Rank = rank;
                     GameId = gameId;
                     StartTime = startTime.ToString("yy/MM/dd HH:mm");
                     EloDelta = eloDelta;
+                    MapName = mapName;
+                    UserName = userName;
+                    UserId = userId;
                 }
                 public int Rank { get; set; }
                 public int GameId { get; set; }
                 public string StartTime { get; set; }
                 public int EloDelta { get; set; }
+                public string MapName { get; set; }
+                public string UserName { get; set; }
+                public int UserId { get; set; }
             }
         }
     }

@@ -175,4 +175,26 @@ export class Api{
             return resp.success
         }
     }
+    gameResult = {
+        ofUser:async(userId:number)=>{
+            const resp = await this.httpClient.request(
+                "/api/GameResult/OfUser",
+                "get",
+                {userId}
+            )
+            if(resp.success){
+                return resp.data as GameResultListResponse
+            }
+        },
+        ofGame:async(gameId:number)=>{
+            const resp = await this.httpClient.request(
+                "/api/GameResult/OfGame",
+                "get",
+                {gameId}
+            )
+            if(resp.success){
+                return resp.data as GameResultListResponse
+            }
+        }
+    }
 }

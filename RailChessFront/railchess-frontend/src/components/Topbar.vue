@@ -20,6 +20,11 @@
         <RouterLink to="/maps">棋盘</RouterLink>
       </div>
     </div>
+    <div class="topbar-item">
+      <div>
+        <RouterLink to="/results/ofPlayer">战绩</RouterLink>
+      </div>
+    </div>
   </div>
   <div class="right">
     <div class="topbar-item">

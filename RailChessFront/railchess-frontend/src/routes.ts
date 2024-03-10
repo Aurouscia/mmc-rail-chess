@@ -5,6 +5,8 @@ import Maps from './pages/Maps.vue'
 import Topo from './pages/Topo.vue'
 import Games from './pages/Games.vue'
 import Play from './pages/Play.vue'
+import GameResults from './pages/GameResults.vue'
+import GameResultsOfGame from './pages/GameResultsOfGame.vue'
 
 export const routes = [
     {
@@ -32,5 +34,15 @@ export const routes = [
         component: Play,
         props:true,
         name:'play'
+    },{
+        path: '/results/ofPlayer/:userId?',
+        component: GameResults,
+        props:true,
+        name:'resultsOfPlayer'
+    },{
+        path: '/results/ofGame/:gameId',
+        component: GameResultsOfGame,
+        props:true,
+        name:'resultsOfGame'
     }
 ]
