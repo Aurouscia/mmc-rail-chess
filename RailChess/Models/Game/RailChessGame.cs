@@ -5,6 +5,7 @@
         public int Id { get; set; }
         public int HostUserId { get; set; }
         public int UseMapId { get; set; }
+        public DateTime CreateTime { get; set; }
         public bool Started { get; set; }
         public DateTime StartTime { get; set; }
         public bool Ended { get; set; }

@@ -12,6 +12,7 @@ namespace RailChess.Controllers
     {
         private readonly RailChessContext _context;
         private readonly int _userId;
+        private const int unplayedGameTimeoutMins = 12 * 60;
 
         public GameController(RailChessContext context, HttpUserIdProvider httpUserIdProvider)
         {
@@ -22,6 +23,18 @@ namespace RailChess.Controllers
         public IActionResult Active()
         {
             var g = _context.Games.Where(x => !x.Ended && !x.Deleted).OrderByDescending(x => x.Id).Take(20).ToList();
+            var timeouts = g.FindAll(x => DateTime.Now - x.CreateTime > TimeSpan.FromMinutes(unplayedGameTimeoutMins));
+            if (timeouts.Count > 0)
+            {
+                timeouts.ForEach(t =>
+                {
+                    t.Deleted = true;
+                    _context.Update(t);
+                });
+                _context.SaveChanges();
+                timeouts.RemoveAll(x => x.Deleted);
+            }
+
             List<int> userIds = g.Select(x=>x.HostUserId).ToList();
             List<int> mapIds = g.Select(x=>x.UseMapId).ToList();
             var users = _context.Users.Where(x => userIds.Contains(x.Id)).Select(x => new { x.Id, x.Name }).ToList();
@@ -45,6 +58,8 @@ namespace RailChess.Controllers
                 return this.ApiFailedResp("卡住出局次数设置有问题");
 
             game.HostUserId = _userId;
+            game.CreateTime = DateTime.Now;
+
             _context.Games.Add(game);
             _context.SaveChanges();
             return this.ApiResp();
