@@ -38,7 +38,7 @@ namespace RailChess.Controllers
                     q = q.Where(x => x.Title != null && x.Title.Contains(search));
             }
             var list = q.OrderByDescending(x => x.UpdateTime).Select(x => 
-                new {x.Id, x.Title, x.Author, x.ImgFileName, x.LineCount,x.StationCount,x.ExcStationCount, x.UpdateTime}).Take(20).ToList();
+                new {x.Id, x.Title, x.Author, x.ImgFileName, x.LineCount,x.StationCount,x.ExcStationCount, x.UpdateTime, x.TotalDirections}).Take(30).ToList();
             var authorIds = list.Select(x=>x.Author).ToList();
             var us = _context.Users.Where(x => authorIds.Contains(x.Id)).Select(x => new {x.Id,x.Name}).ToList();
 
@@ -51,11 +51,12 @@ namespace RailChess.Controllers
                     Id = map.Id,
                     Title = map.Title,
                     Author = authorName,
-                    Date = map.UpdateTime.ToString("yy-MM-dd HH:mm:ss"),
+                    Date = map.UpdateTime.ToString("yy-MM-dd HH:mm"),
                     FileName = map.ImgFileName,
                     LineCount = map.LineCount,
                     StationCount = map.StationCount,
                     ExcStationCount = map.ExcStationCount,
+                    TotalDirections = map.TotalDirections
                 });
             }
             return this.ApiResp(res);
@@ -148,6 +149,7 @@ namespace RailChess.Controllers
             map.LineCount = topo.Lines.Count;
             map.StationCount = staDirsInfo.Count;
             map.ExcStationCount = staDirsInfo.Values.Where(x => x > 2).Count();
+            map.TotalDirections = staDirsInfo.Values.Sum();
             map.UpdateTime = DateTime.Now;
             map.TopoData = data;
             _context.SaveChanges();
@@ -210,11 +212,11 @@ namespace RailChess.Controllers
             var maps = _context.Maps
                 .Where(x => !x.Deleted)
                 .Where(x => x.Title != null && x.Title.Contains(s))
-                .Select(x => new { x.Id,x.Title, x.UpdateTime }).Take(6).ToList();
+                .Select(x => new { x.Id,x.Title, x.TotalDirections }).Take(6).ToList();
             QuickSearchResult res = new();
             maps.ForEach(x =>
             {
-                res.Items.Add(new(x.Title??"???", x.UpdateTime.ToString("yy/MM/dd HH:mm"), x.Id));
+                res.Items.Add(new(x.Title??"???", "总分"+x.TotalDirections.ToString()+"分", x.Id));
             });
             return this.ApiResp(res);
         }
@@ -233,6 +235,7 @@ namespace RailChess.Controllers
                 public int LineCount { get; set; }
                 public int StationCount { get; set; }
                 public int ExcStationCount { get; set; }
+                public int TotalDirections { get; set; }
                 public string? Author { get; set; }
                 public string? Date { get; set; } 
                 public string? FileName { get; set; }

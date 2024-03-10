@@ -30,7 +30,8 @@ function create(){
         FileName:undefined,
         LineCount:0,
         StationCount:0,
-        ExcStationCount:0
+        ExcStationCount:0,
+        TotalDirections:0
     }
     fileSelected.value = undefined;
     if(file.value)
@@ -108,6 +109,7 @@ onMounted(async()=>{
 <div class="maps">
     <h1>棋盘列表</h1>
     <input v-model="search" style="width: 150px;" placeholder="搜索棋盘或作者" @blur="load"/>
+    <button v-if="search" @click="search='';load()" class="minor">清空搜索</button>
     <button @click="create" class="confirm">新建</button>
     <button class="gray" @click="search='我上传的';load()">我的</button>
     <table class="list" v-if="data">
@@ -122,9 +124,10 @@ onMounted(async()=>{
                     <div class="titleLeft">
                         <div>{{ m.Title }}</div>
                         <div class="mapInfo">
-                            {{ m.LineCount }}线 
-                            {{ m.StationCount }}站 
-                            {{ m.ExcStationCount }}换乘站
+                            {{ m.LineCount }}线&nbsp;
+                            {{ m.StationCount }}站&nbsp;
+                            {{ m.ExcStationCount }}换乘站&nbsp;
+                            {{ m.TotalDirections }}分
                         </div>
                     </div>
                     <span class="date">{{ m.Date }}</span>

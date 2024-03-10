@@ -10,7 +10,8 @@ export interface RailChessMapIndexResultItem{
     FileName?:string,
     LineCount:number,
     StationCount:number,
-    ExcStationCount:number
+    ExcStationCount:number,
+    TotalDirections:number
 }
 
 export interface TopoEditorLoadResult{

@@ -11,6 +11,7 @@ namespace RailChess.Models.Map
         public string? ImgFileName { get; set; }
         public int StationCount { get; set; }
         public int ExcStationCount { get; set; }
+        public int TotalDirections { get; set; }
         public int LineCount { get; set; }
         public DateTime UpdateTime { get; set; }
         public bool Deleted { get; set; }
