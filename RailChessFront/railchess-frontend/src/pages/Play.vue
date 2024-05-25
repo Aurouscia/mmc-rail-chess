@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CSSProperties, onMounted, onUnmounted, ref, watch } from 'vue';
+import { CSSProperties, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { injectApi, injectHideTopbar, injectHttp, injectPop, injectUserInfo } from '../provides';
 import { OcpStatus, Player, SyncData, TextMsg } from '../models/play';
 import SideBar from '../components/SideBar.vue';
@@ -266,8 +266,17 @@ async function init(){
         topoData.value = JSON.parse(resp.TopoData);
         gameInfo.value = resp.GameInfo;
     }
-    setTimeout(()=>{renderStaList()},100)
+    await nextTick();
+    renderStaList()
+    if(bg.value){
+        bg.value.addEventListener('load', ()=>{
+            renderStaList();
+            clearTimeout(loadingBgTimer);
+        })
+    }
 }
+const bg = ref<HTMLImageElement>()
+let loadingBgTimer = 0;
 
 const sending = ref<string>("");
 function send(){
@@ -317,6 +326,10 @@ onMounted(async()=>{
     var http = injectHttp();
     const pop = injectPop();
     jwtToken = http.jwtToken;
+    
+    loadingBgTimer = setTimeout(()=>{
+        pop.value.show("地图加载中请稍后", "warning")
+    }, 1500)
     
     const mInfo = await injectUserInfo().getIdentityInfo();
     me = mInfo.Id;
@@ -410,7 +423,7 @@ watch(props,()=>{
 </div>
 <div class="frame" ref="frame">
     <div class="arena" ref="arena">
-        <img :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
+        <img v-if="bgFileName" ref="bg" :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
         <div v-for="s in staRenderedList" :style="s.style" 
             :class="{clickable:clickableStations.includes(s.id)&&playerList[0]?.id==me, selected:selectedDist==s.id}" 
             :key="s.id" class="station" @click="clickStation(s.id)"></div>
