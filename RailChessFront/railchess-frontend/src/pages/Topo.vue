@@ -312,6 +312,7 @@ const sb = ref<InstanceType<typeof SideBar>>();
 onMounted(async()=>{
   injectHideTopbar()();
   api = injectApi();
+  window.addEventListener('resize', windowResizeHandler)
   if(props.id){
     const idNum = parseInt(props.id);
     if(idNum && idNum>0){
@@ -379,7 +380,16 @@ onMounted(async()=>{
 })
 onUnmounted(()=>{
   disposeListeners();
+  window.removeEventListener('resize', windowResizeHandler)
 })
+
+let resizeStoppedTimer = 0;
+function windowResizeHandler(){
+  clearTimeout(resizeStoppedTimer);
+  resizeStoppedTimer = setTimeout(()=>{
+    CvsInit();
+  }, 500)
+}
 </script>
 
 <template>
