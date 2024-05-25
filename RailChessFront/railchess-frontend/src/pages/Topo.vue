@@ -10,6 +10,7 @@ import { AurStateStore } from '@aurouscia/au-undo-redo'
 import { bgSrc } from '../utils/fileSrc';
 import { posBase } from '../models/map';
 import { clone, pullAt } from 'lodash';
+import TopoRepairTool from './TopoRepairTool.vue';
 
 const props = defineProps<{
   id:string
@@ -272,6 +273,7 @@ async function Save(noJump?:boolean) {
       router.push("/maps")
     }
   }
+  autoSaveCounter = 0;
 }
 function UpCvs(e:MouseEvent){
   if(e.button==2){
@@ -292,6 +294,15 @@ async function TryAutoSave(){
 }
 async function ssSave() {
   ss.push({lines:lines.value,stations:stations.value})
+}
+
+const showRepairTool = ref<boolean>(false)
+function repairDone(changed:boolean){
+  if(changed){
+    ssSave()
+    Save(true)
+  }
+  showRepairTool.value = false;
 }
 
 var api:Api;
@@ -382,9 +393,10 @@ onUnmounted(()=>{
       </div>
     </div>
     <div class="btns">
-      <div class="btn" @click="sb?.extend">使用说明</div>
       <div v-if="selectedLineId>=0" class="btn" @click="DeleteLine(selectedLineId)" style="background-color: plum;color:white">删除该线</div>
       <div v-if="selectedLineId>=0" class="btn" @click="ReverseLine(selectedLineId)">头尾反转</div>
+      <div class="btn" @click="showRepairTool = true">修复工具</div>
+      <div class="btn" @click="sb?.extend">使用说明</div>
       <div class="btn" @click="Save()" style="background-color: olivedrab;color:white">保存</div>
     </div>
   </div>
@@ -397,6 +409,10 @@ onUnmounted(()=>{
   <div class="ur">
     <div :class="{locked:!canUndo}" @click="undo">撤销</div>
     <div :class="{locked:!canRedo}" @click="redo">重做</div>
+  </div>
+
+  <div v-if="showRepairTool" class="repairTool">
+    <TopoRepairTool :re-render="Render" :stations="stations" @done="repairDone"></TopoRepairTool>
   </div>
 
   <SideBar ref="sb">
@@ -415,6 +431,17 @@ onUnmounted(()=>{
 </template>
 
 <style scoped>
+.repairTool{
+  position: fixed;
+  top: 0px;
+  right: 0px;
+  background-color: #ddd;
+  height: 160px;
+  width: 320px;
+  border-radius: 5px;
+  border: 2px solid #fff;
+  z-index: 1000;
+}
 .ur div.locked:hover{
   background-color: #000;
 }
@@ -471,7 +498,6 @@ canvas{
 }
 .lineList{
   position: relative;
-  height: 140px;
   overflow-x: auto;
   display: flex;
   flex-direction: column;
@@ -495,13 +521,13 @@ canvas{
 .btns{
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 .btn{
   line-height: 25px;
   height:25px;
   width: 70px;
-  margin: 2px;
+  margin: 0px;
   background-color: #ccc;
   border: 2px solid #fff;
   border-radius: 5px;

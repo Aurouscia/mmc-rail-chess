@@ -369,7 +369,8 @@ FodyWeavers.xsd
 
 # db file
 /RailChess/Data/fcloud3.db
-
+/RailChess/Data/fcloud3.db-shm
+/RailChess/Data/fcloud3.db-wal
 
 # front end build output target
 /RailChess/wwwroot/*
