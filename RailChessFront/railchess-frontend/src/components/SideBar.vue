@@ -83,6 +83,7 @@ const emit = defineEmits<{
 .body{
     padding: 10px;
     overflow-y: auto;
+    overflow-x: hidden;
     height: calc(100vh - 50px);
 }
 .sideBar{

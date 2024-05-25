@@ -291,7 +291,7 @@ const msgs = ref<TextMsg[]>([]);
 const frame = ref<HTMLDivElement>();
 const arena = ref<HTMLDivElement>();
 const bgOpacity = ref<number>(0.5);
-const staSize = ref<number>(1);
+const staSize = ref<number>(0.8);
 const staSizeAuto = ref<boolean|undefined>(true);
 function autoStaSize(){
     if(!staSizeAuto.value){return;}
@@ -306,11 +306,11 @@ function autoStaSize(){
         ratio = arena.value.clientWidth / frame.value.clientWidth;
     }
     if(ratio<1.05){
-        staSize.value = 0.4;
+        staSize.value = 0.3;
         return;
     }
     if(ratio<4){
-        staSize.value = 0.7;
+        staSize.value = 0.5;
         return;
     }
     staSize.value = 1.0;
@@ -461,7 +461,7 @@ watch(props,()=>{
         </div>
         <div class="sideBarSlideOuter">
             站点标记尺寸：{{ staSize }}
-            <input type="range" :disabled="staSizeAuto" v-model="staSize" min="0.4" max="1.6" step="0.3"><br/>
+            <input type="range" v-model="staSize" min="0.3" max="1.0" step="0.1"><br/>
             <input type="checkbox" v-model="staSizeAuto"/>自动
         </div>
     </div>
