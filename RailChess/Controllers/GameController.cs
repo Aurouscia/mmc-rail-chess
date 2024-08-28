@@ -23,16 +23,25 @@ namespace RailChess.Controllers
         public IActionResult Active()
         {
             var g = _context.Games.Where(x => !x.Ended && !x.Deleted).OrderByDescending(x => x.Id).Take(20).ToList();
-            var timeouts = g.FindAll(x => DateTime.Now - x.CreateTime > TimeSpan.FromMinutes(unplayedGameTimeoutMins));
+            var timeoutSpan = TimeSpan.FromMinutes(unplayedGameTimeoutMins);
+            var timeouts = g.FindAll(x => DateTime.Now - x.StartTime > timeoutSpan);
             if (timeouts.Count > 0)
             {
-                timeouts.ForEach(t =>
+                timeouts.ForEach(game =>
                 {
-                    t.Deleted = true;
-                    _context.Update(t);
+                    var itsLastEvent = _context.Events
+                        .Where(x => x.GameId == game.Id)
+                        .OrderByDescending(x=>x.Time)
+                        .FirstOrDefault();
+                    if (itsLastEvent is null 
+                        || DateTime.Now - itsLastEvent.Time > timeoutSpan)
+                    {
+                        game.Deleted = true;
+                        _context.Update(g);
+                    }
                 });
                 _context.SaveChanges();
-                timeouts.RemoveAll(x => x.Deleted);
+                g.RemoveAll(x => x.Deleted);
             }
 
             List<int> userIds = g.Select(x=>x.HostUserId).ToList();
@@ -59,6 +68,8 @@ namespace RailChess.Controllers
 
             game.HostUserId = _userId;
             game.CreateTime = DateTime.Now;
+            game.Started = false;
+            game.StartTime = DateTime.Now;
 
             _context.Games.Add(game);
             _context.SaveChanges();
