@@ -25,6 +25,11 @@
         <RouterLink to="/ranking">战绩</RouterLink>
       </div>
     </div>
+    <div class="topbar-item">
+      <div>
+        <RouterLink to="/guide">规则</RouterLink>
+      </div>
+    </div>
   </div>
   <div class="right">
     <div class="topbar-item">

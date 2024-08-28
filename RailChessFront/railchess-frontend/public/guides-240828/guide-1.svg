@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 28.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="图层_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 509.95 388.05" style="enable-background:new 0 0 509.95 388.05;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:none;stroke:#F7931E;stroke-width:4;stroke-miterlimit:10;}
+	.st1{fill:none;stroke:#29ABE2;stroke-width:4;stroke-miterlimit:10;}
+	.st2{fill:#FFFFFF;stroke:#808080;stroke-width:3;stroke-miterlimit:10;}
+	.st3{fill:#93278F;}
+	.st4{fill:#FFFFFF;}
+	.st5{font-family:'MicrosoftYaHei';}
+	.st6{font-size:17.1263px;}
+	.st7{font-size:14px;}
+	.st8{font-size:10px;}
+	.st9{fill:#FF7BAC;}
+	.st10{fill:#1B1464;}
+</style>
+<path class="st0" d="M257.38,38.84v296c0,9.33,7.56,16.89,16.89,16.89h130.79"/>
+<path class="st1" d="M475.16,264.51H200.97c-7.95,0-15.58-3.16-21.2-8.78l-39.6-39.6c-5.62-5.62-13.25-8.78-21.2-8.78H49.25"/>
+<circle class="st2" cx="49.25" cy="207.34" r="4.97"/>
+<circle class="st2" cx="257.38" cy="264.51" r="4.97"/>
+<circle class="st2" cx="332.2" cy="264.51" r="4.97"/>
+<circle class="st2" cx="405.06" cy="264.51" r="4.97"/>
+<circle class="st2" cx="158.21" cy="234.17" r="4.97"/>
+<circle class="st2" cx="257.38" cy="113.54" r="4.97"/>
+<circle class="st2" cx="257.38" cy="188.23" r="4.97"/>
+<circle class="st2" cx="257.38" cy="327.43" r="4.97"/>
+<circle class="st2" cx="257.38" cy="38.84" r="4.97"/>
+<circle class="st2" cx="475.16" cy="264.51" r="4.97"/>
+<g>
+	<circle class="st3" cx="47.07" cy="207.34" r="11.18"/>
+	<text transform="matrix(1 0 0 1 41.1699 213.0591)" class="st4 st5 st6">A</text>
+</g>
+<text transform="matrix(1 0 0 1 35.8897 161.8335)"><tspan x="0" y="0" class="st5 st7">假设这是你</tspan><tspan x="0" y="12" class="st5 st8">每个玩家开局都会被随机分配位置</tspan><tspan x="0" y="24" class="st5 st8">回合制轮流行动</tspan></text>
+<g>
+	<circle class="st9" cx="475.16" cy="264.51" r="11.18"/>
+	<text transform="matrix(1 0 0 1 470.27 271.1165)" class="st4 st5 st6">B</text>
+</g>
+<circle class="st2" cx="332.2" cy="351.73" r="4.97"/>
+<circle class="st2" cx="405.06" cy="351.73" r="4.97"/>
+<text transform="matrix(1 0 0 1 377.1588 308.2444)"><tspan x="0" y="0" class="st5 st7">这些是其他玩家</tspan><tspan x="18" y="12" class="st5 st8">每个玩家单独一队</tspan></text>
+<g>
+	<circle class="st10" cx="405.06" cy="351.73" r="11.18"/>
+	<text transform="matrix(1 0 0 1 398.2696 358.3376)" class="st4 st5 st6">C</text>
+</g>
+</svg>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 28.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="图层_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 509.95 388.05" style="enable-background:new 0 0 509.95 388.05;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:none;stroke:#FF1D25;stroke-width:6;stroke-miterlimit:10;}
+	.st1{fill:#FF1D25;}
+	.st2{fill:none;stroke:#29ABE2;stroke-width:4;stroke-miterlimit:10;}
+	.st3{fill:#FFFFFF;stroke:#808080;stroke-width:3;stroke-miterlimit:10;}
+	.st4{fill:#93278F;}
+	.st5{fill:#FFFFFF;}
+	.st6{font-family:'MicrosoftYaHei';}
+	.st7{font-size:17.1263px;}
+	.st8{fill:#4EB4DE;}
+	.st9{font-size:27px;}
+	.st10{fill:#FFFFFF;stroke:#000000;stroke-miterlimit:10;}
+	.st11{font-size:17px;}
+	.st12{font-size:11px;}
+	.st13{fill:#FF7BAC;}
+	.st14{font-size:10.8886px;}
+	.st15{fill:none;stroke:#39B54A;stroke-width:6;stroke-miterlimit:10;}
+	.st16{fill:#39B54A;}
+	.st17{fill:none;stroke:#F7931E;stroke-width:4;stroke-miterlimit:10;}
+	.st18{fill:none;stroke:#FFFFFF;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st19{fill:none;stroke:#FF1D25;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st20{fill:#1B1464;}
+</style>
+<g>
+	<g>
+		<line class="st0" x1="210.9" y1="252.62" x2="356.09" y2="252.62"/>
+		<g>
+			<polygon class="st1" points="348.21,259.33 354.92,252.62 348.21,245.91 353.91,245.91 360.62,252.62 353.91,259.33 			"/>
+		</g>
+	</g>
+</g>
+<path class="st2" d="M475.16,264.51H200.97c-7.95,0-15.58-3.16-21.2-8.78l-39.6-39.6c-5.62-5.62-13.25-8.78-21.2-8.78H49.25"/>
+<circle class="st3" cx="49.25" cy="207.34" r="4.97"/>
+<circle class="st3" cx="332.2" cy="264.51" r="4.97"/>
+<circle class="st3" cx="405.06" cy="264.51" r="4.97"/>
+<circle class="st3" cx="158.21" cy="234.17" r="4.97"/>
+<circle class="st3" cx="475.16" cy="264.51" r="4.97"/>
+<g>
+	<circle class="st4" cx="47.07" cy="207.34" r="11.18"/>
+	<text transform="matrix(1 0 0 1 41.1699 213.0591)" class="st5 st6 st7">A</text>
+</g>
+<path class="st8" d="M119.57,90.86H46.81c-11.89,0-21.52-9.64-21.52-21.52v0c0-11.89,9.64-21.52,21.52-21.52h72.76
+	c11.89,0,21.52,9.64,21.52,21.52v0C141.1,81.22,131.46,90.86,119.57,90.86z"/>
+<text transform="matrix(1 0 0 1 44.2809 78.2855)" class="st5 st6 st9">4</text>
+<line class="st10" x1="56.14" y1="83.62" x2="66.81" y2="118.51"/>
+<text transform="matrix(1 0 0 1 54.2271 138.0525)" class="st6 st11">轮到玩家时出现随机数</text>
+<text transform="matrix(1 0 0 1 56.1428 154.4761)"><tspan x="0" y="0" class="st6 st12">玩家必须沿线路走指定步数</tspan><tspan x="0" y="13.2" class="st6 st12">允许换乘的次数可开局前约定</tspan></text>
+<g>
+	<circle class="st13" cx="475.16" cy="264.51" r="11.18"/>
+	<text transform="matrix(1 0 0 1 470.27 271.1165)" class="st5 st6 st7">B</text>
+</g>
+<g>
+	<circle class="st13" cx="332.34" cy="264.51" r="7.11"/>
+	<text transform="matrix(1 0 0 1 329.2362 268.7101)" class="st5 st6 st14">B</text>
+</g>
+<g>
+	<circle class="st13" cx="405.06" cy="264.51" r="7.11"/>
+	<text transform="matrix(1 0 0 1 401.9555 268.7101)" class="st5 st6 st14">B</text>
+</g>
+<g>
+	<g>
+		<path class="st15" d="M61.48,197.57h66.46c6.29,0,12.32,2.5,16.77,6.95l41.16,41.16c4.45,4.45,10.48,6.95,16.77,6.95h17.42
+			c13.1,0,23.71-10.62,23.71-23.71V118.06"/>
+		<g>
+			<polygon class="st16" points="250.48,125.95 243.76,119.23 237.05,125.95 237.05,120.25 243.76,113.54 250.48,120.25 			"/>
+		</g>
+	</g>
+</g>
+<text transform="matrix(1 0 0 1 167.6971 223.3121)" class="st16 st6 st11">1</text>
+<text transform="matrix(1 0 0 1 267.8741 282.6121)" class="st16 st6 st11">2</text>
+<text transform="matrix(1 0 0 1 267.874 193.2059)" class="st16 st6 st11">3</text>
+<text transform="matrix(1 0 0 1 265.607 123.7008)" class="st16 st6 st11">4</text>
+<path class="st17" d="M257.38,38.84v296c0,9.33,7.56,16.89,16.89,16.89h130.79"/>
+<circle class="st3" cx="257.38" cy="327.43" r="4.97"/>
+<circle class="st3" cx="332.2" cy="351.73" r="4.97"/>
+<circle class="st3" cx="405.06" cy="351.73" r="4.97"/>
+<circle class="st3" cx="257.38" cy="264.51" r="4.97"/>
+<circle class="st3" cx="257.38" cy="188.23" r="4.97"/>
+<circle class="st3" cx="257.38" cy="113.54" r="4.97"/>
+<circle class="st3" cx="257.38" cy="38.84" r="4.97"/>
+<g>
+	<g>
+		<path class="st15" d="M208.24,252.62h9.48c14.39,0,26.05,11.66,26.05,26.05v62.38c0,14.39,11.66,26.05,26.05,26.05h58.01"/>
+		<g>
+			<polygon class="st16" points="319.93,373.81 326.65,367.1 319.93,360.38 325.63,360.38 332.34,367.1 325.63,373.81 			"/>
+		</g>
+	</g>
+</g>
+<text transform="matrix(1 0 0 1 267.8742 334.5876)" class="st16 st6 st11">3</text>
+<text transform="matrix(1 0 0 1 327.2238 339.2401)" class="st16 st6 st11">4</text>
+<line class="st10" x1="265.61" y1="107.19" x2="308.05" y2="73.38"/>
+<text transform="matrix(1 0 0 1 315.1752 63.355)"><tspan x="0" y="0" class="st6 st11">可选择的车站会高亮表示</tspan><tspan x="0" y="13.2" class="st6 st12">点击车站后确认即可走到该位置</tspan><tspan x="0" y="26.4" class="st6 st12">到达的车站将立即占领</tspan></text>
+<g>
+	<polyline class="st18" points="298.63,248.58 308.69,238.52 288.59,258.62 298.63,248.58 308.75,258.7 288.38,238.32 	"/>
+	<polyline class="st19" points="298.63,248.58 308.69,238.52 288.59,258.62 298.63,248.58 308.75,258.7 288.38,238.32 	"/>
+</g>
+<text transform="matrix(1 0 0 1 275.2525 216.3691)"><tspan x="0" y="0" class="st6 st12">不能跨过或到达</tspan><tspan x="0" y="13.2" class="st6 st12">其他玩家已占领的位置</tspan></text>
+<line class="st10" x1="335.5" y1="274.97" x2="339.46" y2="295.86"/>
+<text transform="matrix(1 0 0 1 335.4993 309.857)" class="st6 st12">小头像：B玩家占领点</text>
+<line class="st10" x1="468.99" y1="277.19" x2="460.24" y2="315.67"/>
+<text transform="matrix(1 0 0 1 403.0185 328.9558)" class="st6 st12">大头像：B玩家位置</text>
+<g>
+	<circle class="st20" cx="406.81" cy="351.73" r="11.18"/>
+	<text transform="matrix(1 0 0 1 400.019 358.3376)" class="st5 st6 st7">C</text>
+</g>
+</svg>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 28.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="图层_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 509.95 388.05" style="enable-background:new 0 0 509.95 388.05;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:none;stroke:#F7931E;stroke-width:4;stroke-miterlimit:10;}
+	.st1{fill:none;stroke:#29ABE2;stroke-width:4;stroke-miterlimit:10;}
+	.st2{fill:#FFFFFF;stroke:#808080;stroke-width:3;stroke-miterlimit:10;}
+	.st3{fill:#93278F;}
+	.st4{fill:#FFFFFF;}
+	.st5{font-family:'MicrosoftYaHei';}
+	.st6{font-size:17.1263px;}
+	.st7{fill:#FF7BAC;}
+	.st8{font-size:10.9207px;}
+	.st9{font-size:10.8886px;}
+	.st10{fill:#1B1464;}
+	.st11{fill:#FFFFFF;stroke:#000000;stroke-miterlimit:10;}
+	.st12{font-size:17px;}
+	.st13{font-size:11px;}
+	.st14{fill:none;stroke:#FF0000;stroke-width:6;stroke-miterlimit:10;}
+	.st15{fill:#FF0000;}
+	.st16{fill:none;stroke:#FFFFFF;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st17{fill:none;stroke:#FF1D25;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+</style>
+<path class="st0" d="M257.38,38.84v296c0,9.33,7.56,16.89,16.89,16.89h130.79"/>
+<path class="st1" d="M475.16,264.51H200.97c-7.95,0-15.58-3.16-21.2-8.78l-39.6-39.6c-5.62-5.62-13.25-8.78-21.2-8.78H49.25"/>
+<circle class="st2" cx="49.25" cy="207.34" r="4.97"/>
+<circle class="st2" cx="257.38" cy="264.51" r="4.97"/>
+<circle class="st2" cx="332.2" cy="264.51" r="4.97"/>
+<circle class="st2" cx="405.06" cy="264.51" r="4.97"/>
+<circle class="st2" cx="158.21" cy="234.17" r="4.97"/>
+<circle class="st2" cx="257.38" cy="113.54" r="4.97"/>
+<circle class="st2" cx="257.38" cy="188.23" r="4.97"/>
+<circle class="st2" cx="257.38" cy="327.43" r="4.97"/>
+<circle class="st2" cx="257.38" cy="38.84" r="4.97"/>
+<circle class="st2" cx="475.16" cy="264.51" r="4.97"/>
+<g>
+	<circle class="st3" cx="257.38" cy="113.54" r="11.18"/>
+	<text transform="matrix(1 0 0 1 251.4764 119.2556)" class="st4 st5 st6">A</text>
+</g>
+<g>
+	<circle class="st7" cx="475.16" cy="264.51" r="11.18"/>
+	<text transform="matrix(1 0 0 1 470.27 271.1165)" class="st4 st5 st6">B</text>
+</g>
+<circle class="st2" cx="332.2" cy="351.73" r="4.97"/>
+<circle class="st2" cx="405.06" cy="351.73" r="4.97"/>
+<g>
+	<circle class="st3" cx="49.25" cy="207.34" r="7.13"/>
+	<text transform="matrix(1 0 0 1 45.4891 210.9873)" class="st4 st5 st8">A</text>
+</g>
+<g>
+	<circle class="st7" cx="332.2" cy="264.51" r="7.11"/>
+	<text transform="matrix(1 0 0 1 329.0886 268.7101)" class="st4 st5 st9">B</text>
+</g>
+<g>
+	<circle class="st7" cx="405.42" cy="264.51" r="7.11"/>
+	<text transform="matrix(1 0 0 1 402.3074 268.7101)" class="st4 st5 st9">B</text>
+</g>
+<g>
+	<circle class="st10" cx="405.42" cy="351.73" r="11.18"/>
+	<text transform="matrix(1 0 0 1 398.6215 358.3376)" class="st4 st5 st6">C</text>
+</g>
+<g>
+	<circle class="st3" cx="257.38" cy="37.73" r="7.13"/>
+	<text transform="matrix(1 0 0 1 253.6161 41.3774)" class="st4 st5 st8">A</text>
+</g>
+<line class="st11" x1="268.32" y1="37.35" x2="319.98" y2="65.22"/>
+<text transform="matrix(1 0 0 1 324.0042 79.4221)"><tspan x="0" y="0" class="st5 st12">在你行动后</tspan><tspan x="0" y="13.2" class="st5 st13">除你外其他玩家再也无法到达的车站</tspan><tspan x="0" y="26.4" class="st5 st13">将自动归你所有</tspan></text>
+<g>
+	<g>
+		<path class="st14" d="M470.19,249.89H299.41c-15.29,0-27.68-12.39-27.68-27.68V48.34"/>
+		<g>
+			<polygon class="st15" points="278.44,56.23 271.73,49.51 265.02,56.23 265.02,50.53 271.73,43.81 278.44,50.53 			"/>
+		</g>
+	</g>
+</g>
+<path class="st14" d="M395.67,337.51h-96.25c-15.29,0-27.68-12.39-27.68-27.68V202.37"/>
+<g>
+	<polyline class="st16" points="271.8,88.64 281.86,78.58 261.76,98.68 271.8,88.64 281.92,98.76 261.54,78.38 	"/>
+	<polyline class="st17" points="271.8,88.64 281.86,78.58 261.76,98.68 271.8,88.64 281.92,98.76 261.54,78.38 	"/>
+</g>
+<line class="st11" x1="208.75" y1="136.87" x2="240.59" y2="116.97"/>
+<text transform="matrix(1 0 0 1 86.6316 151.531)"><tspan x="0" y="0" class="st5 st12">你占领了该车站</tspan><tspan x="-2" y="13.2" class="st5 st13">其他玩家无法越过该车站</tspan><tspan x="20" y="26.4" class="st5 st13">你把他们堵在外面了</tspan></text>
+</svg>
