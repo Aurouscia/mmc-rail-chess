@@ -61,7 +61,6 @@ const emit = defineEmits<{
 <div class="sidebarOuter">
     <div class="cover" :style="coverStyle" @click="fold"></div>
     <div class="sideBar" :style="barStyle">
-        <div class="offBtn"><button class="cancel" @click="fold">关闭</button></div>
         <div class="body">
             <slot v-if="showing"></slot>
         </div>
@@ -70,13 +69,6 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
-.offBtn{
-    padding: 5px;
-    height: 50px;
-    overflow: hidden;
-    flex-grow: 0;
-    flex-shrink: 0;
-}
 .sideBar button{
     margin-bottom: 10px;
 }
@@ -84,7 +76,7 @@ const emit = defineEmits<{
     padding: 10px;
     overflow-y: auto;
     overflow-x: hidden;
-    height: calc(100vh - 50px);
+    height: calc(100vh - 20px);
 }
 .sideBar{
     position: fixed;
