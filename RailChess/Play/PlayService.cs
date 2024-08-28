@@ -23,6 +23,7 @@ namespace RailChess.Play
         private int _gameId;
         private int _userId;
         private const int timeoutMins = 180;
+        private const int allowKickSecs = 20;
         public int GameId { get => _gameId; set 
             {
                 if (value <= 0) throw new Exception("请从正确入口进入");
@@ -245,6 +246,21 @@ namespace RailChess.Play
         {
             _eventsService.Add(RailChessEventType.PlayerOut, 0, true);
             return null;
+        }
+        public string? KickAfk(out string? clearedPlayerName)
+        {
+            int player = _playerService.CurrentPlayer();
+            var latestOp = _eventsService.LatestOperation();
+            clearedPlayerName = _playerService.Get(player).Name;
+            if (latestOp is null)
+                return "棋局未开始";
+            TimeSpan stuckTime = DateTime.Now - latestOp.Time;
+            if (stuckTime.TotalSeconds > allowKickSecs)
+            {
+                _eventsService.Add(RailChessEventType.PlayerOut, 0, player, true);
+                return null;
+            }
+            return $"请等待，玩家挂机{allowKickSecs}秒后才可移出";
         }
     }
 }

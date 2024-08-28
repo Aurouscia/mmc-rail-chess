@@ -179,7 +179,20 @@ namespace RailChess.Play
             await SendTextMsg($"<b>{name}</b>退出了对局", defaultSender, TextMsgType.Important);
             await SyncAll();
         }
-
+        public async Task KickAfk(KickAfkRequest _)
+        {
+            var errmsg = Service.KickAfk(out string? clearedPlayerName);
+            if (errmsg is not null)
+            {
+                await SendTextMsg(errmsg, defaultSender, TextMsgType.Err, Clients.Caller);
+                return;
+            }
+            else
+            {
+                await SendTextMsg($"<b>{clearedPlayerName}</b>挂机太久，已被房主移出", defaultSender, TextMsgType.Important);
+                await SyncAll();
+            }
+        }
         public async Task SyncMe(SyncMeRequest _)
         {
             var data = Service.GetSyncData();

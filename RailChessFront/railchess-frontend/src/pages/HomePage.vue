@@ -18,7 +18,7 @@
     </div>
 
     <div>
-        <p>感谢mmc及其同学创造了本游戏玩法，感谢mtp、四氨合铜离子、等人的支持。</p>
+        <p>感谢mmc(SlinkierApple13)及其同学创造了本游戏玩法，感谢mtp、四氨合铜离子、等人的支持。</p>
     </div>
 </template>
 
