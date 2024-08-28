@@ -89,6 +89,7 @@ function renderStaList(){
     if(!topoData.value || !arena.value){return;}
     const aw = arena.value.clientWidth;
     const ah = arena.value.clientHeight;
+    console.log('render')
     autoStaSize();
     const size = staRenderedWidth*staSize.value;
     for(var i=0;i<topoData.value.Stations.length;i++){
@@ -320,6 +321,7 @@ var api:Api;
 var me:number;
 var jwtToken:string|null;
 var sgrc:SignalRClient
+const moveLocked = ref(false)
 onMounted(async()=>{
     injectHideTopbar()();
     api = injectApi();
@@ -348,7 +350,7 @@ onMounted(async()=>{
     }
     sgrc = new SignalRClient(gameId,jwtToken||"", sync, textMsgCall);
 
-    bgOpacity.value = parseFloat(localStorage.getItem(opacityStoreKey)||"1")||1;
+    bgOpacity.value = parseFloat(localStorage.getItem(opacityStoreKey)||"0.5")||0.5;
     staSize.value = parseFloat(localStorage.getItem(staSizeStoreKey)||"1")||1;
     staSizeAuto.value = !!localStorage.getItem(staSizeAutoStoreKey);
 
@@ -357,7 +359,7 @@ onMounted(async()=>{
     await sgrc.enter();
 
     if(frame.value && arena.value){
-        scaler = new Scaler(frame.value,arena.value,renderStaList);
+        scaler = new Scaler(frame.value,arena.value,renderStaList, moveLocked, bg);
     }
 
     window.addEventListener("keypress",(ev)=>{
@@ -660,5 +662,8 @@ canvas{
     display: flex;
     align-items: center;
     padding: 10px;
+}
+img{
+    user-select: none;
 }
 </style>
