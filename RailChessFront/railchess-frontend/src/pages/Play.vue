@@ -298,9 +298,10 @@ function autoStaSize(){
     if(!frame.value || !arena.value){return;}
     const wr = arena.value.clientWidth/frame.value.clientWidth;
     const hr = arena.value.clientHeight/frame.value.clientHeight;
-    const r = Math.min(wr, hr)
-    staSize.value = r*staSizeRatio.value*0.3
-    if(r<=0.9){
+    const smallerR = Math.min(wr, hr)
+    const biggerR = Math.max(wr, hr)
+    staSize.value = smallerR*staSizeRatio.value*0.3
+    if(biggerR<=0.9){
         staSize.value = 1
     }
     if(staSize.value < 0.4)
