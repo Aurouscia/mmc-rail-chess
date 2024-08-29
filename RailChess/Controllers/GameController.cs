@@ -150,6 +150,10 @@ namespace RailChess.Controllers
                     }
                 }
             }
+            if (activeItem is not null)
+            {
+                timeline.Items.Add(activeItem);
+            }
             users.ForEach(x =>
             {
                 timeline.Avts.Add(x.Id, x.AvatarName);
