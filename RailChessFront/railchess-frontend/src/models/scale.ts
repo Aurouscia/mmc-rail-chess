@@ -151,7 +151,7 @@ export class Scaler{
             x = (this.frame.scrollLeft+ww/2)/w;
             y = (this.frame.scrollTop+hh/2)/h;
         }
-        if(w<ww && ratio<1){
+        if(w<ww*0.8 && ratio<1){
             return;
         }
         if(w>ww*10 && ratio>1){

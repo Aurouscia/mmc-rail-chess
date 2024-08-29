@@ -291,30 +291,20 @@ const sidebar = ref<InstanceType<typeof SideBar>>();
 const msgs = ref<TextMsg[]>([]);
 const frame = ref<HTMLDivElement>();
 const arena = ref<HTMLDivElement>();
-const bgOpacity = ref<number>(0.5);
-const staSize = ref<number>(0.8);
-const staSizeAuto = ref<boolean|undefined>(true);
+const bgOpacity = ref<number>(0.4);
+const staSizeRatio = ref<number>(0.8);
+const staSize = ref<number>(0.8)
 function autoStaSize(){
-    if(!staSizeAuto.value){return;}
     if(!frame.value || !arena.value){return;}
-    const frameWHRatio = frame.value.clientWidth / frame.value.clientHeight;
-    const arenaWHRatio = arena.value.clientWidth / arena.value.clientHeight;
-    var arenaWider = arenaWHRatio > frameWHRatio;
-    var ratio:number;
-    if(arenaWider){
-        ratio = arena.value.clientHeight / frame.value.clientHeight;
-    }else{
-        ratio = arena.value.clientWidth / frame.value.clientWidth;
+    const wr = arena.value.clientWidth/frame.value.clientWidth;
+    const hr = arena.value.clientHeight/frame.value.clientHeight;
+    const r = Math.min(wr, hr)
+    staSize.value = r*staSizeRatio.value*0.3
+    if(r<=0.9){
+        staSize.value = 1
     }
-    if(ratio<1.05){
-        staSize.value = 0.3;
-        return;
-    }
-    if(ratio<4){
-        staSize.value = 0.5;
-        return;
-    }
-    staSize.value = 1.0;
+    if(staSize.value < 0.4)
+        staSize.value = 0.4
 }
 
 var api:Api;
@@ -351,9 +341,16 @@ onMounted(async()=>{
     }
     sgrc = new SignalRClient(gameId,jwtToken||"", sync, textMsgCall);
 
-    bgOpacity.value = parseFloat(localStorage.getItem(opacityStoreKey)||"0.5")||0.5;
-    staSize.value = parseFloat(localStorage.getItem(staSizeStoreKey)||"1")||1;
-    staSizeAuto.value = !!localStorage.getItem(staSizeAutoStoreKey);
+    bgOpacity.value = parseFloat(localStorage.getItem(opacityStoreKey)||"0.4")||0.4;
+    if(bgOpacity.value<0)
+        bgOpacity.value = 0
+    if(bgOpacity.value>1)
+        bgOpacity.value = 1
+    staSizeRatio.value = parseFloat(localStorage.getItem(staSizeRatioStoreKey)||"1")||1;
+    if(staSizeRatio.value<0.3)
+        staSizeRatio.value = 0.3
+    if(staSizeRatio.value>1)
+        staSizeRatio.value = 1
 
     await init();
     await sgrc.connect();
@@ -392,14 +389,9 @@ const opacityStoreKey = "bgOpacity";
 watch(bgOpacity,(newVal)=>{
     localStorage.setItem(opacityStoreKey,String(newVal));
 })
-const staSizeStoreKey = "staSize";
-watch(staSize,(newVal)=>{
-    localStorage.setItem(staSizeStoreKey,String(newVal));
-    renderStaList();
-})
-const staSizeAutoStoreKey = "staSizeAuto";
-watch(staSizeAuto,(newVal)=>{
-    localStorage.setItem(staSizeAutoStoreKey,newVal ? "yes" : "")
+const staSizeRatioStoreKey = "staSizeRatio";
+watch(staSizeRatio,(newVal)=>{
+    localStorage.setItem(staSizeRatioStoreKey,String(newVal));
     renderStaList();
 })
 
@@ -467,9 +459,9 @@ watch(props,()=>{
             <input type="range" v-model="bgOpacity" min="0" max="1" step="0.1">
         </div>
         <div class="sideBarSlideOuter">
-            站点标记尺寸：{{ staSize }}
-            <input type="range" v-model="staSize" min="0.3" max="1.0" step="0.1"><br/>
-            <input type="checkbox" v-model="staSizeAuto"/>自动
+            站点标记尺寸倍率：{{ staSizeRatio }}
+            <input type="range" v-model="staSizeRatio" min="0.3" max="1.0" step="0.1">
+            <div style="font-size: 12px;">站点有最小尺寸限制，视角近时调整才看得到效果</div>
         </div>
     </div>
 </SideBar>
