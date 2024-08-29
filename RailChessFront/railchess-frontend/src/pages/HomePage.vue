@@ -22,7 +22,7 @@ checkAndPop()
     </div>
 
     <div>
-        <p>感谢mmc(SlinkierApple13)及其同学创造了本游戏玩法，感谢滨蜀、mtp、四氨合铜离子等人的支持。</p>
+        <p>感谢mmc(SlinkierApple13)及其同学创造了本游戏玩法，感谢滨蜀、mtp、四氨合铜离子等人的大力支持。</p>
     </div>
 </template>
 
@@ -30,7 +30,7 @@ checkAndPop()
 iframe{
     width: 100%;
     max-width: 600px;
-    height: calc(100vh - 250px);
+    height: calc(100vh - 300px);
     border: none;
 }
 .gitInfo{

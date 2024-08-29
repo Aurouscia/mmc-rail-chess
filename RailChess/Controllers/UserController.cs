@@ -189,8 +189,12 @@ namespace RailChess.Controllers
                     u.Ranks = null;
                 }
             }
-            list.RemoveAll(x => x.Plays == 0);
+            list.RemoveAll(x => x.Plays == 0 && x.UId != _userId);
             list.Sort((x, y) => {
+                int xIsUser = x.UId == _userId ? 1:0;
+                int yIsUser = y.UId == _userId ? 1:0;
+                if (xIsUser != yIsUser)
+                    return yIsUser - xIsUser;
                 int rankDiff = y.AvgRank - x.AvgRank;
                 if (rankDiff != 0)
                     return rankDiff;
