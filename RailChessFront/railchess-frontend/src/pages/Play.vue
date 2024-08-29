@@ -3,7 +3,7 @@ import { CSSProperties, nextTick, onMounted, onUnmounted, ref, watch } from 'vue
 import { injectApi, injectHideTopbar, injectHttp, injectPop, injectUserInfo } from '../provides';
 import { OcpStatus, Player, SyncData, TextMsg } from '../models/play';
 import SideBar from '../components/SideBar.vue';
-import { RailChessTopo,posBase } from '../models/map';
+import { RailChessTopo,Sta,posBase } from '../models/map';
 import { Api } from '../utils/api';
 import { RailChessGame } from '../models/game';
 import { avtSrc,bgSrc } from '../utils/fileSrc';
@@ -80,11 +80,9 @@ function textAttention(style:CSSProperties){
 }
 
 const staRenderedWidth = 30;
-interface StaRendered{
-    id:number,
-    style:CSSProperties
-}
-const staRenderedList = ref<StaRendered[]>([]);
+type CSSWithSId = CSSProperties & {sId:number}
+type StaRendered = Record<number, CSSWithSId>
+const staRenderedList = ref<StaRendered>({});
 function renderStaList(){
     if(!topoData.value || !arena.value){return;}
     const aw = arena.value.clientWidth;
@@ -92,7 +90,7 @@ function renderStaList(){
     autoStaSize();
     const size = staRenderedWidth*staSize.value;
     for(var i=0;i<topoData.value.Stations.length;i++){
-        const s = topoData.value.Stations[i];
+        const s:Sta = topoData.value.Stations[i];
         const id = s[0];
         const x = s[1]/posBase*aw;
         const y = s[2]/posBase*ah;
@@ -121,7 +119,8 @@ function renderStaList(){
                 }
             }
         }
-        const style:CSSProperties = {
+        const style:CSSWithSId = {
+            sId: id,
             left:x-side/2+'px',
             top:y-side/2+'px',
             width:side-4+'px',
@@ -130,15 +129,7 @@ function renderStaList(){
             boxShadow:shadow,
             zIndex
         };
-        const existing = staRenderedList.value.find(x=>x.id==id);
-        if(existing){
-            existing.style = style;
-        }else{
-            staRenderedList.value.push({
-                id,
-                style
-            })
-        }
+        staRenderedList.value[id] = style;
     }
 }
 
@@ -425,9 +416,9 @@ watch(props,()=>{
 <div class="frame" ref="frame">
     <div class="arena" ref="arena">
         <img v-if="bgFileName" ref="bg" :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
-        <div v-for="s in staRenderedList" :style="s.style" 
-            :class="{clickable:clickableStations.includes(s.id)&&playerList[0]?.id==me, selected:selectedDist==s.id}" 
-            :key="s.id" class="station" @click="clickStation(s.id)"></div>
+        <div v-for="s in staRenderedList" :style="s" 
+            :class="{clickable:clickableStations.includes(s.sId)&&playerList[0]?.id==me, selected:selectedDist==s.sId}" 
+            :key="s.sId" class="station" @click="clickStation(s.sId)"></div>
         <div v-if="animatorRendered" :style="animatorRendered.style" class="pathAnim">{{ animatorRendered.step }}</div>
     </div>
 </div>
