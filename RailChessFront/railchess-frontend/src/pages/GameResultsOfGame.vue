@@ -38,7 +38,6 @@ onMounted(async()=>{
                 <tr>
                     <th>排名</th>
                     <th>玩家</th>
-                    <th>得分</th>
                 </tr>
                 <tr v-for="log in data.Logs" @click="jumpToPlayerLog(log.UserId)">
                     <td>
@@ -46,9 +45,6 @@ onMounted(async()=>{
                     </td>
                     <td>
                         {{ log.UserName }}
-                    </td>
-                    <td>
-                        {{ log.EloDelta }}
                     </td>
                 </tr>
             </table>

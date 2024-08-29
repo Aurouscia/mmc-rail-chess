@@ -45,7 +45,6 @@ onMounted(async()=>{
                     <th>时间</th>
                     <th>棋盘</th>
                     <th>排名</th>
-                    <th>得分</th>
                 </tr>
                 <tr v-for="log in data.Logs" @click="jumpToGameLog(log.GameId)">
                     <td class="time">
@@ -55,10 +54,7 @@ onMounted(async()=>{
                         {{ log.MapName }}
                     </td>
                     <td>
-                        {{ log.Rank }}
-                    </td>
-                    <td>
-                        {{ log.EloDelta }}
+                        {{ log.Rank }}/{{ log.PlayerCount }}
                     </td>
                 </tr>
             </table>

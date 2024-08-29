@@ -32,10 +32,23 @@ namespace RailChess.Controllers
                 select new { r.Rank, r.GameId, g.StartTime, r.EloDelta, MapName = m.Title }).ToList();
             data.Sort((x, y) => DateTime.Compare(y.StartTime, x.StartTime));
             var userName = _context.Users.Where(x => x.Id == userId).Select(x => x.Name).FirstOrDefault();
+
+            var gameIds = data.Select(x => x.GameId).ToList();
+            var relatedRes = (
+                from gr in _context.GameResults
+                where gameIds.Contains(gr.GameId)
+                group gr by gr.GameId into g
+                select new
+                {
+                    GameId = g.Key,
+                    Count = g.Count()
+                }).ToList();
+
             var res = new GameResultListResponse();
             data.ForEach(d =>
             {
-                res.Logs.Add(new(d.Rank, d.GameId, d.StartTime, d.EloDelta, d.MapName, userName??"??", userId));
+                var playerCount = relatedRes.Find(rs => rs.GameId == d.GameId)?.Count ?? 0;
+                res.Logs.Add(new(d.Rank, playerCount, d.GameId, d.StartTime, d.EloDelta, d.MapName, userName??"??", userId));
             });
             return this.ApiResp(res);
         }
@@ -55,7 +68,7 @@ namespace RailChess.Controllers
             data.Sort((x, y) => x.Rank - y.Rank);
             data.ForEach(d =>
             {
-                res.Logs.Add(new(d.Rank, d.GameId, game.StartTime, d.EloDelta, mapName ?? "??", d.UserName, d.UserId));
+                res.Logs.Add(new(d.Rank, data.Count, d.GameId, game.StartTime, d.EloDelta, mapName ?? "??", d.UserName, d.UserId));
             });
             return this.ApiResp(res);
         }
@@ -90,9 +103,11 @@ namespace RailChess.Controllers
             public class GameResultListItem
             {
                 public GameResultListItem(
-                    int rank, int gameId, DateTime startTime, int eloDelta, string mapName, string userName, int userId)
+                    int rank, int playerCount, int gameId, DateTime startTime, int eloDelta,
+                    string mapName, string userName, int userId)
                 {
                     Rank = rank;
+                    PlayerCount = playerCount;
                     GameId = gameId;
                     StartTime = startTime.ToString("yy/MM/dd HH:mm");
                     EloDelta = eloDelta;
@@ -101,6 +116,7 @@ namespace RailChess.Controllers
                     UserId = userId;
                 }
                 public int Rank { get; set; }
+                public int PlayerCount { get; set; }
                 public int GameId { get; set; }
                 public string StartTime { get; set; }
                 public int EloDelta { get; set; }

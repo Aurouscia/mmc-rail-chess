@@ -24,7 +24,7 @@ onMounted(async()=>{
 
 <template>
 <h1>排行榜</h1>
-<div class="note">注：双人局分别记[1, 0]，三人局分别记[1, 0.66, 0.33, 0]，以此类推</div>
+<div class="note">注：双人局分别记[100, 0]，四人局分别记[100, 66, 33, 0]，以此类推</div>
 <div>
     <table>
         <tr>
