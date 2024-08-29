@@ -45,8 +45,9 @@ onMounted(async()=>{
                     <th>时间</th>
                     <th>棋盘</th>
                     <th>排名</th>
+                    <th></th>
                 </tr>
-                <tr v-for="log in data.Logs" @click="jumpToGameLog(log.GameId)">
+                <tr v-for="log in data.Logs">
                     <td class="time">
                         {{ log.StartTime }}
                     </td>
@@ -55,6 +56,10 @@ onMounted(async()=>{
                     </td>
                     <td>
                         {{ log.Rank }}/{{ log.PlayerCount }}
+                    </td>
+                    <td>
+                        <button class="minor" @click="jumpToGameLog(log.GameId)">详情</button>
+                        <button class="minor" @click="router.push('/playback/'+log.GameId)">回放</button>
                     </td>
                 </tr>
             </table>
@@ -67,12 +72,6 @@ onMounted(async()=>{
 </template>
 
 <style scoped>
-tr{
-    cursor: pointer;
-}
-tr:hover td{
-    background-color: #ccc;
-}
 table{
     table-layout: fixed;
     width: 100%;

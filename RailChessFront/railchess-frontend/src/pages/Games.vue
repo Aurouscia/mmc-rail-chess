@@ -77,7 +77,7 @@ onMounted(async ()=>{
             {{ g.HostUserName }}
         </td>
     </tr>
-    <tr><td colspan="3">已结束的棋局会被封存，敬请期待回放功能</td></tr>
+    <tr><td colspan="3">已结束的棋局会被封存，请在战绩页面使用回放功能</td></tr>
 </table>
 <Loading v-else></Loading>
 <SideBar ref="sidebar">

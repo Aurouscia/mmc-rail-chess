@@ -25,3 +25,17 @@ export interface GameActiveResultItem{
     HostUserName:string
     StartedMins:number
 }
+
+export interface GameTimeline
+{
+    Items:GameTimelineItem[],
+    Avts:Record<number, string>,
+    Warning:string
+}
+export interface GameTimelineItem
+{
+    UId: number
+    Rand: number
+    Cap: number
+    T: number
+}

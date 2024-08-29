@@ -1,0 +1,114 @@
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import { GameTimeline } from '../models/game';
+import { injectApi, injectPop } from '../provides';
+import { avtSrc } from '../utils/fileSrc';
+
+const props = defineProps<{
+    gameId:number
+}>()
+const emit = defineEmits<{
+    (e:'viewTime', time:number):void
+}>()
+
+const data = ref<GameTimeline>();
+const api = injectApi()
+const pop = injectPop()
+const selectedIdx = ref(-1)
+async function load(){
+    data.value = await api.game.loadTimeline(props.gameId)
+    if(data.value)
+        selectedIdx.value = data.value.Items.length-1;
+}
+function capColor(capCount:number){
+    if(capCount <= 0){
+        return 'red'
+    }
+    if(capCount <= 9){
+        return 'black'
+    }
+    return 'green'
+}
+function seekLeft(){
+    if(data.value && selectedIdx.value>0){
+        selectedIdx.value -= 1
+        emit('viewTime', data.value.Items[selectedIdx.value].T)
+    }
+}
+function seekRight(){
+    if(data.value && selectedIdx.value<data.value.Items.length-1){
+        selectedIdx.value += 1
+        emit('viewTime', data.value.Items[selectedIdx.value].T)
+    }
+}
+onMounted(async()=>{
+    await load()
+    if(data.value?.Warning){
+        pop.value.show(data.value.Warning, 'warning')
+    }
+})
+</script>
+
+<template>
+    <div class="seek">
+        <button @click="seekLeft"><<</button>
+        <button @click="seekRight">>></button>
+    </div>
+    <div class="timeline" v-if="data">
+        <div v-for="i,idx in data.Items" :key="i.UId" @click="selectedIdx=idx; emit('viewTime', i.T)" :class="{selected: idx===selectedIdx}">
+            <img :src="avtSrc(data.Avts[i.UId])"/>
+            <div class="cap" :style="{backgroundColor:capColor(i.Cap)}">+{{ i.Cap }}</div>
+        </div>
+    </div>
+</template>
+
+<style scoped>
+.seek{
+    position: fixed;
+    right: 10px;
+    bottom: 80px;
+    padding: 5px;
+    border-radius: 10px;
+    background-color: white;
+    box-shadow: 0px 0px 5px 0px black;
+}
+.timeline{
+    height: 70px;
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    overflow-x: scroll;
+    display: flex;
+    gap: 5px;
+    background-color: white;
+    box-shadow: 0px 0px 10px 0px black;
+}
+.cap{
+    padding: 1px;
+    border-radius: 2px;
+}
+.timeline>div{
+    padding: 2px;
+    width: 36px;
+    height: 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color:white;
+    cursor: pointer;
+}
+.timeline>div:hover{
+    background-color: #ddd;
+}
+.timeline>div>img{
+    width: 24px;
+    height: 24px;
+    border-radius: 1000px;
+}
+.selected{
+    background-color: #bbb;
+}
+</style>

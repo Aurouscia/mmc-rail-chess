@@ -59,8 +59,10 @@ namespace RailChess.Play
             _context = context;
         }
 
-        public SyncData GetSyncData(bool onlyWriteResult = false)
+        public SyncData GetSyncData(bool onlyWriteResult = false, long tFilter = 0)
         {
+            if(tFilter > 0)
+                _eventsService.TFilter = TimeStamp.Long2DateTime(tFilter).Add(TimeSpan.FromMilliseconds(10));
             var players = _playerService.GetOrdered();
             var locEvents = _eventsService.PlayerLocateEvents();
             var stuckEvents = _eventsService.PlayerStuckEvents();

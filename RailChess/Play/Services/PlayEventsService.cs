@@ -12,6 +12,11 @@ namespace RailChess.Play.Services
         private readonly IMemoryCache _cache;
         public int GameId { get; set; }
         public int UserId { get; set; }
+        /// <summary>
+        /// 只取比该时间早的时间的事件，当其大于最小值时生效
+        /// </summary>
+        public DateTime TFilter { get; set; } = DateTime.MinValue;
+        public bool TFiltered => TFilter > DateTime.MinValue;
         public PlayEventsService(PlayGameService gameService, RailChessContext context, IMemoryCache cache)
         {
             _gameService = gameService;
@@ -30,6 +35,11 @@ namespace RailChess.Play.Services
                 {
                     SlidingExpiration = TimeSpan.FromMinutes(30)
                 });
+            }
+            if (TFiltered)
+            {
+                var firstExceed = list.FindIndex(x => x.Time > TFilter);
+                list = list.GetRange(0, firstExceed);
             }
             return list;
         }

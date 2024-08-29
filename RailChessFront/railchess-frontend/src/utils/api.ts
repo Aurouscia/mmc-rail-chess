@@ -1,4 +1,4 @@
-import { GameActiveResult, RailChessGame } from "../models/game";
+import { GameActiveResult, GameTimeline, RailChessGame } from "../models/game";
 import { RailChessMapIndexResult, RailChessTopo, TopoEditorLoadResult } from "../models/map";
 import { InitData } from "../models/play";
 import { QuickSearchResult } from "../models/quickSearch";
@@ -181,6 +181,15 @@ export class Api{
                 "删除成功"
             )
             return resp.success
+        },
+        loadTimeline:async(id:number)=>{
+            const resp = await this.httpClient.request(
+                "/api/Game/LoadTimeline",
+                "get",
+                {id}
+            )
+            if(resp.success)
+                return resp.data as GameTimeline
         }
     }
     gameResult = {

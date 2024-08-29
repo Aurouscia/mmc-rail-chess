@@ -20,7 +20,9 @@ interface SelectRequest extends RequestModelBase{
     Path:number[]
 }
 interface OutRequest extends RequestModelBase{}
-interface SyncMeRequest extends RequestModelBase{}
+interface SyncMeRequest extends RequestModelBase{
+    AtT:number
+}
 interface KickAfkRequest extends RequestModelBase{}
 
 export class SignalRClient{
@@ -96,9 +98,10 @@ export class SignalRClient{
         };
         await this.conn.invoke("Out",r);
     }
-    async syncMe(){
+    async syncMe(atT:number = 0){
         const r:SyncMeRequest = {
-            GameId: this.gameId
+            GameId: this.gameId,
+            AtT: atT
         };
         await this.conn.invoke("SyncMe",r)
     }

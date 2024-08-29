@@ -5,7 +5,7 @@ import { OcpStatus, Player, SyncData, TextMsg } from '../models/play';
 import SideBar from '../components/SideBar.vue';
 import { RailChessTopo,Sta,posBase } from '../models/map';
 import { Api } from '../utils/api';
-import { RailChessGame } from '../models/game';
+import { GameTimeline, RailChessGame } from '../models/game';
 import { avtSrc,bgSrc } from '../utils/fileSrc';
 import { Scaler } from '../models/scale';
 import { SignalRClient } from '../utils/signalRClient';
@@ -14,8 +14,12 @@ import { useAnimator, AnimNode } from '../utils/pathAnim';
 import _, { truncate } from 'lodash'
 import { boxTypes } from '../components/Pop.vue';
 import { sleep } from '../utils/sleep';
+import Timeline from '../components/Timeline.vue';
 
-const props = defineProps<{id:string}>();
+const props = defineProps<{
+    id:string,
+    playback?:string
+}>();
 const gameId = parseInt(props.id);
 
 const playerList = ref<Player[]>([]);
@@ -113,11 +117,11 @@ function renderStaList(){
                 side = size *1.3;
                 backgroundImage = `url("${avtSrc(player.avtFileName)}")`;
                 zIndex = 13;
-                if(isNewOcp){
-                    zIndex = 14;
-                    shadow = "0px 0px 5px 5px orange"
-                }
             }
+        }
+        if(isNewOcp){
+            zIndex = 14;
+            shadow = "0px 0px 5px 5px orange"
         }
         const style:CSSWithSId = {
             sId: id,
@@ -170,6 +174,9 @@ function renderPathAnims() {
     setPaths(animPath);
 }
 function clickStation(id:number){
+    if(props.playback){
+        return;
+    }
     if(!clickableStations.value.includes(id)){
         selectedDist.value = undefined;
         return;
@@ -178,6 +185,9 @@ function clickStation(id:number){
     renderPathAnims();
 }
 async function select(){
+    if(props.playback){
+        return;
+    }
     if(!currentSelections.value || currentSelections.value.length==0){
         await sgrc.select([]);
         return;
@@ -312,6 +322,7 @@ var me:number;
 var jwtToken:string|null;
 var sgrc:SignalRClient
 const moveLocked = ref(false)
+const timeline = ref<GameTimeline>()
 onMounted(async()=>{
     injectHideTopbar()();
     api = injectApi();
@@ -357,6 +368,9 @@ onMounted(async()=>{
             send();
         }
     })
+    if(props.playback){
+        timeline.value = await api.game.loadTimeline(gameId)
+    }
 })
 onUnmounted(()=>{
     sgrc.conn.stop();
@@ -409,7 +423,7 @@ watch(props,()=>{
 </div>    
 <div class="randNumOuter">
     <div v-show="gameStarted && !ended" class="randNum" :style="randNumStyle">{{ randNum }}</div>
-    <div v-show="gameStarted && !ended" class="status">{{playerList[0]?.id!=me ? '▲等待玩家': '▲轮到你了'}}</div>
+    <div v-show="gameStarted && !ended" class="status">{{playerList[0]?.id!=me || playback ? '▲等待玩家': '▲轮到你了'}}</div>
     <div v-show="!gameStarted && !ended" class="status">等待房主开始中</div>
     <div v-show="ended" class=status>本对局已经结束</div>
 </div>
@@ -417,7 +431,7 @@ watch(props,()=>{
     <div class="arena" ref="arena">
         <img v-if="bgFileName" ref="bg" :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
         <div v-for="s in staRenderedList" :style="s" 
-            :class="{clickable:clickableStations.includes(s.sId)&&playerList[0]?.id==me, selected:selectedDist==s.sId}" 
+            :class="{clickable:clickableStations.includes(s.sId)&&playerList[0]?.id==me&&!playback, selected:selectedDist==s.sId&&!playback}" 
             :key="s.sId" class="station" @click="clickStation(s.sId)"></div>
         <div v-if="animatorRendered" :style="animatorRendered.style" class="pathAnim">{{ animatorRendered.step }}</div>
     </div>
@@ -431,8 +445,8 @@ watch(props,()=>{
     <button @click="scaler?.autoMutiple(1)">占满</button>
     <button @click="scaler?.autoMutiple(1,true)">总览</button>
 </div>
-<button v-show="selectedDist && !ended" class="decideBtn" @click="select">确认选择</button>
-<button v-show="gameStarted && !ended && playerList[0]?.id==me && !currentSelections?.length" class="cancel decideBtn" @click="select">无路可走</button>
+<button v-show="selectedDist && !ended && !playback" class="decideBtn" @click="select">确认选择</button>
+<button v-show="gameStarted && !ended && !playback && playerList[0]?.id==me && !currentSelections?.length" class="cancel decideBtn" @click="select">无路可走</button>
 <SideBar ref="sidebar">
     <TextMsgDisplay :msgs="msgs"></TextMsgDisplay>
     <div>
@@ -459,6 +473,7 @@ watch(props,()=>{
         </div>
     </div>
 </SideBar>
+<Timeline v-if="playback" :game-id="gameId" @view-time="t=>sgrc.syncMe(t)"></Timeline>
 </template>
 
 <style scoped>

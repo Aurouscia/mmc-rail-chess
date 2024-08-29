@@ -2,5 +2,6 @@
 {
     public class SyncMeRequest:RequestModelBase
     {
+        public long AtT { get; set; }
     }
 }

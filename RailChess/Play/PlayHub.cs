@@ -193,9 +193,9 @@ namespace RailChess.Play
                 await SyncAll();
             }
         }
-        public async Task SyncMe(SyncMeRequest _)
+        public async Task SyncMe(SyncMeRequest req)
         {
-            var data = Service.GetSyncData();
+            var data = Service.GetSyncData(false, req.AtT);
             await Clients.Caller.SendAsync(syncMethod, data);
         }
         private async Task SyncAll()

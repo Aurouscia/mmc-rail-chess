@@ -9,6 +9,7 @@ import GameResults from './pages/GameResults.vue'
 import GameResultsOfGame from './pages/GameResultsOfGame.vue'
 import RankingList from './pages/RankingList.vue'
 import Guide from './pages/Guide.vue'
+import { RouteLocation } from 'vue-router'
 
 export const routes = [
     {
@@ -36,6 +37,11 @@ export const routes = [
         component: Play,
         props:true,
         name:'play'
+    },{
+        path: '/playback/:id',
+        component: Play,
+        props: (route:RouteLocation) => ({ id: route.params.id, playback: 'playback' }),
+        name:'playback'
     },{
         path: '/results/ofPlayer/:userId?',
         component: GameResults,
