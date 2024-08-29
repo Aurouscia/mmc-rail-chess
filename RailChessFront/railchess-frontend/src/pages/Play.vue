@@ -89,7 +89,6 @@ function renderStaList(){
     if(!topoData.value || !arena.value){return;}
     const aw = arena.value.clientWidth;
     const ah = arena.value.clientHeight;
-    console.log('render')
     autoStaSize();
     const size = staRenderedWidth*staSize.value;
     for(var i=0;i<topoData.value.Stations.length;i++){

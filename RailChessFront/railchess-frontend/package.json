@@ -5,9 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "clean": "node clean.cjs",
-    "build": "node clean.cjs && vue-tsc && vite build",
-    "preview": "vite preview"
+    "build": "vue-tsc && vite build",
+    "prebuild": "node src/build/clean.cjs && node src/build/markVersion.cjs"
   },
   "dependencies": {
     "@aurouscia/au-undo-redo": "^0.1.0",

@@ -7,6 +7,10 @@ import { injectApi, injectUserInfo } from '../provides';
 import Loading from '../components/Loading.vue';
 import Search from '../components/Search.vue';
 import { router } from '../main';
+import { useFeVersionChecker } from '../utils/feVersionCheck';
+
+const { checkAndPop } = useFeVersionChecker()
+checkAndPop()
 
 const active = ref<GameActiveResult>();
 async function loadActive(){

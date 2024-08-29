@@ -374,3 +374,6 @@ FodyWeavers.xsd
 
 # front end build output target
 /RailChess/wwwroot/*
+
+/RailChessFront/railchess-frontend/src/build/feVersion.js
+/RailChessFront/railchess-frontend/public/feVersion.txt

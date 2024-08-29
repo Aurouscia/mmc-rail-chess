@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useFeVersionChecker } from '../utils/feVersionCheck';
+
+const { checkAndPop } = useFeVersionChecker()
+checkAndPop()
 </script>
 
 <template>
@@ -18,7 +22,7 @@
     </div>
 
     <div>
-        <p>感谢mmc(SlinkierApple13)及其同学创造了本游戏玩法，感谢mtp、四氨合铜离子、等人的支持。</p>
+        <p>感谢mmc(SlinkierApple13)及其同学创造了本游戏玩法，感谢滨蜀、mtp、四氨合铜离子等人的支持。</p>
     </div>
 </template>
 
@@ -26,7 +30,7 @@
 iframe{
     width: 100%;
     max-width: 600px;
-    height: 260px;
+    height: calc(100vh - 250px);
     border: none;
 }
 .gitInfo{
