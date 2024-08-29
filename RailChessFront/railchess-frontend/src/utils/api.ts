@@ -2,7 +2,7 @@ import { GameActiveResult, RailChessGame } from "../models/game";
 import { RailChessMapIndexResult, RailChessTopo, TopoEditorLoadResult } from "../models/map";
 import { InitData } from "../models/play";
 import { QuickSearchResult } from "../models/quickSearch";
-import { User } from "../models/user";
+import { User, UserRankingListItem } from "../models/user";
 import { HttpClient } from "./httpClient";
 import { IdentityInfo } from "./userInfo";
 
@@ -70,7 +70,7 @@ export class Api{
                     "/api/User/RankingList",
                     "get")
                 if(res.success){
-                    return res.data as User[]
+                    return res.data as UserRankingListItem[]
                 }
             }
         }

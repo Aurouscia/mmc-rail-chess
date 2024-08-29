@@ -157,9 +157,56 @@ namespace RailChess.Controllers
 
         public IActionResult RankingList()
         {
-            var res = _context.Users.Where(x=>x.Elo!=0).OrderByDescending(x => x.Elo).ToList();
-            res.ForEach(x => x.Pwd = "");
-            return this.ApiResp(res);
+            var allUsers = _context.Users.ToList();
+            var allGameRess = _context.GameResults.ToList();
+            var allGames = _context.Games.Where(x => x.Ended).ToList();
+            var list = allUsers.ConvertAll(x => new UserRankingListItem()
+            {
+                UId = x.Id,
+                UName = x.Name,
+                UAvt = x.AvatarName,
+            });
+            foreach(var g in allGames)
+            {
+                var ress = allGameRess.FindAll(x => x.GameId == g.Id);
+                var rankBase = ress.Count - 1;
+                ress.ForEach(r =>
+                {
+                    var user = list.Find(u => u.UId == r.UserId);
+                    if (user is null)
+                        return;
+                    user.Plays++;
+                    float rankEqv = 1 - (float)(r.Rank - 1) / (float)rankBase;
+                    user.Ranks ??= new();
+                    user.Ranks.Add(rankEqv);
+                });
+            }
+            foreach(var u in list)
+            {
+                if (u.Ranks is not null && u.Ranks.Count >= 10)
+                {
+                    u.AvgRank = (int)(u.Ranks.Average() * 10000);
+                    u.Ranks = null;
+                }
+            }
+            list.RemoveAll(x => x.Plays == 0);
+            list.Sort((x, y) => {
+                int rankDiff = y.AvgRank - x.AvgRank;
+                if (rankDiff != 0)
+                    return rankDiff;
+                return y.Plays - x.Plays;
+            });
+            return this.ApiResp(list);
+        }
+
+        public class UserRankingListItem
+        {
+            public int UId { get; set; }
+            public string? UName { get; set; }
+            public string? UAvt { get; set; }
+            public int Plays { get; set; }
+            public List<float>? Ranks { get; set; }
+            public int AvgRank { get; set; }
         }
 
         private readonly static List<string> supportedAvatarExts = new() { ".png", ".jpg", ".jpeg" };

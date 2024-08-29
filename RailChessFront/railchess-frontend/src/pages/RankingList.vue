@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue';
 import { avtSrc } from '../utils/fileSrc';
-import { User } from '../models/user';
+import { UserRankingListItem } from '../models/user';
 import { Api } from '../utils/api';
 import { useRouter } from 'vue-router';
 
-const data = ref<User[]>();
+const data = ref<UserRankingListItem[]>();
 async function load(){
     data.value = await api.identites.user.rankingList();
 }
@@ -24,22 +24,27 @@ onMounted(async()=>{
 
 <template>
 <h1>排行榜</h1>
+<div class="note">注：双人局分别记[1, 0]，三人局分别记[1, 0.66, 0.33, 0]，以此类推</div>
 <div>
     <table>
         <tr>
             <th class="avtTd"></th>
             <th>用户</th>
-            <th>分数</th>
+            <th>参加局数</th>
+            <th>平均胜率</th>
         </tr>
-        <tr v-for="u in data" @click="jumpToPlayerLog(u.Id)" :key="u.Id">
+        <tr v-for="u in data" @click="jumpToPlayerLog(u.UId)" :key="u.UId">
             <td class="avtTd">
-                <img v-if="u.AvatarName" :src="avtSrc(u.AvatarName)" width="35" height="35">
+                <img v-if="u.UAvt" :src="avtSrc(u.UAvt)" width="35" height="35">
             </td>
             <td>
-                {{u.Name}}
+                {{ u.UName }}
             </td>
             <td>
-                {{u.Elo}}
+                {{ u.Plays }}
+            </td>
+            <td>
+                {{ u.AvgRank/100 || '——' }}
             </td>
         </tr>
     </table>
@@ -47,6 +52,11 @@ onMounted(async()=>{
 </template>
 
 <style scoped>
+.note{
+    text-align: center;
+    margin-bottom: 10px;
+    color: #666
+}
 .avtTd{
     background-color: white !important;
     width: 35px !important;
