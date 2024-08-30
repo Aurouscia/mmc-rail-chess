@@ -39,7 +39,7 @@ namespace RailChess.Controllers
                         || DateTime.Now - itsLastEvent.Time > timeoutSpan)
                     {
                         game.Deleted = true;
-                        _context.Update(g);
+                        _context.Update(game);
                     }
                 });
                 _context.SaveChanges();
