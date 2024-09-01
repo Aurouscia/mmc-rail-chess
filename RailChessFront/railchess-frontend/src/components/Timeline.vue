@@ -21,7 +21,8 @@ async function load(){
         selectedIdx.value = data.value.Items.length-1;
 }
 function capColor(capCount:number){
-    if(capCount <= 0){
+    if(capCount < 0){
+        //卡住记作-1
         return 'red'
     }
     if(capCount <= 9){
@@ -57,7 +58,8 @@ onMounted(async()=>{
     <div class="timeline" v-if="data">
         <div v-for="i,idx in data.Items" :key="i.UId" @click="selectedIdx=idx; emit('viewTime', i.T)" :class="{selected: idx===selectedIdx}">
             <img :src="avtSrc(data.Avts[i.UId])"/>
-            <div class="cap" :style="{backgroundColor:capColor(i.Cap)}">+{{ i.Cap }}</div>
+            <div class="cap" :style="{backgroundColor:capColor(i.Cap)}">{{ i.Cap < 0 ? '卡' : '+'+i.Cap }}</div>
+            <!--卡住记作-1-->
         </div>
     </div>
 </template>

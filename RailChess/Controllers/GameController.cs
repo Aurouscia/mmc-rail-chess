@@ -141,6 +141,8 @@ namespace RailChess.Controllers
                         Rand = rand,
                         T = TimeStamp.DateTime2Long(e.Time)
                     };
+                    if (e.EventType == RailChessEventType.PlayerStuck)
+                        activeItem.Cap = -1;
                 }
                 else
                 {
