@@ -86,8 +86,8 @@ onMounted(async ()=>{
         <tr>
             <td>随机数</td>
             <td>
-                下界 <input v-model="creating.RandMin" type="number"/><br/>
-                上界 <input v-model="creating.RandMax" type="number"/>
+                下界 <input v-model="creating.RandMin" type="number" min="0" max="13"/><br/>
+                上界 <input v-model="creating.RandMax" type="number" min="3" max="16"/>
             </td>
         </tr>
         <tr>
@@ -103,7 +103,7 @@ onMounted(async ()=>{
         </tr>
         <tr>
             <td>可中途换乘</td>
-            <td><input type="number" v-model="creating.AllowTransfer" min="0" max="10"></td>
+            <td><input type="number" v-model="creating.AllowTransfer" min="0" max="2"></td>
         </tr>
         <tr>
             <td>允许跨过<br/>其他玩家<br/>占领车站</td>
