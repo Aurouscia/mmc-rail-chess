@@ -96,7 +96,9 @@ export class SignalRClient{
         const r:OutRequest = {
             GameId: this.gameId
         };
-        await this.conn.invoke("Out",r);
+        if(window.confirm("是否退出棋局")){
+            await this.conn.invoke("Out",r);
+        }
     }
     async syncMe(atT:number = 0){
         const r:SyncMeRequest = {
