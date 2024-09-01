@@ -420,7 +420,7 @@ watch(props,()=>{
     <div v-show="!gameStarted && !ended" class="status">等待房主开始中</div>
     <div v-show="ended" class=status>本对局已经结束</div>
 </div>
-<div class="frame" ref="frame">
+<div class="frame" ref="frame" :class="{playbackFrame:playback}">
     <div class="arena" ref="arena">
         <img v-if="bgFileName" ref="bg" :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
         <div v-for="s in staRenderedList" :style="s" 
@@ -595,6 +595,9 @@ canvas{
     top:90px;left:0px;right:0px;bottom: 0px;
     overflow: scroll;
     user-select: none;
+}
+.playbackFrame{
+    bottom: 70px;
 }
 .menuEntry{
     position: fixed;
