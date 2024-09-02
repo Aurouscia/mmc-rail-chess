@@ -24,14 +24,14 @@ onMounted(async()=>{
 
 <template>
 <h1>排行榜</h1>
-<div class="note">注：双人局分别记[100, 0]，四人局分别记[100, 66, 33, 0]，以此类推</div>
+<!--<div class="note">注：双人局分别记[100, 0]，四人局分别记[100, 66, 33, 0]，以此类推</div>-->
 <div>
     <table>
         <tr>
             <th class="avtTd"></th>
             <th>用户</th>
             <th>参加局数</th>
-            <th>平均胜率</th>
+            <!--<th>平均胜率</th>-->
         </tr>
         <tr v-for="u in data" @click="jumpToPlayerLog(u.UId)" :key="u.UId">
             <td class="avtTd">
@@ -43,9 +43,9 @@ onMounted(async()=>{
             <td>
                 {{ u.Plays }}
             </td>
-            <td>
+            <!--<td>
                 {{ u.AvgRank/100 || '——' }}
-            </td>
+            </td>-->
         </tr>
     </table>
 </div>
