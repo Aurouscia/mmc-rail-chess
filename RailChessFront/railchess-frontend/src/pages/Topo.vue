@@ -2,7 +2,7 @@
 import { onMounted, onUnmounted, ref } from 'vue';
 import { Line, RailChessTopo, Sta, StaParsed, toSta, toStaParsed } from '../models/map';
 import { Api } from '../utils/api';
-import { injectApi, injectHideTopbar } from '../provides';
+import { injectApi, injectHideTopbar, injectPop } from '../provides';
 import { MouseDragListener } from '../utils/mouseDrag';
 import SideBar from '../components/SideBar.vue'
 import { router } from '../main';
@@ -309,6 +309,7 @@ var api:Api;
 var disposeListeners:()=>void;
 var movingSta:number = 0;
 const sb = ref<InstanceType<typeof SideBar>>();
+const pop = injectPop()
 onMounted(async()=>{
   injectHideTopbar()();
   api = injectApi();
@@ -331,6 +332,9 @@ onMounted(async()=>{
       }
       if(res && res.FileName){
         bgImg.value = bgSrc(res.FileName);
+      }
+      if(res && res.WarnMsg){
+        pop.value.show(res.WarnMsg, 'warning')
       }
     }
   }

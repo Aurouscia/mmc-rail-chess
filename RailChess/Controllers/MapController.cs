@@ -128,10 +128,12 @@ namespace RailChess.Controllers
             var m = _context.Maps.Find(id);
             if (m is null)
                 return this.ApiFailedResp("找不到指定棋盘");
+            string? warnMsg = _userId == m.Author ? null : "该棋盘不属于你<br/><b>不能保存</b>只能浏览";
             TopoEditorLoadResult res = new()
             {
                 TopoData = m.TopoData,
-                FileName = m.ImgFileName
+                FileName = m.ImgFileName,
+                WarnMsg = warnMsg,
             };
             return this.ApiResp(res);
         }
@@ -245,6 +247,7 @@ namespace RailChess.Controllers
         {
             public string? TopoData { get; set; }
             public string? FileName { get; set; }
+            public string? WarnMsg { get; set; }
         }
     }
 }

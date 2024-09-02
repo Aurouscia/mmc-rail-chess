@@ -16,7 +16,8 @@ export interface RailChessMapIndexResultItem{
 
 export interface TopoEditorLoadResult{
     TopoData?:string,
-    FileName:string
+    FileName:string,
+    WarnMsg?:string
 }
 
 export const posBase = 10000
