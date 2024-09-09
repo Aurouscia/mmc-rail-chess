@@ -37,5 +37,5 @@ export interface GameTimelineItem
     UId: number
     Rand: number
     Cap: number
-    T: number
+    EId: number
 }

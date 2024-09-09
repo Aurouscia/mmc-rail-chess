@@ -442,7 +442,7 @@ watch(props,()=>{
     <div v-show="gameStarted && !ended" class="randNum" :style="randNumStyle">{{ randNum }}</div>
     <div v-show="gameStarted && !ended" class="status">{{ randNumText }}</div>
     <div v-show="!gameStarted && !ended" class="status">等待房主开始中</div>
-    <div v-show="ended" class=status>本对局已经结束</div>
+    <div v-show="ended" class="status">本对局已经结束</div>
 </div>
 <div class="frame" ref="frame" :class="{playbackFrame:playback}">
     <div class="arena" ref="arena">

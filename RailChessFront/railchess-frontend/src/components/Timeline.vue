@@ -8,7 +8,7 @@ const props = defineProps<{
     gameId:number
 }>()
 const emit = defineEmits<{
-    (e:'viewTime', time:number):void
+    (e:'viewTime', eid?:number):void
 }>()
 
 const data = ref<GameTimeline>();
@@ -33,14 +33,17 @@ function capColor(capCount:number){
 function seekLeft(){
     if(data.value && selectedIdx.value>0){
         selectedIdx.value -= 1
-        emit('viewTime', data.value.Items[selectedIdx.value].T)
+        selectedItem()
     }
 }
 function seekRight(){
     if(data.value && selectedIdx.value<data.value.Items.length-1){
         selectedIdx.value += 1
-        emit('viewTime', data.value.Items[selectedIdx.value].T)
+        selectedItem()
     }
+}
+function selectedItem(){
+    emit('viewTime', data.value?.Items[selectedIdx.value+1]?.EId)
 }
 onMounted(async()=>{
     await load()
@@ -56,7 +59,7 @@ onMounted(async()=>{
         <button @click="seekRight">>></button>
     </div>
     <div class="timeline" v-if="data">
-        <div v-for="i,idx in data.Items" :key="i.UId" @click="selectedIdx=idx; emit('viewTime', i.T)" :class="{selected: idx===selectedIdx}">
+        <div v-for="i,idx in data.Items" :key="i.UId" @click="selectedIdx=idx; selectedItem()" :class="{selected: idx===selectedIdx}">
             <img :src="avtSrc(data.Avts[i.UId])"/>
             <div class="cap" :style="{backgroundColor:capColor(i.Cap)}">{{ i.Cap < 0 ? '卡' : '+'+i.Cap }}</div>
             <!--卡住记作-1-->

@@ -2,6 +2,6 @@
 {
     public class SyncMeRequest:RequestModelBase
     {
-        public long AtT { get; set; }
+        public int TFilterId { get; set; }
     }
 }

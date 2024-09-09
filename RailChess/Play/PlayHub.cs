@@ -195,7 +195,7 @@ namespace RailChess.Play
         }
         public async Task SyncMe(SyncMeRequest req)
         {
-            var data = Service.GetSyncData(false, req.AtT);
+            var data = Service.GetSyncData(false, req.TFilterId);
             await Clients.Caller.SendAsync(syncMethod, data);
         }
         private async Task SyncAll()

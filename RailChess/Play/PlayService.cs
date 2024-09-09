@@ -59,12 +59,12 @@ namespace RailChess.Play
             _context = context;
         }
 
-        public SyncData GetSyncData(bool onlyWriteResult = false, long tFilter = 0)
+        public SyncData GetSyncData(bool onlyWriteResult = false, int tFilterId = 0)
         {
             bool playback = false;
-            if (tFilter > 0)
+            if (tFilterId > 0)
             {
-                _eventsService.TFilter = TimeStamp.Long2DateTime(tFilter).Add(TimeSpan.FromMilliseconds(500));
+                _eventsService.TFilterId = tFilterId;
                 playback = true;
             }
             var players = _playerService.GetOrdered();

@@ -139,7 +139,7 @@ namespace RailChess.Controllers
                         UId = e.PlayerId,
                         Cap = 0,
                         Rand = rand,
-                        T = TimeStamp.DateTime2Long(e.Time)
+                        EId = e.Id,
                     };
                     if (e.EventType == RailChessEventType.PlayerStuck)
                         activeItem.Cap = -1;
@@ -149,8 +149,6 @@ namespace RailChess.Controllers
                     if (activeItem is { })
                     {
                         activeItem.Cap += 1;
-                        activeItem.T = TimeStamp.DateTime2Long(e.Time);
-                        //events按时间排列，e.Time必 >= activeItem.T
                     }
                 }
             }
@@ -215,7 +213,7 @@ namespace RailChess.Controllers
                 public int UId { get; set; }
                 public int Rand { get; set; }
                 public int Cap { get; set; }
-                public long T { get; set; }
+                public int EId { get; set; }
             }
         }
     }
