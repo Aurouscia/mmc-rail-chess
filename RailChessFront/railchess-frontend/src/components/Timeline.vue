@@ -60,6 +60,7 @@ onMounted(async()=>{
             <img :src="avtSrc(data.Avts[i.UId])"/>
             <div class="cap" :style="{backgroundColor:capColor(i.Cap)}">{{ i.Cap < 0 ? '卡' : '+'+i.Cap }}</div>
             <!--卡住记作-1-->
+            <div class="rand">{{ i.Rand }}</div>
         </div>
     </div>
 </template>
@@ -68,35 +69,42 @@ onMounted(async()=>{
 .seek{
     position: fixed;
     right: 10px;
-    bottom: 80px;
+    bottom: 90px;
     padding: 5px;
     border-radius: 10px;
     background-color: white;
     box-shadow: 0px 0px 5px 0px black;
 }
 .timeline{
-    height: 70px;
+    height: 80px;
     position: fixed;
     bottom: 0px;
     left: 0px;
     right: 0px;
     overflow-x: scroll;
+    overflow-y: hidden;
     display: flex;
     gap: 5px;
     background-color: white;
     box-shadow: 0px 0px 10px 0px black;
 }
-.cap{
+.cap,.rand{
     padding: 1px;
     border-radius: 2px;
+    min-width: 10px;
+    text-align: center;
+}
+.rand{
+    background-color: #eee;
+    color: #666
 }
 .timeline>div{
-    padding: 2px;
+    padding: 0px 2px 0px 2px;
     width: 36px;
-    height: 48px;
+    height: 64px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: space-around;
     align-items: center;
     font-size: 12px;
     color:white;

@@ -597,7 +597,7 @@ canvas{
     user-select: none;
 }
 .playbackFrame{
-    bottom: 70px;
+    bottom: 80px;
 }
 .menuEntry{
     position: fixed;
