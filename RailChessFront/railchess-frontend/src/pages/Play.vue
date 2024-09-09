@@ -424,6 +424,12 @@ const randNumText = computed<string>(()=>{
         return '▲等待玩家'
     }
 })
+const tooManySelections = computed<boolean>(()=>{
+    if(currentSelections.value && currentSelections.value.length >= 8){
+        return true;
+    }
+    return false;
+})
 
 watch(props,()=>{
     sgrc.conn.stop();
@@ -449,7 +455,7 @@ watch(props,()=>{
     <div v-show="!gameStarted && !ended" class="status">等待房主开始中</div>
     <div v-show="ended" class="status">本对局已经结束</div>
 </div>
-<div class="frame" ref="frame" :class="{playbackFrame:playback}">
+<div class="frame" ref="frame" :class="{playbackFrame:playback, tooManySelections}">
     <div class="arena" ref="arena">
         <img v-if="bgFileName" ref="bg" :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
         <div v-for="s in staRenderedList" :style="s" 
@@ -481,7 +487,7 @@ watch(props,()=>{
         <button v-show="meOut" class="minor">已退出本棋局</button>
         <button v-show="meHost && !gameStarted && meJoined" @click="sgrc.gameStart">下令开始棋局</button>
         <button v-show="gameStarted" class="minor">本棋局已开始</button>
-        <button v-show="meHost" class="cancel" @click="sgrc.gameReset">下令重置房间</button>
+        <button v-show="meHost && !ended" class="cancel" @click="sgrc.gameReset">下令重置房间</button>
         <button v-show="meHost && gameStarted" class="cancel" @click="sgrc.kickAfk">移除挂机玩家</button>
         <button class="off" @click="$router.push('/')">返回主菜单</button>
         <div class="sideBarSlideOuter">
@@ -590,6 +596,9 @@ canvas{
     animation-direction: alternate;
     cursor: pointer;
     z-index: 10;
+}
+.tooManySelections .station.clickable{
+    animation: none !important;
 }
 .station.selected{
     border-color: rgb(0, 201, 0);
