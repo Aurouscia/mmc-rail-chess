@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 import { GameTimeline } from '../models/game';
 import { injectApi, injectPop } from '../provides';
 import { avtSrc } from '../utils/fileSrc';
@@ -17,8 +17,11 @@ const pop = injectPop()
 const selectedIdx = ref(-1)
 async function load(){
     data.value = await api.game.loadTimeline(props.gameId)
-    if(data.value)
+    if(data.value){
         selectedIdx.value = data.value.Items.length-1;
+        await nextTick()
+        autoScroll()
+    }
 }
 function capColor(capCount:number){
     if(capCount < 0){
@@ -33,18 +36,64 @@ function capColor(capCount:number){
 function seekLeft(){
     if(data.value && selectedIdx.value>0){
         selectedIdx.value -= 1
-        selectedItem()
+        selectedItem(true)
     }
 }
 function seekRight(){
     if(data.value && selectedIdx.value<data.value.Items.length-1){
         selectedIdx.value += 1
-        selectedItem()
+        selectedItem(true)
     }
 }
-function selectedItem(){
-    emit('viewTime', data.value?.Items[selectedIdx.value+1]?.EId)
+function seekSame(dir:'left'|'right'){
+    const sidx = selectedIdx.value
+    const item = data.value?.Items[sidx]
+    if(!data.value || !item){
+        return;
+    }
+    const uid = item.UId;
+    for(let i=1;;i++){
+        const idx = dir=='left' ? sidx-i : sidx+i;
+        if(idx<0){
+            pop.value.show('该玩家无更早行动', 'failed')
+            return;
+        }
+        if(idx>data.value.Items.length-1){
+            pop.value.show('该玩家无后续行动', 'failed')
+            return;
+        }
+        const itemAtIdx = data.value.Items[idx]
+        if(itemAtIdx && itemAtIdx.UId == uid){
+            selectedIdx.value = idx
+            selectedItem(true);
+            return
+        }
+    }
 }
+function selectedItem(needAutoScroll?:boolean){
+    const nextEid = data.value?.Items[selectedIdx.value+1]?.EId
+    emit('viewTime', nextEid)
+    if(needAutoScroll){
+        autoScroll()
+    }
+}
+function autoScroll() {
+    const thisEid = data.value?.Items[selectedIdx.value]?.EId
+    if (thisEid) {
+        const element = document.getElementById(itemElementId(thisEid))
+        if (element && timelineDiv.value) {
+            timelineDiv.value.scrollTo({
+                left: element.offsetLeft - 100,
+                behavior: 'smooth'
+            })
+        }
+    }
+}
+function itemElementId(eid:number){
+    return `te_${eid}`
+}
+
+const timelineDiv = ref<HTMLDivElement>()
 onMounted(async()=>{
     await load()
     if(data.value?.Warning){
@@ -55,11 +104,14 @@ onMounted(async()=>{
 
 <template>
     <div class="seek">
-        <button @click="seekLeft"><<</button>
-        <button @click="seekRight">>></button>
+        <button @click="seekSame('left')"><<</button>
+        <button @click="seekLeft"><</button>
+        <button @click="seekRight">></button>
+        <button @click="seekSame('right')">>></button>
     </div>
-    <div class="timeline" v-if="data">
-        <div v-for="i,idx in data.Items" :key="i.UId" @click="selectedIdx=idx; selectedItem()" :class="{selected: idx===selectedIdx}">
+    <div class="timeline" v-if="data" ref="timelineDiv">
+        <div v-for="i,idx in data.Items" :key="i.EId" @click="selectedIdx=idx; selectedItem()"
+            :class="{selected: idx===selectedIdx}" :id="itemElementId(i.EId)">
             <img :src="avtSrc(data.Avts[i.UId])"/>
             <div class="cap" :style="{backgroundColor:capColor(i.Cap)}">{{ i.Cap < 0 ? '卡' : '+'+i.Cap }}</div>
             <!--卡住记作-1-->
@@ -77,6 +129,10 @@ onMounted(async()=>{
     border-radius: 10px;
     background-color: white;
     box-shadow: 0px 0px 5px 0px black;
+}
+.seek button{
+    width: 28px;
+    text-align: center;
 }
 .timeline{
     height: 80px;

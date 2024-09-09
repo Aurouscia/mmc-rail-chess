@@ -214,12 +214,14 @@ async function select(){
 }
 
 const randNumStyle = ref<CSSProperties>({});
+let changeRandNumTimer = 0;
 function changeRandNum(to:number){
+    clearTimeout(changeRandNumTimer)
     if(!randNumStyle.value){
         randNumStyle.value = {};
     }
     randNumStyle.value.opacity = 0;
-    setTimeout(()=>{
+    changeRandNumTimer = setTimeout(()=>{
         randNum.value = to;
         randNumStyle.value.opacity = 1;
     },500)
