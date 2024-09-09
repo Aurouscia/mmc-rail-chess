@@ -13,7 +13,6 @@ import TextMsgDisplay from '../components/TextMsgDisplay.vue';
 import { useAnimator, AnimNode } from '../utils/pathAnim';
 import _, { truncate } from 'lodash'
 import { boxTypes } from '../components/Pop.vue';
-import { sleep } from '../utils/sleep';
 import Timeline from '../components/Timeline.vue';
 
 const props = defineProps<{
@@ -245,13 +244,18 @@ const randNum = ref<number>(0);
 const ended = ref<boolean>(false);
 async function sync(data:SyncData){
     console.log("收到同步数据指令",data)
+    //当前currentSelections未更新，还是上个玩家的可选选项
+    //当前playerList未更新，第一个还是上个玩家
     const lastPlayer = playerList.value[0];
-    playerList.value = data.playerStatus;
-    const newPos = playerList.value.find(x=>x.id==lastPlayer?.id)?.atSta;
-    selectedDist.value = newPos;
-    renderPathAnims();
-    await sleep(100);
+    //找到上个玩家现在的新位置，并设置为动画目标（展示上个玩家走的路线）
+    if(lastPlayer && lastPlayer.id !== me){
+        const newPos = data.playerStatus.find(x=>x.id==lastPlayer?.id)?.atSta;
+        selectedDist.value = newPos;
+        renderPathAnims();
+    }
+    await nextTick()
 
+    playerList.value = data.playerStatus;
     const meInList = playerList.value.find(x=>x.id==me);
     meJoined.value = !!meInList;
     meOut.value = meInList?.out||false;
@@ -263,7 +267,6 @@ async function sync(data:SyncData){
     newOcps.value = data.newOcps;
     changeRandNum(data.randNumber);
     if(currentSelections.value){
-        renderPathAnims();
         clickableStations.value = currentSelections.value.map(x=>x[x.length-1]);
         console.log("更新可点击车站", clickableStations.value)
     }else{
@@ -430,6 +433,9 @@ const tooManySelections = computed<boolean>(()=>{
     }
     return false;
 })
+const nowMe = computed<boolean>(()=>{
+    return playerList.value[0]?.id==me
+})
 
 watch(props,()=>{
     sgrc.conn.stop();
@@ -459,7 +465,7 @@ watch(props,()=>{
     <div class="arena" ref="arena">
         <img v-if="bgFileName" ref="bg" :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
         <div v-for="s in staRenderedList" :style="s" 
-            :class="{clickable:clickableStations.includes(s.sId)&&playerList[0]?.id==me&&!playback, selected:selectedDist==s.sId&&!playback}" 
+            :class="{clickable:clickableStations.includes(s.sId)&&nowMe&&!playback, selected:selectedDist==s.sId&&nowMe&&!playback}" 
             :key="s.sId" class="station" @click="clickStation(s.sId)"></div>
         <div v-if="animatorRendered" :style="animatorRendered.style" class="pathAnim">{{ animatorRendered.step }}</div>
     </div>
@@ -488,7 +494,7 @@ watch(props,()=>{
         <button v-show="meHost && !gameStarted && meJoined" @click="sgrc.gameStart">下令开始棋局</button>
         <button v-show="gameStarted" class="minor">本棋局已开始</button>
         <button v-show="meHost && !ended" class="cancel" @click="sgrc.gameReset">下令重置房间</button>
-        <button v-show="meHost && gameStarted" class="cancel" @click="sgrc.kickAfk">移除挂机玩家</button>
+        <button v-show="meHost && gameStarted && !ended" class="cancel" @click="sgrc.kickAfk">移除挂机玩家</button>
         <button class="off" @click="$router.push('/')">返回主菜单</button>
         <div class="sideBarSlideOuter">
             背景不透明度：{{ bgOpacity }}
