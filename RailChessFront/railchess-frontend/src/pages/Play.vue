@@ -124,6 +124,9 @@ function renderStaList(){
             side = size * 2;
             backgroundImage = `url("${avtSrc(atByPlayer.avtFileName)}")`;
             zIndex = 21;
+            if(atByPlayer.id === newOcps.value?.playerId){
+                shadow = "0px 0px 5px 5px black"
+            } 
         }
         else if(occupiedByPlayer){
             const player = playerList.value.find(x=>x.id==occupiedByPlayer?.playerId);
