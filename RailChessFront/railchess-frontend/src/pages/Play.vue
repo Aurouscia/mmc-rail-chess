@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CSSProperties, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, CSSProperties, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { injectApi, injectHideTopbar, injectHttp, injectPop, injectUserInfo } from '../provides';
 import { OcpStatus, Player, SyncData, TextMsg } from '../models/play';
 import SideBar from '../components/SideBar.vue';
@@ -27,37 +27,51 @@ const playerList = ref<Player[]>([]);
 const playerRenderedWidth = 167;
 interface PlayerRendered{
     p:Player,
+    idx:number,
     style:CSSProperties,
     nameStyle:CSSProperties
 }
 const playerRenderedList = ref<PlayerRendered[]>([]);
+const animTimers:number[] = []
 function renderPlayerList(){
-    for(var i=0;i<playerList.value.length;i++){
-        const p = playerList.value[i];
+    const playerListSplitted:Player[] = []
+    playerListSplitted.push(...playerList.value.filter(p=>!p.out))
+    playerListSplitted.push(...playerList.value.filter(p=>p.out))
+    animTimers.forEach(t=>{
+        clearTimeout(t)
+    })
+    animTimers.length = 0;
+    for(var i=0;i<playerListSplitted.length;i++){
+        const p = playerListSplitted[i];
         const left = playerRenderedWidth*i;
         const existing = playerRenderedList.value.find(x=>x.p.id==p.id);
         if(existing){
             existing.p = p;
-            if(i==playerList.value.length-1){
+            if(i > existing.idx){
                 existing.style.opacity = 0;
                 existing.style.zIndex = 0;
-                setTimeout(()=>{
+                const moveTimer = setTimeout(()=>{
                     existing.style.left = left+"px"
-                    setTimeout(()=>{
+                    const emergeTimer = setTimeout(()=>{
                         existing.style.opacity = undefined;
-                    },500)
+                        existing.style.zIndex = undefined;
+                    },100)
+                    animTimers.push(emergeTimer)
                 },500)
+                animTimers.push(moveTimer)
             }else{
                 existing.style.opacity = undefined;
+                existing.style.zIndex = undefined;
                 existing.style.left = left+"px";
-                existing.style.zIndex = 100
                 if(i==0 && me==existing.p.id && gameStarted.value){
                     textAttention(existing.nameStyle);
                 }
             }
+            existing.idx = i;
         }else{
             playerRenderedList.value.push({
                 p,
+                idx: playerRenderedList.value.length,
                 style:{left:left+"px"},
                 nameStyle:{}
             })
@@ -395,6 +409,16 @@ watch(staSizeRatio,(newVal)=>{
     localStorage.setItem(staSizeRatioStoreKey,String(newVal));
     renderStaList();
 })
+const randNumText = computed<string>(()=>{
+    if(props.playback){
+        return '▲回放中'
+    }
+    if(playerList.value[0]?.id===me){
+        return '▲轮到你了'
+    }else{
+        return '▲等待玩家'
+    }
+})
 
 watch(props,()=>{
     sgrc.conn.stop();
@@ -416,7 +440,7 @@ watch(props,()=>{
 </div>    
 <div class="randNumOuter">
     <div v-show="gameStarted && !ended" class="randNum" :style="randNumStyle">{{ randNum }}</div>
-    <div v-show="gameStarted && !ended" class="status">{{playerList[0]?.id!=me || playback ? '▲等待玩家': '▲轮到你了'}}</div>
+    <div v-show="gameStarted && !ended" class="status">{{ randNumText }}</div>
     <div v-show="!gameStarted && !ended" class="status">等待房主开始中</div>
     <div v-show="ended" class=status>本对局已经结束</div>
 </div>
@@ -646,6 +670,7 @@ canvas{
     transition: 500ms;
     background-color: white;
     box-shadow: 0px 0px 5px 0px black;
+    z-index: 100;
 }
 .playerList{
     position: relative;

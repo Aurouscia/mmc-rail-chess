@@ -97,6 +97,10 @@ namespace RailChess.Play.Services
                 rand = last.StationId;
             return rand;
         }
+        public int RandedResultOnlyGet()
+        {
+            return OurEvents().Where(x => x.EventType == RailChessEventType.RandNumGened).LastOrDefault()?.StationId ?? 0;
+        }
 
         public void Add(RailChessEventType type, int stationId, int userId, bool saveChanges=true)
         {

@@ -61,8 +61,12 @@ namespace RailChess.Play
 
         public SyncData GetSyncData(bool onlyWriteResult = false, long tFilter = 0)
         {
-            if(tFilter > 0)
-                _eventsService.TFilter = TimeStamp.Long2DateTime(tFilter).Add(TimeSpan.FromMilliseconds(10));
+            bool playback = false;
+            if (tFilter > 0)
+            {
+                _eventsService.TFilter = TimeStamp.Long2DateTime(tFilter).Add(TimeSpan.FromMilliseconds(500));
+                playback = true;
+            }
             var players = _playerService.GetOrdered();
             var locEvents = _eventsService.PlayerLocateEvents();
             var stuckEvents = _eventsService.PlayerStuckEvents();
@@ -105,7 +109,7 @@ namespace RailChess.Play
 
             bool timeout = latestOp is not null && (DateTime.Now - latestOp.Time).TotalMinutes > timeoutMins;
 
-            if (timeout || playerAllOut || stationAllCaptured || game.Ended)
+            if (!playback && (timeout || playerAllOut || stationAllCaptured || game.Ended))
             {
                 ended = true;
                 if (!_eventsService.GamedEnded())
@@ -145,7 +149,7 @@ namespace RailChess.Play
             int rand = 0;
             var selections = new List<List<int>>();
             var started = _eventsService.GameStarted();
-            if (started && !ended)
+            if (started && !ended && !playback)
             {
                 var paths = _coreCaller.GetSelections().ToList();
                 paths.ForEach(p =>
@@ -156,6 +160,10 @@ namespace RailChess.Play
                 });
 
                 rand = _eventsService.RandedResult();
+            }
+            if (playback)
+            {
+                rand = _eventsService.RandedResultOnlyGet();
             }
             var res = new SyncData()
             {
