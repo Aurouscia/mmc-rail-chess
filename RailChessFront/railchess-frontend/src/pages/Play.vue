@@ -595,6 +595,7 @@ canvas{
 .station.clickable{
     border-color: rgb(71, 171, 174);
     background-color: rgb(51, 118, 120);
+    box-shadow:0px 0px 10px 10px cadetblue;
     
     animation-duration: 1s;
     animation-name: stationSpark;
