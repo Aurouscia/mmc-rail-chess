@@ -16,6 +16,7 @@ namespace RailChess.Controllers
         private readonly RailChessContext _context;
         private readonly int _userId;
         private const string myMaps = "我上传的";
+        private const string orderByScore = "score";
 
         public MapController(RailChessContext context, HttpUserIdProvider httpUserIdProvider)
         {
@@ -23,7 +24,7 @@ namespace RailChess.Controllers
             _userId = httpUserIdProvider.Get();
         }
         [AllowAnonymous]
-        public IActionResult Index(string search)
+        public IActionResult Index(string? search, string? orderBy, int scoreMin, int scoreMax)
         {
             search ??= "";
             var q = _context.Maps.Where(x => x.Deleted == false);
@@ -37,8 +38,17 @@ namespace RailChess.Controllers
                 else
                     q = q.Where(x => x.Title != null && x.Title.Contains(search));
             }
-            var list = q.OrderByDescending(x => x.UpdateTime).Select(x => 
-                new {x.Id, x.Title, x.Author, x.ImgFileName, x.LineCount,x.StationCount,x.ExcStationCount, x.UpdateTime, x.TotalDirections}).Take(30).ToList();
+            if (orderBy == orderByScore)
+                q = q.OrderByDescending(x => x.TotalDirections);
+            else
+                q = q.OrderByDescending(x => x.UpdateTime);
+            if (scoreMin > 0)
+                q = q.Where(x => x.TotalDirections >= scoreMin);
+            if (scoreMax > 0)
+                q = q.Where(x => x.TotalDirections <= scoreMax);
+            var list = q.Select(x => 
+                new {x.Id, x.Title, x.Author, x.ImgFileName, x.LineCount,x.StationCount,x.ExcStationCount, x.UpdateTime, x.TotalDirections})
+                .Take(30).ToList();
             var authorIds = list.Select(x=>x.Author).ToList();
             var us = _context.Users.Where(x => authorIds.Contains(x.Id)).Select(x => new {x.Id,x.Name}).ToList();
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { injectApi } from '../provides';
 import { Api } from '../utils/api';
 import { RailChessMapIndexResult, RailChessMapIndexResultItem } from '../models/map';
@@ -9,9 +9,22 @@ import Notice from '../components/Notice.vue';
 import { router } from '../main';
 
 const search = ref<string>();
+const orderBy = ref<'score'|undefined>()
+const scoreMin = ref<number>(0)
+const scoreMax = ref<number>(0)
+const scoreMinOptions = [1, 200, 500, 1000, 2000]
+const scoreMaxOptions = [200, 500, 1000, 2000]
+async function clearSearch(){
+    search.value = undefined
+    scoreMin.value = 0
+    scoreMax.value = 0
+    await load()
+}
+const isSearching = computed<boolean>(()=> !!search.value || !!scoreMin.value || !!scoreMax.value)
+
 const data = ref<RailChessMapIndexResult>();
 async function load(){
-    const res = await api.map.index(search.value||"")
+    const res = await api.map.index(search.value, orderBy.value, scoreMin.value, scoreMax.value)
     if(res){
         data.value = res;
     }
@@ -108,10 +121,30 @@ onMounted(async()=>{
 <template>
 <div class="maps">
     <h1>棋盘列表</h1>
-    <input v-model="search" style="width: 150px;" placeholder="搜索棋盘或作者" @blur="load"/>
-    <button v-if="search" @click="search='';load()" class="minor">清空搜索</button>
-    <button @click="create" class="confirm">新建</button>
-    <button class="gray" @click="search='我上传的';load()">我的</button>
+    <div class="aboveTable">
+        <div>
+            <input v-model="search" style="width: 150px;" placeholder="搜索棋盘或作者" @blur="load"/>
+            <div>
+                <select v-model="scoreMin" @change="load">
+                    <option :value="0">分下限</option>
+                    <option v-for="s in scoreMinOptions" :value="s">{{ s }}</option>
+                </select>
+                <select v-model="scoreMax" @change="load">
+                    <option :value="0">分上限</option>
+                    <option v-for="s in scoreMaxOptions" :value="s">{{ s }}</option>
+                </select>
+            </div>
+            <button v-if="isSearching" @click="clearSearch" class="lite">清空筛选</button>
+        </div>
+        <div style="flex-wrap: nowrap;flex-shrink: 0;">
+            <select v-model="orderBy" @change="load">
+                <option :value="undefined">最新</option>
+                <option :value="'score'">分数</option>
+            </select>
+            <button @click="create" class="confirm">新建</button>
+            <button class="gray" @click="search='我上传的';load()">我的</button>
+        </div>
+    </div>
     <table class="list" v-if="data">
         <tr>
             <th class="titleTh">名称</th>
@@ -253,5 +286,14 @@ input[type=file]{
 table.list{
     table-layout: fixed;
     width: 100%;
+}
+.aboveTable{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.aboveTable>div{
+    display: flex;
+    flex-wrap: wrap;
 }
 </style>

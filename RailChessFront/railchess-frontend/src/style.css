@@ -31,11 +31,12 @@ table tr.noneBackground td{
 }
 
 
-input {
+input, select {
   font-size: unset;
   margin: 5px;
   padding: 3px;
   border: 1px solid #aaa;
+  border-radius: 5px;
 }
 select {
   font-size: unset;
@@ -104,6 +105,12 @@ button.off{
 }
 button.off:hover{
   background-color: #222;
+}
+button.lite{
+  font-size: 14px;
+  background: none;
+  color: gray;
+  text-decoration: underline;
 }
 
 .section{
