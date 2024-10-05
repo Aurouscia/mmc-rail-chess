@@ -1,0 +1,1 @@
+export const contact = "轨交棋交流群：302104258"

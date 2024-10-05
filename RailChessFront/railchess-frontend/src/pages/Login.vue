@@ -10,6 +10,7 @@ import { useRouter } from 'vue-router';
 import { User } from '../models/user';
 import Loading from '../components/Loading.vue';
 import Avatar from '../components/Avatar.vue';
+import { contact } from '../utils/consts';
 
 const router = useRouter();
 const userName = ref<string>("")
@@ -109,6 +110,7 @@ onMounted(async()=>{
             登录有效期：{{ identityInfo?.LeftHours }}小时<br/>
             <button @click="Logout" class="logout">退出登录</button>
         </div>
+        <div class="contact">{{ contact }}</div>
         </div>
         <div>
             <table>
@@ -214,5 +216,9 @@ button.logout{
     text-align: center;
     color:gray;
     margin-top: 20px;
+}
+.contact{
+    color: gray;
+    margin-top: 40px;
 }
 </style>

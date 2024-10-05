@@ -138,6 +138,13 @@ a:hover{
   text-decoration: underline;
 }
 
+.contact{
+  color: black;
+  text-align: center;
+  margin: 10px;
+  text-indent: 0px;
+}
+
 :root{
   --top-bar-height:50px;
   --main-div-margin-top:70px;

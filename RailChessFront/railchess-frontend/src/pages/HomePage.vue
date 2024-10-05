@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { contact } from '../utils/consts';
 import { useFeVersionChecker } from '../utils/feVersionCheck';
 
 const { checkAndPop } = useFeVersionChecker()
@@ -15,6 +16,9 @@ checkAndPop()
         <p>
             本软件为轨交棋的第二代线上游戏实现，相比第一代有更友好的UI和动画，也更便于部署和维护。
         </p>
+        <div class="contact">
+            {{ contact }}
+        </div>
     </div>
 
     <div class="gitInfo">
@@ -42,10 +46,9 @@ iframe{
 h1{
     text-align: center;
 }
-div{
+div p{
     text-indent: 2em;
-}
-p{
-    color:gray;
+    color: gray;
+    margin-bottom: 8px;
 }
 </style>
