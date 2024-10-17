@@ -23,7 +23,7 @@ namespace RailChess.Play
         private int _gameId;
         private int _userId;
         private const int timeoutMins = 180;
-        private const int allowKickSecs = 20;
+        private const int allowKickSecs = 30;
         public int GameId { get => _gameId; set 
             {
                 if (value <= 0) throw new Exception("请从正确入口进入");
@@ -262,11 +262,22 @@ namespace RailChess.Play
         public string? KickAfk(out string? clearedPlayerName)
         {
             int player = _playerService.CurrentPlayer();
-            var latestOp = _eventsService.LatestOperation();
             clearedPlayerName = _playerService.Get(player).Name;
-            if (latestOp is null)
-                return "棋局未开始";
-            TimeSpan stuckTime = DateTime.Now - latestOp.Time;
+            DateTime lastOpTime = DateTime.MinValue;
+            var lastOp = _eventsService.LatestOperation();
+            if (lastOp is { })
+            {
+                lastOpTime = lastOp.Time;
+            }
+            else { 
+                var startEvent = _eventsService.OurEvents()
+                    .FirstOrDefault(x => x.EventType == RailChessEventType.GameStart);
+                if(startEvent is { })
+                {
+                    lastOpTime = startEvent.Time;
+                }
+            }
+            TimeSpan stuckTime = DateTime.Now - lastOpTime;
             if (stuckTime.TotalSeconds > allowKickSecs)
             {
                 _eventsService.Add(RailChessEventType.PlayerOut, 0, player, true);
