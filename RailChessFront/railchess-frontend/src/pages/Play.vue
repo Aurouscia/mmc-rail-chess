@@ -336,6 +336,7 @@ var jwtToken:string|null;
 var sgrc:SignalRClient
 const moveLocked = ref(false)
 const timeline = ref<GameTimeline>()
+const msgDisp = ref<InstanceType<typeof TextMsgDisplay>>()
 onMounted(async()=>{
     injectHideTopbar()();
     api = injectApi();
@@ -351,6 +352,10 @@ onMounted(async()=>{
     me = mInfo.Id;
     const textMsgCall = (m:TextMsg)=>{
         msgs.value.push(m);
+        if(msgs.value.length>50){
+            msgs.value.shift()
+        }
+        msgDisp.value?.moveDown()
         var t:boxTypes;
         if(m.type==0){
             t = "info"
@@ -482,7 +487,7 @@ watch(props,()=>{
 <button v-show="selectedDist && !ended && !playback" class="decideBtn" @click="select">确认选择</button>
 <button v-show="gameStarted && !ended && !playback && playerList[0]?.id==me && !currentSelections?.length" class="cancel decideBtn" @click="select">无路可走</button>
 <SideBar ref="sidebar">
-    <TextMsgDisplay :msgs="msgs"></TextMsgDisplay>
+    <TextMsgDisplay :msgs="msgs" ref="msgDisp"></TextMsgDisplay>
     <div>
         <input v-model="sending" placeholder="说点什么"/>
         <button @click="send">发送</button>

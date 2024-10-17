@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 import { TextMsg, TextMsgType } from '../models/play';
 
 const props = defineProps<{
@@ -13,16 +13,21 @@ function msgTypeClassName(t:TextMsgType){
 }
 
 const msgs = ref<HTMLDivElement>();
-watch(props,async(_newVal)=>{
-    await nextTick();
-    if(msgs.value)
-        msgs.value.scrollTop = 10000000000;
-})
+async function moveDown(){
+    if(msgs.value){
+        const atBottom = msgs.value.clientHeight + msgs.value.scrollTop - msgs.value.scrollHeight > -30
+        await nextTick();
+        if(atBottom){
+            msgs.value.scrollTop = 10000000000;
+        }
+    }
+}
 onMounted(async()=>{
     await nextTick();
     if(msgs.value)
         msgs.value.scrollTop = 10000000000;
 })
+defineExpose({moveDown})
 </script>
 
 <template>
