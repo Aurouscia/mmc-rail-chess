@@ -71,7 +71,7 @@ onMounted(async ()=>{
         </td>
         <td>
             <button @click="enter(g.Data.Id||0)">进入</button>
-            <button v-if="g.Data.HostUserId==me" @click="deleteGame(g.Data.Id||0)" class="cancel">删除</button>
+            <button v-if="g.Data.HostUserId==me && g.StartedMins===-1" @click="deleteGame(g.Data.Id||0)" class="cancel">删除</button>
         </td>
         <td>
             {{ g.HostUserName }}

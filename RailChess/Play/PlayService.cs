@@ -219,6 +219,8 @@ namespace RailChess.Play
         public string? ResetGame()
         {
             var game = _gameService.OurGame();
+            if (game.Started)
+                return "对局已开始，不允许重制";
             if (game.Ended)
                 return "对局已结束，不允许重置";
             game.Started = false;
