@@ -494,7 +494,7 @@ watch(props,()=>{
         <button v-show="meHost && !gameStarted && meJoined" @click="sgrc.gameStart">下令开始棋局</button>
         <button v-show="gameStarted" class="minor">本棋局已开始</button>
         <button v-show="meHost && !ended && !gameStarted" class="cancel" @click="sgrc.gameReset">下令重置房间</button>
-        <button v-show="meHost && gameStarted && !ended" class="cancel" @click="sgrc.kickAfk">移除挂机玩家</button>
+        <button v-show="gameStarted && !ended" class="cancel" @click="sgrc.kickAfk">移除挂机玩家</button>
         <button class="off" @click="$router.push('/')">返回主菜单</button>
         <div class="sideBarSlideOuter">
             背景不透明度：{{ bgOpacity }}

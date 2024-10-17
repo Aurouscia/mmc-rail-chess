@@ -189,7 +189,8 @@ namespace RailChess.Play
             }
             else
             {
-                await SendTextMsg($"<b>{clearedPlayerName}</b>挂机太久，已被房主移出", defaultSender, TextMsgType.Important);
+                var name = _playerService.Get(Service.UserId).Name;
+                await SendTextMsg($"<b>{clearedPlayerName}</b>挂机太久，已被{name}移出", defaultSender, TextMsgType.Important);
                 await SyncAll();
             }
         }
