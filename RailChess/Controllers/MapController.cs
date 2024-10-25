@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using RailChess.Models.COM;
 using RailChess.Models.DbCtx;
 using RailChess.Models.Map;
+using RailChess.Play.Services.Core;
 using RailChess.Services;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -15,11 +16,17 @@ namespace RailChess.Controllers
         private const int mapBgFileMaxSize = 5 * 1000 * 1000;
         private readonly RailChessContext _context;
         private readonly int _userId;
+        private readonly CoreGraphConverter _graphConverter;
+        private readonly CoreGraphEvaluator _graphEvaluator;
         private const string myMaps = "我上传的";
         private const string orderByScore = "score";
 
-        public MapController(RailChessContext context, HttpUserIdProvider httpUserIdProvider)
+        public MapController(
+            CoreGraphConverter graphConverter, CoreGraphEvaluator graphEvaluator,
+            RailChessContext context, HttpUserIdProvider httpUserIdProvider)
         {
+            _graphConverter = graphConverter;
+            _graphEvaluator = graphEvaluator;
             _context = context;
             _userId = httpUserIdProvider.Get();
         }
@@ -154,14 +161,9 @@ namespace RailChess.Controllers
                 return this.ApiFailedResp("找不到指定棋盘");
             if (map.Author != _userId)
                 return this.ApiFailedResp("只能编辑自己的棋盘");
+
             RailChessTopo? topo = JsonConvert.DeserializeObject<RailChessTopo>(data);
-            if (topo is null || topo.Lines is null || topo.Stations is null)
-                return this.ApiFailedResp("未知错误，请联系管理员");
-            var staDirsInfo = topo.StationsDirections();
-            map.LineCount = topo.Lines.Count;
-            map.StationCount = staDirsInfo.Count;
-            map.ExcStationCount = staDirsInfo.Values.Where(x => x > 2).Count();
-            map.TotalDirections = staDirsInfo.Values.Sum();
+            SetMapInfoByTopo(map, topo);
             map.UpdateTime = DateTime.Now;
             map.TopoData = data;
             _context.SaveChanges();
@@ -185,12 +187,7 @@ namespace RailChess.Controllers
             string json = sr.ReadToEnd();
 
             RailChessTopo? topo = JsonConvert.DeserializeObject<RailChessTopo>(json);
-            if (topo is null || topo.Lines is null || topo.Stations is null)
-                return this.ApiFailedResp("文件格式有误");
-            var staDirsInfo = topo.StationsDirections();
-            map.LineCount = topo.Lines.Count;
-            map.StationCount = staDirsInfo.Count;
-            map.ExcStationCount = staDirsInfo.Values.Where(x => x > 2).Count();
+            SetMapInfoByTopo(map, topo);
             map.UpdateTime = DateTime.Now;
             map.TopoData = json;
             _context.SaveChanges();
@@ -233,6 +230,19 @@ namespace RailChess.Controllers
             return this.ApiResp(res);
         }
 
+        private void SetMapInfoByTopo(RailChessMap map, RailChessTopo? topo)
+        {
+            if (topo is null)
+                throw new Exception("未知错误，请联系管理员");
+            var graph = _graphConverter.Convert(topo);
+            if (topo.Lines is null || topo.Stations is null || graph is null)
+                throw new Exception("未知错误，请联系管理员");
+            var staDirsInfo = _graphEvaluator.StationDirections(graph);
+            map.LineCount = topo.Lines.Count;
+            map.StationCount = staDirsInfo.Count;
+            map.ExcStationCount = staDirsInfo.Values.Where(x => x > 2).Count();
+            map.TotalDirections = staDirsInfo.Values.Sum();
+        }
         public class RailChessMapIndexResult
         {
             public RailChessMapIndexResult()
