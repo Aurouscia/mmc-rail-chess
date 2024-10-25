@@ -8,16 +8,19 @@ namespace RailChess.Play.Services.Core
         private readonly PlayEventsService _eventsService;
         private readonly PlayToposService _topoService;
         private readonly CoreGraphConverter _converter;
+        private readonly CoreGraphEvaluator _evaluator;
         private readonly IMemoryCache _cache;
         private readonly ILogger<CoreGraphProvider> _logger;
 
         public CoreGraphProvider(
-            PlayEventsService eventsService, PlayToposService toposService, CoreGraphConverter converter,
+            PlayEventsService eventsService, PlayToposService toposService,
+            CoreGraphConverter converter, CoreGraphEvaluator evaluator,
             IMemoryCache cache, ILogger<CoreGraphProvider> logger) 
         {
             _eventsService = eventsService;
             _topoService = toposService;
             _converter = converter;
+            _evaluator = evaluator;
             _cache = cache;
             _logger = logger;
         }
@@ -70,13 +73,7 @@ namespace RailChess.Play.Services.Core
         public Dictionary<int,int> StationDirections()
         {
             var graph = GetPlainGraph();
-            Dictionary<int, int> dict = new();
-            graph.Stations.ForEach(x =>
-            {
-                var count = x.Neighbors.Select(x => x.Station).Distinct().Count();
-                dict.Add(x.Id, count);
-            });
-            return dict;
+            return _evaluator.StationDirections(graph);
         }
         public int TotalDirections(List<int> staIds)
         {

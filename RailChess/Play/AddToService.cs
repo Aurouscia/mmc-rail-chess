@@ -20,6 +20,7 @@ namespace RailChess.Play
             services.AddScoped<IExclusiveStasFinder, ExclusiveStasFinder>();
             services.AddScoped<IFixedStepPathFinder, FixedStepPathFinder>();
             services.AddScoped<CoreGraphProvider>();
+            services.AddScoped<CoreGraphEvaluator>();
             services.AddScoped<CoreCaller>();
 
             services.AddSingleton<PlayInvokeInfoFilter>();
