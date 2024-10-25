@@ -9,7 +9,8 @@ namespace RailChess.Play.Services.Core
         {
             if (topo.Stations is null || topo.Lines is null)
                 return null;
-            List<Sta> ss = topo.Stations.ConvertAll(x => new Sta(x.Id));
+            Dictionary<int, Sta> ss = topo.Stations.ToDictionary
+                (x => x.Id, x => new Sta(x.Id));
             topo.Lines.ForEach(line =>
             {
                 if (line.Stas is not null && line.Stas.Count > 1)
@@ -17,7 +18,7 @@ namespace RailChess.Play.Services.Core
                     for (int i = 0; i < line.Stas.Count; i++)
                     {
                         int staId = line.Stas[i];
-                        var target = ss.Find(x => x.Id == staId);
+                        ss.TryGetValue(staId, out var target);
                         if (target is null) continue;
                         List<int> neighborHere = new(2);
                         if (i == 0)
@@ -32,7 +33,7 @@ namespace RailChess.Play.Services.Core
 
                         neighborHere.ForEach(n =>
                         {
-                            var ns = ss.Find(s => s.Id == n);
+                            ss.TryGetValue(n, out var ns);
                             if (ns is not null)
                             {
                                 target.Neighbors.Add(new(line.Id, ns));
@@ -41,7 +42,7 @@ namespace RailChess.Play.Services.Core
                     }
                 }
             });
-            return new Graph(ss);
+            return new Graph(ss.Values.ToList());
         }
     }
 }
