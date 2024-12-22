@@ -82,8 +82,8 @@ namespace RailChess.Controllers
         {
             bool existing = id > 0;
             title ??= "";
-            if (title.Length < 2 || title.Length > 20)
-                return this.ApiFailedResp("棋盘名称应在2-20之间");
+            if (title.Length < 2 || title.Length > 25)
+                return this.ApiFailedResp("棋盘名称应在2-25之间");
 
             RailChessMap? m;
             if (existing) {
