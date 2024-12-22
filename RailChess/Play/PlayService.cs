@@ -261,6 +261,11 @@ namespace RailChess.Play
         }
         public string? KickAfk(out string? clearedPlayerName)
         {
+            if (!_eventsService.MeJoined()) 
+            {
+                clearedPlayerName = null;
+                return "仅棋局内玩家可踢出挂机者";
+            }
             int player = _playerService.CurrentPlayer();
             clearedPlayerName = _playerService.Get(player).Name;
             DateTime lastOpTime = DateTime.MinValue;
