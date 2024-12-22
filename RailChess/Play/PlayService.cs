@@ -23,7 +23,7 @@ namespace RailChess.Play
         private int _gameId;
         private int _userId;
         private const int timeoutMins = 180;
-        private const int allowKickSecs = 30;
+        private const int allowKickSecs = 60;
         public int GameId { get => _gameId; set 
             {
                 if (value <= 0) throw new Exception("请从正确入口进入");
