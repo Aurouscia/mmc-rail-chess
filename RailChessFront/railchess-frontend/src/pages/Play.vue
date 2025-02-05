@@ -566,6 +566,7 @@ canvas{
     position: fixed;
     left:15px;
     bottom: 30px;
+    box-shadow: 0px 0px 10px 0px black;
 }
 .scaleFold{
     position: absolute;
