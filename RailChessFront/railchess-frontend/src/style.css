@@ -31,6 +31,9 @@ table tr.noneBackground td{
 }
 
 
+input{
+  width: 200px;
+}
 input, select {
   font-size: unset;
   margin: 5px;
