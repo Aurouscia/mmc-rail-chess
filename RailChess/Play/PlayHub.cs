@@ -8,7 +8,6 @@ using RailChess.Play.Services;
 
 namespace RailChess.Play
 {
-    [Authorize]
     public class PlayHub : Hub
     {
         public PlayService Service { get; }
@@ -51,6 +50,7 @@ namespace RailChess.Play
             }
         }
 
+        [Authorize]
         public async Task Join(JoinRequest _)
         {
             var errmsg = Service.Join();
@@ -66,6 +66,7 @@ namespace RailChess.Play
                 await SendTextMsg(errmsg, defaultSender, TextMsgType.Err, Clients.Caller);
             }
         }
+        [Authorize]
         public async Task GameStart(GameStartRequest _)
         {
             var errmsg = Service.StartGame();
@@ -77,6 +78,7 @@ namespace RailChess.Play
             else
                 await SendTextMsg(errmsg, defaultSender, TextMsgType.Err, Clients.Caller);
         }
+        [Authorize]
         public async Task GameReset(GameResetRequest _)
         {
             var errmsg = Service.ResetGame();
@@ -88,6 +90,7 @@ namespace RailChess.Play
             else
                 await SendTextMsg(errmsg, defaultSender, TextMsgType.Err, Clients.Caller);
         }
+        [Authorize]
         public async Task SendTextMsg(SendTextMsgRequest request)
         {
             string? senderName = SenderName();
@@ -104,11 +107,7 @@ namespace RailChess.Play
         public async Task Enter(EnterRequest _)
         {
             if (Service.UserId == 0)
-            {
-                await SendTextMsg("请先登录再进入房间", defaultSender, TextMsgType.Err, Clients.Caller);
-                Context.Abort();
-                return;
-            }
+                await SendTextMsg("当前未登录，仅能旁观", defaultSender, TextMsgType.Err, Clients.Caller);
             _playerService.InsertByConn(Context.ConnectionId, Service.UserId, Service.GameId);
 
             await Groups.AddToGroupAsync(Context.ConnectionId, GroupName);
@@ -135,6 +134,7 @@ namespace RailChess.Play
             await SendTextMsg($"用户<b>{SenderName()}</b>离开房间", defaultSender, TextMsgType.Important);
         }
 
+        [Authorize]
         /// <summary>
         /// 由当前轮到的玩家唤起的方法，表示自己选好了怎么移动
         /// </summary>
@@ -172,6 +172,8 @@ namespace RailChess.Play
             await SendTextMsg($"<b>{name}</b>已落子，新占领{captured}个车站");
             await SyncAll();
         }
+
+        [Authorize]
         public async Task Out(OutRequest _)
         {
             Service.Leave();
@@ -179,6 +181,8 @@ namespace RailChess.Play
             await SendTextMsg($"<b>{name}</b>退出了对局", defaultSender, TextMsgType.Important);
             await SyncAll();
         }
+
+        [Authorize]
         public async Task KickAfk(KickAfkRequest _)
         {
             var errmsg = Service.KickAfk(out string? clearedPlayerName);

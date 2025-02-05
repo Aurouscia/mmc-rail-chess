@@ -60,7 +60,11 @@ namespace RailChess.Play.Services
         }
         public User Get(int id)
         {
-            return Get(new List<int> { id }).FirstOrDefault() ?? throw new Exception("找不到指定玩家");
+            return Get(new List<int> { id }).FirstOrDefault() ?? new User()
+            {
+                Id = 0,
+                Name = "游客"
+            };
         }
         private List<User> GetOrdered(List<int> ids, int lastPlayer = -1)
         {

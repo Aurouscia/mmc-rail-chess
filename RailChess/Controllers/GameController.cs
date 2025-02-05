@@ -9,7 +9,6 @@ using static RailChess.Controllers.GameController.GameTimeline;
 
 namespace RailChess.Controllers
 {
-    [Authorize]
     public class GameController:Controller
     {
         private readonly RailChessContext _context;
@@ -59,6 +58,7 @@ namespace RailChess.Controllers
             });
             return this.ApiResp(res);
         }
+        [Authorize]
         public IActionResult Create([FromBody]RailChessGame game)
         {
             var m = _context.Maps.Where(x => x.Id == game.UseMapId).Select(x => x.Author).FirstOrDefault();
@@ -89,6 +89,7 @@ namespace RailChess.Controllers
                 return this.ApiFailedResp("找不到指定地图");
             return this.ApiResp(new GameInitData(m, g));
         }
+        [Authorize]
         public IActionResult Delete(int id)
         {
             var g = _context.Games.Find(id);
