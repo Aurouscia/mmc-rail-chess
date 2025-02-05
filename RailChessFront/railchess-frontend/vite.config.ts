@@ -6,6 +6,12 @@ export default defineConfig({
   plugins: [vue()],
   build:{
     outDir:"../../RailChess/wwwroot",
-    emptyOutDir:false
+    emptyOutDir:false,
+    rollupOptions: {
+      onwarn(msg, defaultHandler) {
+        if (msg.code !== 'INVALID_ANNOTATION')
+          defaultHandler(msg)
+      },
+    },
   }
 })
