@@ -8,6 +8,12 @@ export default defineConfig({
     outDir:"../../RailChess/wwwroot",
     emptyOutDir:false,
     rollupOptions: {
+      output:{
+        manualChunks: (id) => {
+          if (id.includes('node_modules'))
+            return 'libs'
+        }
+      },
       onwarn(msg, defaultHandler) {
         if (msg.code !== 'INVALID_ANNOTATION')
           defaultHandler(msg)
