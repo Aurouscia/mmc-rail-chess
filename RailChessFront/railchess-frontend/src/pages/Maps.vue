@@ -84,7 +84,7 @@ function toTopo(id:number){
 
 const ipt = ref<HTMLInputElement>();
 async function clickIpt() {
-    if(window.confirm("将会覆盖已有数据，确认操作")){
+    if(window.confirm("将会覆盖已有数据，请核对名称")){
         ipt.value?.showPicker();
     }
 }
@@ -211,6 +211,9 @@ onMounted(async()=>{
     </Notice>
     <Notice v-if="editing && editing.Id==0" :type="'warn'">
         注意：如果地图后续会扩大，提前预留好位置，确保替换背景图片时新图片和旧图片中车站的相对位置一致
+    </Notice>
+    <Notice :type="'warn'">
+        注意：使用复杂的svg格式图片可能导致客户端视角缩放卡顿，建议使用png/jpg格式图片
     </Notice>
     <div class="iptOuter">
         <button v-if="editing && editing.Id>0" class="minor" @click="clickIpt">导入数据</button>
