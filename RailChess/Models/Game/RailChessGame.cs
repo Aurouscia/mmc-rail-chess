@@ -18,6 +18,8 @@
         public int StucksToLose { get; set; }
         public bool AllowReverseAtTerminal { get; set; }
         public int AllowTransfer { get; set; }
+        public AiPlayerType AiPlayer { get; set; }
+        public SpawnRuleType SpawnRule { get; set; }
 
         public bool Deleted { get;set; }
     }
@@ -26,5 +28,16 @@
     {
         Uniform = 0,
         Gaussian = 1
+    }
+    public enum AiPlayerType
+    {
+        None = 0,
+        Simple = 1,
+        Medium = 2
+    }
+    public enum SpawnRuleType
+    {
+        Terminal = 0,
+        TwinExchange = 1
     }
 }
