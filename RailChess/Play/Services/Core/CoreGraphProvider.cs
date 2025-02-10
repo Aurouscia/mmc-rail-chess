@@ -98,5 +98,20 @@ namespace RailChess.Play.Services.Core
             var res = dirDict.Where(x=>x.Value==1).Select(x=>x.Key).ToList();
             return res;
         }
+        public List<int> TwinExchanges()
+        {
+            var graph = GetPlainGraph();
+            var res = graph.Stations.Where(x =>
+            {
+                var n = x.Neighbors;
+                if (n.Count == 4)
+                {
+                    if (n.Select(x => x.LineId).Distinct().Count() == 2)
+                        return true;
+                }
+                return false;
+            }).Select(x => x.Id).ToList();
+            return res;
+        }
     }
 }

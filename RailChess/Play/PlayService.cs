@@ -185,13 +185,18 @@ namespace RailChess.Play
                 return "对局已开始，不能加入";
             if (_eventsService.MeJoined())
                 return "已在对局中";
-            var pureTerminals = _coreGraphProvider.PureTerminals();
+            var spawnRule = _gameService.OurGame().SpawnRule;
+            List<int> spawnCandidates;
+            if (spawnRule == SpawnRuleType.TwinExchange)
+                spawnCandidates = _coreGraphProvider.TwinExchanges();
+            else
+                spawnCandidates = _coreGraphProvider.PureTerminals();
             var otherPlayersJoinEvents = _eventsService.PlayersJoinEvents();
             var occupiedStations = otherPlayersJoinEvents.ConvertAll(x => x.StationId);
-            var available = pureTerminals.Except(occupiedStations).ToList();
-            if (!available.Any())
+            var spawnAvailable = spawnCandidates.Except(occupiedStations).ToList();
+            if (spawnAvailable.Count == 0)
                 throw new Exception("房间已满，无法加入");
-            int startAt = available.RandomSelect();
+            int startAt = spawnAvailable.RandomSelect();
             _eventsService.Add(RailChessEventType.PlayerJoin, startAt,false);
             _eventsService.Add(RailChessEventType.PlayerCapture, startAt);
             return null;
