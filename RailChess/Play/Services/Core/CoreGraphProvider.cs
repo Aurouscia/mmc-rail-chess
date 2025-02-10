@@ -106,7 +106,8 @@ namespace RailChess.Play.Services.Core
                 var n = x.Neighbors;
                 if (n.Count == 4)
                 {
-                    if (n.Select(x => x.LineId).Distinct().Count() == 2)
+                    //其实并不是“双线换乘站”，是“十字换乘站”，也可能是三条或者四条线
+                    if (n.Select(x => x.Station.Id).Distinct().Count() == 4)
                         return true;
                 }
                 return false;
