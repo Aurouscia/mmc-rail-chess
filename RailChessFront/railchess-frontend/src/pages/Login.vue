@@ -86,7 +86,7 @@ onMounted(async()=>{
         :texts="identityInfo&&identityInfo.Id>0 ? ['登录','注册','个人中心'] : ['登录','注册']">
         <div>
         <div>
-            <table>
+            <table><tobdy>
                 <tr>
                     <td>昵称</td>
                     <td>
@@ -99,7 +99,7 @@ onMounted(async()=>{
                         <input v-model="password" type="password"/>
                     </td>
                 </tr>
-            </table>
+            </tobdy></table>
             <div class="login">
                 <button @click="Login" class="confirm">登&nbsp;录</button>
             </div>
@@ -113,7 +113,7 @@ onMounted(async()=>{
         <div class="contact">{{ contact }}</div>
         </div>
         <div>
-            <table>
+            <table><tbody>
                 <tr>
                     <td>昵称</td>
                     <td>
@@ -126,7 +126,7 @@ onMounted(async()=>{
                         <input v-model="newPassword" type="text"/>
                     </td>
                 </tr>
-            </table>
+            </tbody></table>
             <div class="login">
                 <button @click="Register" class="confirm">注&nbsp;册</button>
             </div>
@@ -137,7 +137,7 @@ onMounted(async()=>{
                     <Avatar :file-name="uInfo.AvatarName" @need-refresh="edit"></Avatar>
                 </div>
                 <div class="avtNotice">点击设置</div>
-                <table>
+                <table><tbody>
                     <tr>
                         <td>昵称</td>
                         <td>
@@ -150,7 +150,7 @@ onMounted(async()=>{
                             <input v-model="uInfo.Pwd" type="text"/>
                         </td>
                     </tr>
-                </table>
+                </tbody></table>
                 <div class="login">
                     <button @click="editExe" class="confirm">保&nbsp;存</button>
                 </div>

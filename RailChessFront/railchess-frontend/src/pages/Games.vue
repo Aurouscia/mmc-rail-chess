@@ -61,7 +61,7 @@ onMounted(async ()=>{
 <template>
 <h1>正在进行</h1>
 <button class="confirm" @click="sidebar?.extend">新建棋局</button>
-<table v-if="active" class="list">
+<table v-if="active" class="list"><tbody>
     <tr><th class="mapCol">棋盘</th><th></th> <th>房主</th></tr>
     <tr v-for="g in active.Items">
         <td>
@@ -80,11 +80,11 @@ onMounted(async ()=>{
         </td>
     </tr>
     <tr><td colspan="3">已结束的棋局会被封存，请在战绩页面使用回放功能</td></tr>
-</table>
+</tbody></table>
 <Loading v-else></Loading>
 <SideBar ref="sidebar">
     <h1>创建棋局</h1>
-    <table v-if="creating">
+    <table v-if="creating"><tbody>
         <tr>
             <td>随机数</td>
             <td>
@@ -126,7 +126,7 @@ onMounted(async ()=>{
                     @done="(_x,id)=>{if(creating){creating.UseMapId=id;create()}}" :placeholder="'使用棋盘名称'"></Search>
             </td>
         </tr>
-    </table>
+    </tbody></table>
 </SideBar>
 </template>
 

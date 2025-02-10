@@ -35,7 +35,7 @@ onMounted(async()=>{
         <div v-if="data.Logs.length>0">
             <h1>{{ data.Logs[0].StartTime }} <br/> {{ data.Logs[0].MapName }} 的记录</h1>
             <button @click="router.push('/playback/'+gameId)">查看棋局回放</button>
-            <table>
+            <table><tbody>
                 <tr>
                     <th>排名</th>
                     <th>玩家</th>
@@ -48,7 +48,7 @@ onMounted(async()=>{
                         {{ log.UserName }}
                     </td>
                 </tr>
-            </table>
+            </tbody></table>
         </div>
         <h1 v-else>
             暂无对弈记录

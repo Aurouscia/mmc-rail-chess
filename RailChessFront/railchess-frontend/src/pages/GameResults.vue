@@ -40,7 +40,7 @@ onMounted(async()=>{
     <div v-if="data">
         <div v-if="data.Logs.length>0">
             <h1>{{ data.Logs[0].UserName }} 的记录</h1>
-            <table>
+            <table><tbody>
                 <tr>
                     <th>时间</th>
                     <th>棋盘</th>
@@ -62,7 +62,7 @@ onMounted(async()=>{
                         <button class="minor" @click="router.push('/playback/'+log.GameId)">回放</button>
                     </td>
                 </tr>
-            </table>
+            </tbody></table>
         </div>
         <h1 v-else>
             暂无对弈记录

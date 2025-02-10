@@ -145,7 +145,7 @@ onMounted(async()=>{
             <button class="gray" @click="search='我上传的';load()">我的</button>
         </div>
     </div>
-    <table class="list" v-if="data">
+    <table class="list" v-if="data"><tbody>
         <tr>
             <th class="titleTh">名称</th>
             <th>作者</th>
@@ -179,7 +179,7 @@ onMounted(async()=>{
         <tr v-if="data.Items.length==20">
             <td style="color:#999;">仅显示前20个结果</td><td></td><td></td>
         </tr>
-    </table>
+    </tbody></table>
     <Loading v-else>
     </Loading>
 </div>
@@ -188,7 +188,7 @@ onMounted(async()=>{
     <div class="previewDiv" v-if="editing?.FileName">
         <img class="preview" :src="bgFilePath(editing.FileName)"/>
     </div>
-    <table v-if="editing">
+    <table v-if="editing"><tbody>
         <tr>
             <td>名称</td>
             <td><input v-model="editing.Title"></td>
@@ -204,7 +204,7 @@ onMounted(async()=>{
         <tr class="noneBackground">
             <td colspan="2"><button @click="confirm">确认</button></td>
         </tr>
-    </table>
+    </tbody></table>
     <Loading v-else></Loading>
     <Notice v-if="editing && editing.Id>0" :type="'warn'">
         注意：替换背景图片时请确保新图片和旧图片中车站的相对位置一致
