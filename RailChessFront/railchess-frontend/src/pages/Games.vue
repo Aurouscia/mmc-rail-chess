@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import SideBar from '../components/SideBar.vue';
-import { GameActiveResult, RailChessGame } from '../models/game';
+import { AiPlayerType, GameActiveResult, RailChessGame, RandAlgType, SpawnRuleType } from '../models/game';
 import { Api } from '../utils/api';
 import { injectApi, injectUserInfo } from '../provides';
 import Loading from '../components/Loading.vue';
@@ -46,12 +46,14 @@ onMounted(async ()=>{
     await loadActive();
     creating.value = {
         UseMapId: 0,
-        RandAlg: 0,
+        RandAlg: RandAlgType.Uniform,
         RandMin: 1,
         RandMax: 12,
         StucksToLose: 5,
-        AllowReverseAtTerminal:true,
-        AllowTransfer:1
+        AllowReverseAtTerminal:false,
+        AllowTransfer:1,
+        AiPlayer:AiPlayerType.None,
+        SpawnRule:SpawnRuleType.Terminal
     }
 })
 </script>
@@ -106,11 +108,16 @@ onMounted(async ()=>{
             <td><input type="number" v-model="creating.AllowTransfer" min="0" max="2"></td>
         </tr>
         <tr>
-            <td>允许跨过<br/>其他玩家<br/>占领车站</td>
-            <td>暂不支持设定</td>
+            <td>开局起始点</td>
+            <td>
+                <select v-model="creating.SpawnRule">
+                    <option :value="SpawnRuleType.Terminal">单线终点站</option>
+                    <option :value="SpawnRuleType.TwinExchange">双线换乘站</option>
+                </select>
+            </td>
         </tr>
         <tr>
-            <td>每回合瞬移</td>
+            <td>Ai玩家</td>
             <td>暂不支持设定</td>
         </tr>
         <tr>

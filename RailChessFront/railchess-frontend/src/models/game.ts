@@ -8,12 +8,30 @@ export interface RailChessGame{
     DurationMins?:number
     Steps?:number
 
-    RandAlg:0|1
+    RandAlg:RandAlgType
     RandMin:number
     RandMax:number
     StucksToLose:number
     AllowReverseAtTerminal:boolean
     AllowTransfer:number
+    AiPlayer: AiPlayerType
+    SpawnRule: SpawnRuleType
+}
+export enum RandAlgType
+{
+    Uniform = 0,
+    Gaussian = 1
+}
+export enum AiPlayerType
+{
+    None = 0,
+    Simple = 1,
+    Medium = 2
+}
+export enum SpawnRuleType
+{
+    Terminal = 0,
+    TwinExchange = 1
 }
 
 export interface GameActiveResult{
