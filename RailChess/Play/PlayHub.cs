@@ -18,9 +18,9 @@ namespace RailChess.Play
 
         public IClientProxy Group => Clients.Group(GroupName);
 
-        private const string textMsgMethod = "textmsg";
-        private const string syncMethod = "sync";
-        private const string defaultSender = "服务器";
+        public const string textMsgMethod = "textmsg";
+        public const string syncMethod = "sync";
+        public const string defaultSender = "服务器";
         
         public PlayHub(
             PlayService playService,

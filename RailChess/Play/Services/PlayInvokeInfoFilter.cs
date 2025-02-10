@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using RailChess.Play.PlayHubRequestModel;
+using RailChess.Play.PlayHubResponseModel;
 
 namespace RailChess.Play.Services
 {
@@ -26,7 +27,19 @@ namespace RailChess.Play.Services
                     _logger.LogInformation("游戏[{gameId}]_玩家[{userId}]_发出[{method}]", req.GameId, userId, req.GetType().Name);
                 }
             }
-            return await next(invocationContext);
+            try
+            {
+                return await next(invocationContext);
+            }
+            catch(Exception ex)
+            {
+                //TODO：没那么异常的异常（房间已满之类的）与真异常应该区分开
+                //_logger.LogError(ex, "[异常]");
+                await invocationContext.Hub.Clients.Caller.SendAsync(
+                    method: PlayHub.textMsgMethod,
+                    arg1: new TextMsg(ex.Message, PlayHub.defaultSender, TextMsgType.Err));
+                return Task.CompletedTask;
+            }
         }
     }
 }
