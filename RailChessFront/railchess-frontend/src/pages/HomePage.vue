@@ -9,12 +9,10 @@ checkAndPop()
 <template>
 <h1>欢迎来到轨交棋</h1>
     <div>
+        <img src="/railchessLogo.svg" class="logo"/>
         <p>
             轨交棋是一款基于地铁线路图的棋类游戏，玩家需要在地铁图上沿着线路移动，
             尽可能多的"占领"车站，并堵截其他玩家的行动，最终获得最高分数。
-        </p>
-        <p>
-            本软件为轨交棋的第二代线上游戏实现，相比第一代有更友好的UI和动画，也更便于部署和维护。
         </p>
         <div class="contact">
             {{ contact }}
@@ -26,7 +24,11 @@ checkAndPop()
     </div>
 
     <div>
-        <p>感谢mmc(SlinkierApple13)及其同学创造了本游戏玩法，感谢滨蜀、mtp、四氨合铜离子等人的大力支持。</p>
+        <p>游戏玩法创造者：mmc(SlinkierApple13)及其同学</p>
+        <p>代码贡献者：Au</p>
+        <p>issue贡献者：滨蜀</p>
+        <p>logo设计者：三几几</p>
+        <p>活跃玩家：四氨合铜离子、哦、南京精灵的灵芝、Ripple、梅天浦等人</p>
     </div>
 </template>
 
@@ -34,7 +36,7 @@ checkAndPop()
 iframe{
     width: 100%;
     max-width: 600px;
-    height: calc(100vh - 300px);
+    height: 500px;
     border: none;
 }
 .gitInfo{
@@ -45,6 +47,11 @@ iframe{
 }
 h1{
     text-align: center;
+}
+.logo{
+    display: block;
+    width: 200px;
+    margin: 10px auto 20px auto;
 }
 div p{
     text-indent: 2em;
