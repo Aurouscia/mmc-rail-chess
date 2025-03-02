@@ -17,12 +17,18 @@ namespace RailChess.Controllers
         private readonly RailChessContext _context;
         private readonly int _userId;
         private readonly IMemoryCache _cache;
+        private readonly IConfiguration _config;
 
-        public UserController(RailChessContext context, HttpUserIdProvider httpUserIdProvider,IMemoryCache cache)
+        public UserController(
+            RailChessContext context,
+            HttpUserIdProvider httpUserIdProvider,
+            IMemoryCache cache,
+            IConfiguration config)
         {
             _context = context;
             _userId = httpUserIdProvider.Get();
             _cache = cache;
+            _config = config;
         }
         public IActionResult Add(string? userName, string? password)
         {
@@ -178,6 +184,24 @@ namespace RailChess.Controllers
                 return y.Plays - x.Plays;
             });
             return this.ApiResp(list);
+        }
+
+        [Route("/ResetPwd/{masterKey}/{userName}")]
+        public IActionResult ResetPwd(string masterKey, string userName)
+        {
+            var masterKeyShouldBe = _config["MasterKey"] ?? Path.GetRandomFileName();
+            if (masterKeyShouldBe != masterKey)
+                return this.ApiFailedResp("MasterKey错误");
+            var u = _context.Users.Where(x=>x.Name == userName).FirstOrDefault();
+            if(u is { })
+            {
+                string newPwd = "123456789";
+                string pwdMd5 = MD5Helper.GetMD5Of(newPwd);
+                u.Pwd = pwdMd5;
+                _context.SaveChanges();
+                return this.ApiResp($"已为用户 {u.Name}({u.Id}) 重置密码为 {newPwd}");
+            }
+            return this.ApiFailedResp("未找到该用户");
         }
 
         public class UserRankingListItem
