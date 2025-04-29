@@ -27,7 +27,14 @@
     public enum RandAlgType
     {
         Uniform = 0,
-        Gaussian = 1
+        Gaussian10 = 10,
+        Gaussian15 = 11,
+        Gaussian20 = 12,
+        Gaussian25 = 13,
+        TriangleMiddle = 20,
+        TriangleLeft = 21,
+        TriangleRight = 22,
+        AlwaysNegativeOne = 90
     }
     public enum AiPlayerType
     {

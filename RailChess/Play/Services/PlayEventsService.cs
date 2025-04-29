@@ -87,7 +87,7 @@ namespace RailChess.Play.Services
             if (last is null || last.EventType != RailChessEventType.RandNumGened)
             {
                 var ourGame = _gameService.OurGame();
-                rand = RandNum.Uniform(ourGame.RandMin, ourGame.RandMax);
+                rand = RandNum.Run(ourGame.RandAlg, ourGame.RandMin, ourGame.RandMax);
                 Add(RailChessEventType.RandNumGened, rand, true);
             }
             else 

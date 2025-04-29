@@ -117,6 +117,15 @@ onMounted(async ()=>{
             </td>
         </tr>
         <tr>
+            <td>随机算法</td>
+            <td>
+                <select v-model="creating.RandAlg">
+                    <option :value="RandAlgType.Uniform">均匀分布</option>
+                    <option :value="RandAlgType.AlwaysNegativeOne">仅-1（自由移动）</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
             <td>Ai玩家</td>
             <td>暂不支持设定</td>
         </tr>
