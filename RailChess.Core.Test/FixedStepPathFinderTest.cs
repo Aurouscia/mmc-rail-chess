@@ -246,5 +246,39 @@ namespace RailChess.Core.Test
             var paths_4_2 = _finder.FindAllPaths(g, 1, 4, 2).Select(x => x.Last()).ToList();
             CollectionAssert.AreEquivalent(new List<int>() { 5, 3, 6, 7, 8, 2, 4 }, paths_4_2);
         }
+
+        [TestMethod]
+        public void NegativeOne()
+        {
+            //当步数为-1时，可以一步走到任何其他玩家没占的地方
+            //
+            //   3
+            //   |\
+            // 1-2-4-5
+            //     |
+            //     6
+            var sta1 = new Sta(1, 1);
+            var sta2 = new Sta(2, 1);
+            var sta3 = new Sta(3, 1);
+            var sta4 = new Sta(4, 2);
+            var sta5 = new Sta(5, 1);
+            var sta6 = new Sta(6, 1);
+            sta1.TwowayConnect(sta2);
+            sta2.TwowayConnect(sta3);
+            sta3.TwowayConnect(sta4);
+            sta2.TwowayConnect(sta4);
+            sta4.TwowayConnect(sta5);
+            sta4.TwowayConnect(sta6);
+
+            var playerPos = new Dictionary<int, int>() { { 1, 1 } };
+            Graph graph = new(new(){
+                sta1, sta2, sta3, sta4, sta5, sta6
+            }, playerPos);
+            var res = _finder.FindAllPaths(graph, 1, -1).ToList();
+            res.ForEach(p => Assert.AreEqual(2, p.Count()));//路径长度为2
+            var paths = res.Select(x => x.Last()).ToList();
+            CollectionAssert.AreEquivalent(
+                new List<int> { 2, 3, 5, 6 }, paths);
+        }
     }
 }

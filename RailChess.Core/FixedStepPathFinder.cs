@@ -1,6 +1,5 @@
 ﻿using RailChess.Core.Abstractions;
 using RailChess.GraphDefinition;
-using System.Diagnostics.CodeAnalysis;
 
 namespace RailChess.Core
 {
@@ -11,12 +10,24 @@ namespace RailChess.Core
             if (steps == 0)
                 return new List<List<int>>();
 
-            Queue<LinedPath> paths = new();
             if (!graph.UserPosition.TryGetValue(userId, out int from))
                 throw new Exception("算路异常:找不到玩家位置");
+
+            if (steps == -1)
+            {
+                //如果步数为-1，可一步走到任何未被其他玩家占领的地方
+                var mineOrEmpty = graph.Stations.Where(x => 
+                    (x.Owner == 0 || x.Owner == userId) && x.Id != from);
+                return mineOrEmpty
+                    .Select(x => new List<int> { from, x.Id })
+                    .ToList();
+            }
+
+            Queue<LinedPath> paths = new();
             var startPoint = graph.Stations.Find(x => x.Id == from) ?? throw new Exception("算路异常:找不到指定起始点");
-            var startStas = startPoint.Neighbors.ConvertAll(x=>new LinedSta(x.LineId, startPoint));
-            startStas.ConvertAll(x=>new LinedPath(x)).ForEach(paths.Enqueue);
+            var startStas = startPoint.Neighbors.ConvertAll(x => new LinedSta(x.LineId, startPoint));
+            //路径均有首个点（出发点）
+            startStas.ConvertAll(x => new LinedPath(x)).ForEach(paths.Enqueue);
 
             while (true)
             {
