@@ -5,15 +5,30 @@ namespace RailChess.Core
 {
     public class FixedStepPathFinder : IFixedStepPathFinder
     {
+        /// <inheritdoc/>
         public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, int steps, int maxiumTransfer = int.MaxValue)
         {
-            if (steps == 0)
+            if (steps < 100)
+                return FindAllPaths(graph, userId, steps, 0, maxiumTransfer);
+            else
+            {
+                //十位个位算A
+                int stepsA = steps % 100;
+                //千位百位算B
+                int stepsB = steps / 100;
+                return FindAllPaths(graph, userId, stepsA, stepsB, maxiumTransfer);
+            }
+        }
+        private static IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, int stepsA, int stepsB, int maxiumTransfer = int.MaxValue)
+        {
+            int stepsAB = stepsA + stepsB;
+            if (stepsA == 0 && stepsB == 0)
                 return new List<List<int>>();
 
             if (!graph.UserPosition.TryGetValue(userId, out int from))
                 throw new Exception("算路异常:找不到玩家位置");
 
-            if (steps == -1)
+            if (stepsA == -1 && stepsB == 0)
             {
                 //如果步数为-1，可一步走到任何未被其他玩家占领的地方
                 var mineOrEmpty = graph.Stations.Where(x => 
@@ -29,6 +44,11 @@ namespace RailChess.Core
             //路径均有首个点（出发点）
             startStas.ConvertAll(x => new LinedPath(x)).ForEach(paths.Enqueue);
 
+            List<LinedPath>? stepsAArchive = null;
+            //如果有两种情况，则存储记录步数为A的路径中间产物
+            if (stepsA != stepsAB)
+                stepsAArchive = [];
+
             while (true)
             {
                 var p = paths.Dequeue();
@@ -43,16 +63,26 @@ namespace RailChess.Core
                         if (lastButOne.Station.Id == n.Station.Id) continue; //不能掉头往回跑
                     }
                     if (DuplicatePathRange(p.Stations, n))
-                        continue;//不准走已经走过的区间
+                        continue;//不准走已经走过的区间（但是已经过的站还是可以再次经过的）
                     LinedPath newPath = new(p, n);
                     if (newPath.TransferredTimes > maxiumTransfer)
                         continue;//不准换乘次数超出限制
                     paths.Enqueue(newPath);
+                    if(stepsAArchive is { } && newPath.Count == stepsA + 1)
+                        stepsAArchive.Add(newPath);
                 }
                 if (paths.Count == 0) break;
-                if (paths.All(x => x.Count >= steps + 1)) break;
+                if (paths.All(x => x.Count >= stepsAB + 1)) break;
             }
-            return paths.Where(x=>x.Count==steps + 1).DistinctBy(x=>x.Tail!.Station.Id).ToList().ConvertAll(x=>x.ToIds());
+
+            IEnumerable<LinedPath> pathsFinal = paths.AsEnumerable();
+            if (stepsAArchive is { })
+                pathsFinal = pathsFinal.Concat(stepsAArchive);
+            return pathsFinal
+                .Where(x => (x.Count == stepsA + 1) || (x.Count == stepsAB + 1))
+                .DistinctBy(x => x.Tail!.Station.Id)
+                .Select(x => x.ToIds())
+                .ToList();
         }
 
         public bool IsValidMove(Graph graph, int userId, int to, int steps, int maxiumTransfer = int.MaxValue)

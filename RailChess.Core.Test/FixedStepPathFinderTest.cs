@@ -1,4 +1,3 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RailChess.Core.Abstractions;
 using RailChess.GraphDefinition;
 
@@ -47,7 +46,7 @@ namespace RailChess.Core.Test
             CollectionAssert.AreEquivalent(new List<int>(){ 2 }, paths1);
 
             var paths2 = _finder.FindAllPaths(graph, 1, 2).ToList().ConvertAll(x => x.Last());
-            CollectionAssert.AreEquivalent(new List<int>() { 3,4 }, paths2);
+            CollectionAssert.AreEquivalent(new List<int>() { 3, 4 }, paths2);
 
             var paths3 = _finder.FindAllPaths(graph, 1, 3).ToList().ConvertAll(x => x.Last());
             CollectionAssert.AreEquivalent(new List<int>() { 3, 4, 5, 6 }, paths3);
@@ -279,6 +278,62 @@ namespace RailChess.Core.Test
             var paths = res.Select(x => x.Last()).ToList();
             CollectionAssert.AreEquivalent(
                 new List<int> { 2, 3, 5, 6 }, paths);
+        }
+
+        [TestMethod]
+        public void AB()
+        {
+            //   3
+            //   |\
+            // 1-2-4-5
+            //     |
+            //     6
+            var sta1 = new Sta(1, 1);
+            var sta2 = new Sta(2, 1);
+            var sta3 = new Sta(3, 1);
+            var sta4 = new Sta(4, 1);
+            var sta5 = new Sta(5, 1);
+            var sta6 = new Sta(6, 1);
+            var playerPos = new Dictionary<int, int>()
+            {
+                { 1, 1 }
+            };
+            Graph graph = new(new(){
+                sta1, sta2, sta3, sta4, sta5, sta6
+            }, playerPos);
+            sta1.TwowayConnect(sta2);
+            sta2.TwowayConnect(sta3);
+            sta3.TwowayConnect(sta4);
+            sta2.TwowayConnect(sta4);
+            sta4.TwowayConnect(sta5);
+            sta4.TwowayConnect(sta6);
+
+            var paths100 = _finder.FindAllPaths(graph, 1, 100).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 2 }, paths100);
+
+            var paths101 = _finder.FindAllPaths(graph, 1, 101).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 2, 3, 4 }, paths101);
+
+            var paths102 = _finder.FindAllPaths(graph, 1, 102).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 3, 4, 5, 6 }, paths102);
+
+            var paths103 = _finder.FindAllPaths(graph, 1, 103).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 2, 3, 4, 5, 6 }, paths103);
+
+            var paths200 = _finder.FindAllPaths(graph, 1, 200).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 3, 4 }, paths200);
+
+            var paths201 = _finder.FindAllPaths(graph, 1, 201).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 2, 3, 4, 5, 6 }, paths201);
+
+            var paths202 = _finder.FindAllPaths(graph, 1, 202).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 2, 3, 4, 5, 6 }, paths202);
+
+            var paths300 = _finder.FindAllPaths(graph, 1, 300).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 3, 4, 5, 6 }, paths300);
+
+            var paths301 = _finder.FindAllPaths(graph, 1, 301).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 2, 5, 6 }, paths301);
         }
     }
 }
