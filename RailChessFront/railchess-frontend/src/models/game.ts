@@ -20,6 +20,7 @@ export interface RailChessGame{
 export enum RandAlgType
 {
     Uniform = 0,
+    UniformAB = 1,
     Gaussian10 = 10,
     Gaussian15 = 11,
     Gaussian20 = 12,

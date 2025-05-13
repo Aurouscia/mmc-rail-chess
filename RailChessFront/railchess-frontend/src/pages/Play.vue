@@ -228,6 +228,19 @@ function changeRandNum(to:number){
         randNumStyle.value.opacity = 1;
     },500)
 }
+//AB型随机数：三或四位数，个位十位、百位千位分别是AB两个十位数，A和A+B都是可选项
+const randNumIsAB = computed<boolean>(()=>{
+    return randNum.value > 100
+})
+const randNumDisplay = computed<string>(()=>{
+    if(randNumIsAB.value){
+        const A = Math.floor(randNum.value/100);
+        const B = randNum.value%100;
+        return `${A}/${B}`;
+    }else{
+        return randNum.value.toString();
+    }
+})
 
 const bgFileName = ref<string>();
 const topoData = ref<RailChessTopo>();
@@ -461,7 +474,9 @@ watch(props,()=>{
     </div>
 </div>    
 <div class="randNumOuter">
-    <div v-show="gameStarted && !ended" class="randNum" :style="randNumStyle">{{ randNum }}</div>
+    <div v-show="gameStarted && !ended" class="randNum" :class="{randNumIsAB}" :style="randNumStyle">
+        {{ randNumDisplay }}
+    </div>
     <div v-show="gameStarted && !ended" class="status">{{ randNumText }}</div>
     <div v-show="!gameStarted && !ended" class="status">等待房主开始中</div>
     <div v-show="ended" class="status">本对局已经结束</div>
@@ -546,6 +561,10 @@ canvas{
     font-size: 35px;
     color:white;
     transition: 500ms;
+    font-family: 'system-ui sans-serif';
+}
+.randNumIsAB{
+    font-size: 22px;
 }
 .sideBarSlideOuter input{
     margin: 0px;
