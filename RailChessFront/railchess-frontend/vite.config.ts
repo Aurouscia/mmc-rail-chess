@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { appVersionMark } from '@aurouscia/vite-app-version'
+import viteAppVersionConfig from './appVersionOptions.json'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue(), appVersionMark(viteAppVersionConfig)],
   build:{
     outDir:"../../RailChess/wwwroot",
     emptyOutDir:false,
