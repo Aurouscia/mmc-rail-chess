@@ -242,6 +242,20 @@ const randNumDisplay = computed<string>(()=>{
     }
 })
 
+const sec = ref(0)
+const secDisplay = computed<string|undefined>(()=>{
+    if(sec.value < 0)
+        return `超时${-sec.value}秒`
+    else if(sec.value < 100)
+        return `剩余${sec.value}秒`
+})
+const secDanger = computed<boolean>(()=>{
+    return sec.value <= 10
+})
+window.setInterval(()=>{
+    sec.value -= 1
+}, 1000)
+
 const bgFileName = ref<string>();
 const topoData = ref<RailChessTopo>();
 const gameInfo = ref<RailChessGame>();
@@ -294,6 +308,7 @@ async function sync(data:SyncData){
     }
     renderStaList();
     selectedDist.value = undefined;
+    sec.value = data.leftSecsBeforeCanKick
 }
 async function init(){
     const resp = await api.game.init(gameId);
@@ -477,7 +492,10 @@ watch(props,()=>{
     <div v-show="gameStarted && !ended" class="randNum" :class="{randNumIsAB}" :style="randNumStyle">
         {{ randNumDisplay }}
     </div>
-    <div v-show="gameStarted && !ended" class="status">{{ randNumText }}</div>
+    <div v-show="gameStarted && !ended" class="status" :class="{secDanger}">
+        {{ randNumText }}
+        <div v-if="secDisplay" class="leftSecs">{{ secDisplay }}</div>
+    </div>
     <div v-show="!gameStarted && !ended" class="status">等待房主开始中</div>
     <div v-show="ended" class="status">本对局已经结束</div>
 </div>
@@ -534,9 +552,20 @@ watch(props,()=>{
 canvas{
     position: absolute;
 }
+@keyframes secDanger {
+    0%{color:white}
+    49%{color:white}
+    50%{color:red}
+}
 .status{
     color:white;
     white-space: nowrap;
+}
+.status.secDanger{
+    animation: secDanger 1s infinite;
+}
+.status .leftSecs{
+    font-size: 12px;
 }
 .randNumOuter{
     position: fixed;
