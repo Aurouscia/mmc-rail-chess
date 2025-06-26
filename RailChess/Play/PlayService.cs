@@ -163,7 +163,9 @@ namespace RailChess.Play
             {
                 rand = _eventsService.RandedResultOnlyGet();
             }
-            var leftSecsBeforeCanKick = KickAfk(fake:true, out _);
+            int leftSecsBeforeCanKick = int.MaxValue;
+            if(tFilterId == 0 && started)
+                leftSecsBeforeCanKick = KickAfk(fake:true, out _);
             var res = new SyncData()
             {
                 PlayerStatus = playerStatus,
