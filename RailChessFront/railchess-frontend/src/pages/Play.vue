@@ -590,8 +590,9 @@ canvas{
     font-size: 35px;
     color:white;
     transition: 500ms;
-    font-family: 'system-ui sans-serif';
+    font-family: '宋体','serif';
     white-space: nowrap;
+    flex-grow: 1;
 }
 .randNumIsAB{
     font-size: 22px;
