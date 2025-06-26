@@ -8,6 +8,7 @@
         public OcpStatus? NewOcps { get; set; }
         public List<List<int>>? Selections { get; set; }
         public bool GameStarted { get; set; }
+        public int LeftSecsBeforeCanKick { get; set; }
     }
 
     public class Player

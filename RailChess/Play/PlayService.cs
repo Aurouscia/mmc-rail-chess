@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Caching.Memory;
-using RailChess.Models;
-using RailChess.Models.DbCtx;
+﻿using RailChess.Models.DbCtx;
 using RailChess.Models.Game;
 using RailChess.Play.PlayHubResponseModel;
 using RailChess.Play.Services;
@@ -165,6 +163,7 @@ namespace RailChess.Play
             {
                 rand = _eventsService.RandedResultOnlyGet();
             }
+            var leftSecsBeforeCanKick = KickAfk(fake:true, out _);
             var res = new SyncData()
             {
                 PlayerStatus = playerStatus,
@@ -172,7 +171,8 @@ namespace RailChess.Play
                 NewOcps = newOcps,
                 RandNumber = rand,
                 Selections = selections,
-                GameStarted = started
+                GameStarted = started,
+                LeftSecsBeforeCanKick = leftSecsBeforeCanKick
             };
             return res;
         }
@@ -265,28 +265,49 @@ namespace RailChess.Play
             return null;
         }
 
-        private static DateTime LastKickAfkTime { get; set; } = DateTime.MinValue;
-        public string? KickAfk(out string? clearedPlayerName)
+        public string? KickAfkCall(out string? clearedPlayerName)
         {
-            if (!_eventsService.MeJoined()) 
+            if (!_eventsService.MeJoined())
             {
                 clearedPlayerName = null;
                 return "仅棋局内玩家可踢出挂机者";
             }
-
-            int lastKickSecs = (int)(DateTime.Now - LastKickAfkTime).TotalSeconds;
             static string errmsg(int leftWaitSecs)
             {
                 return $"请等待，玩家挂机{allowKickSecs}秒后才可移出，<b>剩余{leftWaitSecs}秒</b>";
             }
+            var leftSecs = KickAfk(fake:false, out clearedPlayerName);
+            if(leftSecs == -1) //成功踢掉
+                return null;
+            else
+                return errmsg(leftSecs);
+        }
+
+        /// <summary>
+        /// 上次踢人时间
+        /// </summary>
+        private static DateTime LastKickAfkTime { get; set; } = DateTime.MinValue;
+        /// <summary>
+        /// 踢人
+        /// </summary>
+        /// <param name="fake">假踢（只要秒数，不执行）</param>
+        /// <param name="clearedPlayerName">被踢掉玩家的用户名</param>
+        /// <returns>
+        /// 还剩多少秒可以踢掉<br/>
+        /// （非fake时只会是正数，-1表示成功踢掉）<br/>
+        /// （fake时可能为负数，表示已经超时了多少秒）
+        /// </returns>
+        private int KickAfk(bool fake, out string? clearedPlayerName)
+        {
+            // LastKickAfkTime 必然大于 LastOperation.Time，所以可以先检查这里
+            int lastKickSecs = (int)(DateTime.Now - LastKickAfkTime).TotalSeconds;
             if (lastKickSecs < allowKickSecs)
             {
                 clearedPlayerName = null;
-                return errmsg(allowKickSecs - lastKickSecs);
+                return allowKickSecs - lastKickSecs;
             }
 
             int player = _playerService.CurrentPlayer();
-            clearedPlayerName = _playerService.Get(player).Name;
             DateTime lastOpTime = DateTime.MinValue;
             var lastOp = _eventsService.LatestOperation();
             if (lastOp is { })
@@ -302,13 +323,16 @@ namespace RailChess.Play
                 }
             }
             int stuckSecs = (int)(DateTime.Now - lastOpTime).TotalSeconds;
-            if (stuckSecs >= allowKickSecs)
+            if (!fake && stuckSecs >= allowKickSecs)
             {
+                //如果已经超时，而且不是fake模式，则真踢人
                 _eventsService.Add(RailChessEventType.PlayerOut, 0, player, true);
                 LastKickAfkTime = DateTime.Now;
-                return null;
+                clearedPlayerName = _playerService.Get(player).Name;
+                return -1;
             }
-            return errmsg(allowKickSecs - stuckSecs);
+            clearedPlayerName = null;
+            return allowKickSecs - stuckSecs;
         }
     }
 }
