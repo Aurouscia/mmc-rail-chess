@@ -570,19 +570,19 @@ canvas{
 .randNumOuter{
     position: fixed;
     top:70px;
-    left:8px;
-    width: 160px;
+    left:0px;
+    width: 190px;
     height: 50px;
     background-color: cornflowerblue;
     border: 2px solid white;
-    border-radius: 1000px;
+    border-radius: 0px 25px 25px 0px;
     z-index: 1000;
     display: flex;
     align-items: center;
-    justify-content: left;
+    justify-content: space-between;
     gap:10px;
     box-sizing: border-box;
-    padding: 0px 10px 0px 20px;
+    padding: 0px 12px 0px 20px;
     overflow: hidden;
 }
 .randNum{
@@ -591,6 +591,7 @@ canvas{
     color:white;
     transition: 500ms;
     font-family: 'system-ui sans-serif';
+    white-space: nowrap;
 }
 .randNumIsAB{
     font-size: 22px;
