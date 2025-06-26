@@ -287,13 +287,14 @@ namespace RailChess.Play
                     lastOpTime = startEvent.Time;
                 }
             }
-            TimeSpan stuckTime = DateTime.Now - lastOpTime;
-            if (stuckTime.TotalSeconds > allowKickSecs)
+            int stuckSecs = (int)(DateTime.Now - lastOpTime).TotalSeconds;
+            if (stuckSecs > allowKickSecs)
             {
                 _eventsService.Add(RailChessEventType.PlayerOut, 0, player, true);
                 return null;
             }
-            return $"请等待，玩家挂机{allowKickSecs}秒后才可移出";
+            int leftSecs = allowKickSecs - stuckSecs;
+            return $"请等待，玩家挂机{allowKickSecs}秒后才可移出，<b>剩余{leftSecs}秒</b>";
         }
     }
 }
