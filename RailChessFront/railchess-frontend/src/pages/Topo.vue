@@ -153,11 +153,18 @@ function Render(){
       });
 
       stations.value.forEach(sta=>{
-        ctx.beginPath();
         var cx = sta.X/posBase*cvsWidth.value;
         var cy = sta.Y/posBase*cvsHeight.value;
+        ctx.fillStyle = 'black'
+        const xClose = 0.01 * cvsWidth.value
+        const yClose = 0.01 * cvsHeight.value
+        const l = cx - xClose
+        const u = cy - yClose
+        ctx.globalAlpha = 0.2
+        ctx.fillRect(l, u, xClose*2, yClose*2)
+        ctx.globalAlpha = 1
+        ctx.beginPath();
         ctx.arc(cx,cy,3,0,Math.PI*2,true);
-        ctx.closePath();
         ctx.fillStyle=StationColor(sta.Id);
         ctx.fill();
       });
@@ -432,6 +439,7 @@ function windowResizeHandler(){
   <SideBar ref="sb">
     <div class="manual">
       本编辑器仅支持PC端使用，手机端仅供浏览<br/><br/>
+      0.勤保存。
       1.创建新线后，从任意一条线的起点站开始，逐个点击车站<b>（仅点击车站）</b>，此图仅展示连接关系，不要求连线和走向完全一致。<br /><br />
       2.左上角的线路ID与图中线路号无需对应。<br /><br />
       3.选中线路的情况下，按住ctrl键，点击车站，使线路从该车站脱离。<br /><br />
