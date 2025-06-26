@@ -718,6 +718,7 @@ canvas{
 .playerName{
     padding: 2px;
     font-weight: bold;
+    width: fit-content;
     max-width: 96px;
     overflow: hidden;
     white-space: nowrap;
