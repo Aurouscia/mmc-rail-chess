@@ -264,6 +264,8 @@ namespace RailChess.Play
             _eventsService.Add(RailChessEventType.PlayerOut, 0, true);
             return null;
         }
+
+        private static DateTime LastKickAfkTime { get; set; } = DateTime.MinValue;
         public string? KickAfk(out string? clearedPlayerName)
         {
             if (!_eventsService.MeJoined()) 
@@ -271,6 +273,18 @@ namespace RailChess.Play
                 clearedPlayerName = null;
                 return "仅棋局内玩家可踢出挂机者";
             }
+
+            int lastKickSecs = (int)(DateTime.Now - LastKickAfkTime).TotalSeconds;
+            static string errmsg(int leftWaitSecs)
+            {
+                return $"请等待，玩家挂机{allowKickSecs}秒后才可移出，<b>剩余{leftWaitSecs}秒</b>";
+            }
+            if (lastKickSecs < allowKickSecs)
+            {
+                clearedPlayerName = null;
+                return errmsg(allowKickSecs - lastKickSecs);
+            }
+
             int player = _playerService.CurrentPlayer();
             clearedPlayerName = _playerService.Get(player).Name;
             DateTime lastOpTime = DateTime.MinValue;
@@ -288,13 +302,13 @@ namespace RailChess.Play
                 }
             }
             int stuckSecs = (int)(DateTime.Now - lastOpTime).TotalSeconds;
-            if (stuckSecs > allowKickSecs)
+            if (stuckSecs >= allowKickSecs)
             {
                 _eventsService.Add(RailChessEventType.PlayerOut, 0, player, true);
+                LastKickAfkTime = DateTime.Now;
                 return null;
             }
-            int leftSecs = allowKickSecs - stuckSecs;
-            return $"请等待，玩家挂机{allowKickSecs}秒后才可移出，<b>剩余{leftSecs}秒</b>";
+            return errmsg(allowKickSecs - stuckSecs);
         }
     }
 }
