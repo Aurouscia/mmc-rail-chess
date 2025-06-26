@@ -26,6 +26,10 @@ interface TempStore{lines:Line[],stations:StaParsed[]}
 const cvsWidth = ref<number>(0);
 const cvsHeight = ref<number>(0);
 
+const closeDefKey = 'closeDef'
+const closeDefRead = Number(localStorage.getItem(closeDefKey)) || 0.007
+const closeDef = ref<number>(closeDefRead)
+
 const cvs = ref<HTMLCanvasElement>();
 const bg = ref<HTMLDivElement>();
 var ctx:CanvasRenderingContext2D;
@@ -103,6 +107,7 @@ function CvsInit(){
   }
 }
 function Render(){
+  localStorage.setItem(closeDefKey, closeDef.value.toString())
       ctx.clearRect(0,0,cvsWidth.value,cvsHeight.value);
       ctx.strokeStyle="#008800";
       ctx.lineWidth=2;
@@ -156,11 +161,11 @@ function Render(){
         var cx = sta.X/posBase*cvsWidth.value;
         var cy = sta.Y/posBase*cvsHeight.value;
         ctx.fillStyle = 'black'
-        const xClose = 0.01 * cvsWidth.value
-        const yClose = 0.01 * cvsHeight.value
+        const xClose = closeDef.value * cvsWidth.value
+        const yClose = closeDef.value * cvsHeight.value
         const l = cx - xClose
         const u = cy - yClose
-        ctx.globalAlpha = 0.2
+        ctx.globalAlpha = 0.3
         ctx.fillRect(l, u, xClose*2, yClose*2)
         ctx.globalAlpha = 1
         ctx.beginPath();
@@ -228,7 +233,7 @@ function ClickCvs(e: MouseEvent) {
   TryAutoSave();
 }
 function CloseTo(station:StaParsed,x:number,y:number){
-  return (Math.abs(station.X-x)<=0.01*posBase && Math.abs(station.Y-y)<=0.01*posBase);
+  return (Math.abs(station.X-x)<=closeDef.value*posBase && Math.abs(station.Y-y)<=closeDef.value*posBase);
 }
 function DeleteStation(id:number){
       lines.value.forEach(line=>{
@@ -437,9 +442,14 @@ function windowResizeHandler(){
   </div>
 
   <SideBar ref="sb">
+    <div class="closeDefEdit">
+      <div>判定阈值</div>
+      <input v-model="closeDef" type="range" min="0.001" max="0.015" step="0.001" @blur="Render"/>
+      <div>{{ closeDef }}</div>
+    </div>
     <div class="manual">
       本编辑器仅支持PC端使用，手机端仅供浏览<br/><br/>
-      0.勤保存。
+      <b>勤保存</b><br/><br/>
       1.创建新线后，从任意一条线的起点站开始，逐个点击车站<b>（仅点击车站）</b>，此图仅展示连接关系，不要求连线和走向完全一致。<br /><br />
       2.左上角的线路ID与图中线路号无需对应。<br /><br />
       3.选中线路的情况下，按住ctrl键，点击车站，使线路从该车站脱离。<br /><br />
@@ -453,6 +463,15 @@ function windowResizeHandler(){
 </template>
 
 <style scoped>
+.closeDefEdit{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap:3px;
+  flex-direction: column;
+  padding: 6px;
+  background-color: #eee;
+}
 .repairTool{
   position: fixed;
   top: 0px;

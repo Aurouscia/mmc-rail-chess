@@ -113,7 +113,6 @@ watch(selected, (newVal, oldVal)=>{
 
 <template>
 <div class="repairTool">
-    <br/>
     目标: <select v-model="selected">
         <option :value="selectType.whole">整体</option>
         <option :value="selectType.left">左边缘</option>
