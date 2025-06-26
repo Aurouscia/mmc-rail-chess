@@ -185,7 +185,7 @@ namespace RailChess.Play
         [Authorize]
         public async Task KickAfk(KickAfkRequest _)
         {
-            var errmsg = Service.KickAfk(out string? clearedPlayerName);
+            var errmsg = Service.KickAfkCall(out string? clearedPlayerName);
             if (errmsg is not null)
             {
                 await SendTextMsg(errmsg, defaultSender, TextMsgType.Err, Clients.Caller);
