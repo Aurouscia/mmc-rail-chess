@@ -13,7 +13,7 @@ namespace RailChess.Controllers
     {
         private readonly RailChessContext _context;
         private readonly int _userId;
-        private const int unplayedGameTimeoutMins = 12 * 60;
+        private const int unplayedGameTimeoutMins = 48 * 60;
 
         public GameController(RailChessContext context, HttpUserIdProvider httpUserIdProvider)
         {
