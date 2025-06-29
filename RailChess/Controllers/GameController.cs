@@ -63,7 +63,7 @@ namespace RailChess.Controllers
         {
             var m = _context.Maps.Where(x => x.Id == game.UseMapId).Select(x => x.Author).FirstOrDefault();
             if (m == 0) return this.ApiFailedResp("找不到指定地图");
-            if (game.RandMin < 0 || game.RandMax > 16 || game.RandMax <= game.RandMin)
+            if (game.RandMin < 1 || game.RandMax > 16 || game.RandMax <= game.RandMin)
                 return this.ApiFailedResp("随机数设置有问题");
             if (game.StucksToLose < 1 || game.StucksToLose > 20)
                 return this.ApiFailedResp("卡住出局次数设置有问题");
