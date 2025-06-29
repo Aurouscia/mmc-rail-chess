@@ -221,6 +221,7 @@ namespace RailChess.Controllers
             var maps = _context.Maps
                 .Where(x => !x.Deleted)
                 .Where(x => x.Title != null && x.Title.Contains(s))
+                .OrderByDescending(x => x.UpdateTime)
                 .Select(x => new { x.Id,x.Title, x.TotalDirections }).Take(6).ToList();
             QuickSearchResult res = new();
             maps.ForEach(x =>
