@@ -255,17 +255,23 @@ namespace RailChess.Play
                 return "移动不合法，请刷新后重选";
             }
             _eventsService.Add(RailChessEventType.PlayerMoveTo, dist, false);
+            var distNewlyCaptured = false;
             if (!_eventsService.PlayerCaptureEvents().Any(x => x.StationId == dist))
+            {
                 _eventsService.Add(RailChessEventType.PlayerCapture, dist, true);
+                distNewlyCaptured = true;
+            }
             var existing = _eventsService.PlayerCaptureEvents().ConvertAll(x=>x.StationId);
-            var captures = _coreCaller.AutoCapturables().ToList();
-            captures.RemoveAll(existing.Contains);
-            foreach(var capture in captures)
+            var autoCaptures = _coreCaller.AutoCapturables().ToList();
+            autoCaptures.RemoveAll(existing.Contains);
+            foreach(var capture in autoCaptures)
             {
                 _eventsService.Add(RailChessEventType.PlayerCapture, capture, false);
             }
             _context.SaveChanges();
-            captured = captures.Count + 1;
+            captured = autoCaptures.Count;
+            if (distNewlyCaptured)
+                captured += 1;
             return null;
         }
         public string? Leave()
