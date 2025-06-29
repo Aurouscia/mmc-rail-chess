@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, CSSProperties, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, CSSProperties, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { injectApi, injectHideTopbar, injectHttp, injectPop, injectUserInfo } from '../provides';
 import { OcpStatus, Player, SyncData, TextMsg } from '../models/play';
 import SideBar from '../components/SideBar.vue';
@@ -154,7 +154,7 @@ function renderStaList(){
 }
 
 const pathAnimRenderedWidth = 26;
-const { animatorRendered, setPaths } = useAnimator();
+const { animatorRendered, setPaths, stopPathAnim } = useAnimator();
 const selectedDist = ref<number|undefined>();
 function renderPathAnims() {
     if (!topoData.value || !arena.value) { return; }
@@ -166,9 +166,9 @@ function renderPathAnims() {
     var nodes: AnimNode[] = [];
     const getPos = (sta:number)=>{
             const s = topoData.value!.Stations.find(x=>x[0]==sta);
-            if(!s)return undefined
-            const x = s[1] / posBase * arena.value!.clientWidth;
-            const y = s[2] / posBase * arena.value!.clientHeight;
+            if(!s || !arena.value)return undefined
+            const x = s[1] / posBase * arena.value.clientWidth;
+            const y = s[2] / posBase * arena.value.clientHeight;
             const left = x - side / 2 + 'px';
             const top = y - side / 2 + 'px';
             return {left, top}
@@ -455,7 +455,8 @@ onMounted(async()=>{
     }
     resetPollTimer()
 })
-onUnmounted(()=>{
+onBeforeUnmount(()=>{
+    stopPathAnim()
     disposePollTimer()
     document.removeEventListener("visibilitychange", visibilityChangedHandler)
     sgrc.conn.stop();

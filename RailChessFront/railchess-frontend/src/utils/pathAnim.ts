@@ -64,5 +64,8 @@ export function useAnimator() {
             runningTimer = window.setInterval(updateCall, loopTime)
         }
     };
-    return { animatorRendered, setPaths }
+    function stopPathAnim(){
+        window.clearInterval(runningTimer)
+    }
+    return { animatorRendered, setPaths, stopPathAnim }
 }
