@@ -10,6 +10,7 @@ namespace RailChess.Core
         {
             var allStas = graph.Stations;
             var othersReachable = new HashSet<int>();
+            var limit = DateTime.Now.AddSeconds(3);
             foreach(var p in graph.UserPosition)
             {
                 var he = p.Key;
@@ -25,6 +26,8 @@ namespace RailChess.Core
 
                 while (true)
                 {
+                    if (DateTime.Now > limit)
+                        throw new Exception("计算超时，请联系管理员");
                     var a = active.Dequeue();
                     foreach (var n in a.Neighbors)
                     {

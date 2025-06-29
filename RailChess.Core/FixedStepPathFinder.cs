@@ -21,6 +21,7 @@ namespace RailChess.Core
         }
         private static IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, int stepsA, int stepsB, int maxiumTransfer = int.MaxValue)
         {
+            var limit = DateTime.Now.AddSeconds(3);
             int stepsAB = stepsA + stepsB;
             if (stepsA == 0 && stepsB == 0)
                 return new List<List<int>>();
@@ -51,6 +52,8 @@ namespace RailChess.Core
 
             while (true)
             {
+                if (DateTime.Now > limit)
+                    throw new Exception("计算超时，请联系管理员");
                 var p = paths.Dequeue();
                 var tail = p.Tail;
                 if (tail is null) continue;
