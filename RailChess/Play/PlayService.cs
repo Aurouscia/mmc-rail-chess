@@ -87,7 +87,7 @@ namespace RailChess.Play
                     Id = p.Id,
                     Name = p.Name ?? "???",
                     AtSta = atSta,
-                    AvtFileName = p?.AvatarName ?? "???",
+                    AvtFileName = p?.AvatarName ?? "",
                     StuckTimes = stuckTimes,
                     Score = _coreGraphProvider.TotalDirections(hisStations, dirDict),
                     Out = outEvents.Any(x => p is not null && x.PlayerId == p.Id)

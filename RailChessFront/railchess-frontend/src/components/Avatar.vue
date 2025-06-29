@@ -139,7 +139,7 @@ const emit = defineEmits<{
                 <button v-show="colorList.length>1" @click="removeColor(idx)" class="cancel">移除</button>
             </div>
             <div>
-                <button @click="addColor" v-show="colorList.length<4" class="minor">添加颜色</button>
+                <button @click="addColor" v-show="colorList.length<4" class="minor" style="flex-grow: 1;">添加颜色+</button>
             </div>
             <div>背景角度偏移<input v-model="startAngle" type="range" min="0" max="360" @input="tryRender" @blur="render"></div>
             <div>文字横向偏移<input v-model="xOffset" type="range" :min="-cvsSide/2" :max="cvsSide/2" step="1" @input="tryRender" @blur="render"></div>
@@ -175,6 +175,9 @@ const emit = defineEmits<{
 }
 .makeAvtH1{
     margin-top: 50px;
+}
+input{
+    width: 150px;
 }
 input[type=number]{
     width: 50px;
