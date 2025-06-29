@@ -358,6 +358,12 @@ function autoStaSize(){
         staSize.value = 0.4
 }
 
+async function visibilityChangedHandler(){
+    if(document.visibilityState==='visible'){
+        await sgrc.syncMe()
+    }
+}
+
 var api:Api;
 var me:number;
 var jwtToken:string|null;
@@ -421,11 +427,13 @@ onMounted(async()=>{
             send();
         }
     })
+    document.addEventListener("visibilitychange", visibilityChangedHandler)
     if(props.playback){
         timeline.value = await api.game.loadTimeline(gameId)
     }
 })
 onUnmounted(()=>{
+    document.removeEventListener("visibilitychange", visibilityChangedHandler)
     sgrc.conn.stop();
 })
 
