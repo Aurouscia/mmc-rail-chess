@@ -244,8 +244,13 @@ const randNumDisplay = computed<string>(()=>{
 
 const sec = ref(0)
 const secDisplay = computed<string|undefined>(()=>{
-    if(sec.value < 0)
+    if(sec.value < 0){
+        if(sec.value < -99){
+            const mins = Math.ceil(-sec.value/60)
+            return `超时${mins}分钟`
+        }
         return `超时${-sec.value}秒`
+    }
     else if(sec.value < 100)
         return `剩余${sec.value}秒`
 })
