@@ -269,8 +269,15 @@ const ocpStatus = ref<OcpStatus[]>([])
 const newOcps = ref<OcpStatus|undefined>();
 const randNum = ref<number>(0);
 const ended = ref<boolean>(false);
-async function sync(data:SyncData){
+let myLastSyncTimeMs = 0
+async function sync(data:SyncData|null){
     console.log("收到同步数据指令",data)
+    if(!data){
+        console.log("无需同步数据")
+        return
+    }
+    myLastSyncTimeMs = Date.now()
+    resetPollTimer()
     //当前currentSelections未更新，还是上个玩家的可选选项
     //当前playerList未更新，第一个还是上个玩家
     const lastPlayer = playerList.value[0];
@@ -363,6 +370,21 @@ async function visibilityChangedHandler(){
         await sgrc.syncMe()
     }
 }
+//保险措施，有时因为客户端休眠等原因没收到sync指令
+const pollIntv = 15 * 1000
+let pollTimer = 0
+async function poll(){
+    if(!props.playback){
+        await sgrc.syncMeIfNecessary(myLastSyncTimeMs)
+    }
+}
+function resetPollTimer(){
+    disposePollTimer()
+    pollTimer = window.setInterval(poll, pollIntv)
+}
+function disposePollTimer(){
+    window.clearInterval(pollTimer)
+}
 
 var api:Api;
 var me:number;
@@ -431,8 +453,10 @@ onMounted(async()=>{
     if(props.playback){
         timeline.value = await api.game.loadTimeline(gameId)
     }
+    resetPollTimer()
 })
 onUnmounted(()=>{
+    disposePollTimer()
     document.removeEventListener("visibilitychange", visibilityChangedHandler)
     sgrc.conn.stop();
 })

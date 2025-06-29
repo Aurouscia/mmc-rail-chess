@@ -203,6 +203,11 @@ namespace RailChess.Play
             var data = Service.GetSyncData(false, req.TFilterId);
             await Clients.Caller.SendAsync(syncMethod, data);
         }
+        public async Task SyncMeIfNecessary(SyncMeRequest req)
+        {
+            var data = Service.GetSyncDataIfNecessary(req.MyLastSyncTimeMs);
+            await Clients.Caller.SendAsync(syncMethod, data);
+        }
         private async Task SyncAll()
         {
             _logger.LogInformation("游戏[{gameId}]_开始同步所有人",Service.GameId);

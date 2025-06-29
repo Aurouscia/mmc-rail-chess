@@ -179,6 +179,16 @@ namespace RailChess.Play
             return res;
         }
 
+        public SyncData? GetSyncDataIfNecessary(long lastSyncTimeMs)
+        {
+            var lastEventTime = _eventsService.OurEvents().LastOrDefault()?.Time 
+                ?? new DateTime(2000, 1, 1);
+            var lastEventTimestampMs = new DateTimeOffset(lastEventTime)
+                .ToUnixTimeMilliseconds();
+            if (lastEventTimestampMs > lastSyncTimeMs)
+                return GetSyncData();
+            return null;
+        }
         public string? Join()
         {
             if(UserId<=0)

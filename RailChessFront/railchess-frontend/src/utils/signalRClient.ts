@@ -1,7 +1,7 @@
 import * as signalR from '@microsoft/signalr'
 import { SyncData, TextMsg, getLocalTextMsg } from '../models/play';
 
-export type SyncCall = (data:SyncData)=>void
+export type SyncCall = (data:SyncData|null)=>void
 export type TextMsgCall = (data:TextMsg)=>void
 const syncCallMethodName = "sync";
 const textMsgMethodName = "textmsg";
@@ -21,7 +21,8 @@ interface SelectRequest extends RequestModelBase{
 }
 interface OutRequest extends RequestModelBase{}
 interface SyncMeRequest extends RequestModelBase{
-    TFilterId:number
+    TFilterId:number,
+    MyLastSyncTimeMs?:number
 }
 interface KickAfkRequest extends RequestModelBase{}
 
@@ -106,6 +107,14 @@ export class SignalRClient{
             TFilterId: tFilterId
         };
         await this.conn.invoke("SyncMe",r)
+    }
+    async syncMeIfNecessary(myLastSyncTimeMs:number){
+        const r:SyncMeRequest = {
+            GameId: this.gameId,
+            TFilterId: 0,
+            MyLastSyncTimeMs: myLastSyncTimeMs
+        }
+        await this.conn.invoke("SyncMeIfNecessary",r)
     }
     async kickAfk(){
         const r:KickAfkRequest = {
