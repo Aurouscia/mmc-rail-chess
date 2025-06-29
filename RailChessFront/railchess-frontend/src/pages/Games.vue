@@ -88,7 +88,7 @@ onMounted(async ()=>{
         <tr>
             <td>随机数</td>
             <td>
-                下界 <input v-model="creating.RandMin" type="number" min="0" max="13"/><br/>
+                下界 <input v-model="creating.RandMin" type="number" min="1" max="13"/><br/>
                 上界 <input v-model="creating.RandMax" type="number" min="3" max="16"/>
             </td>
         </tr>
