@@ -4,7 +4,7 @@ export function bgSrc(fileName?:string) {
 }
 export function avtSrc(fileName:string){
     if(!fileName){
-        return '/railchessLogo.svg'
+        return '/railchessLogoThumbnail.png'
     }
     const baseUrl = import.meta.env.VITE_BASEURL;
     return baseUrl+"/avts/"+fileName;
