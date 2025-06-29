@@ -20,7 +20,6 @@ namespace RailChess.Play
         
         private int _gameId;
         private int _userId;
-        private const int timeoutMins = 180;
         private const int allowKickSecs = 60;
         public int GameId { get => _gameId; set 
             {
@@ -105,9 +104,7 @@ namespace RailChess.Play
                 throw new Exception("无车站，无法进行游戏");
             bool stationAllCaptured = captureEvents.Count >= ourTopo.Stations.Count;
 
-            bool timeout = latestOp is not null && (DateTime.Now - latestOp.Time).TotalMinutes > timeoutMins;
-
-            if (!playback && (timeout || playerAllOut || stationAllCaptured || game.Ended))
+            if (!playback && (playerAllOut || stationAllCaptured || game.Ended))
             {
                 ended = true;
                 if (!_eventsService.GamedEnded())
