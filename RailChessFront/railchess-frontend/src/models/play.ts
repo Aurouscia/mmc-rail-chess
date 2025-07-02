@@ -18,7 +18,8 @@ export interface SyncData{
     newOcps:OcpStatus,
     selections?:number[][],
     gameStarted:boolean,
-    leftSecsBeforeCanKick:number
+    leftSecsBeforeCanKick:number,
+    tFilterId:number
 }
 
 export interface Player{

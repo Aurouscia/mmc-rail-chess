@@ -9,6 +9,7 @@
         public List<List<int>>? Selections { get; set; }
         public bool GameStarted { get; set; }
         public int LeftSecsBeforeCanKick { get; set; }
+        public int TFilterId { get; set; }
     }
 
     public class Player

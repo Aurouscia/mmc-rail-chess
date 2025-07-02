@@ -171,7 +171,8 @@ namespace RailChess.Play
                 RandNumber = rand,
                 Selections = selections,
                 GameStarted = started,
-                LeftSecsBeforeCanKick = leftSecsBeforeCanKick
+                LeftSecsBeforeCanKick = leftSecsBeforeCanKick,
+                TFilterId = tFilterId
             };
             return res;
         }

@@ -34,7 +34,7 @@ interface PlayerRendered{
 }
 const playerRenderedList = ref<PlayerRendered[]>([]);
 const animTimers:number[] = []
-function renderPlayerList(){
+function renderPlayerList(reversed:boolean){
     const playerListSplitted:Player[] = []
     playerListSplitted.push(...playerList.value.filter(p=>!p.out))
     const outPlayers = [...playerList.value.filter(p=>p.out)]
@@ -50,7 +50,11 @@ function renderPlayerList(){
         const existing = playerRenderedList.value.find(x=>x.p.id==p.id);
         if(existing){
             existing.p = p;
-            if(i > existing.idx){
+            let still = i === existing.idx
+            let goRight = i > existing.idx
+            if(reversed && !still)
+                goRight = !goRight
+            if(goRight){
                 existing.style.opacity = 0;
                 existing.style.zIndex = 0;
                 const moveTimer = setTimeout(()=>{
@@ -279,6 +283,7 @@ const newOcps = ref<OcpStatus|undefined>();
 const randNum = ref<number>(0);
 const ended = ref<boolean>(false);
 let myLastSyncTimeMs = 0
+let lastSyncTFilterId = 0
 async function sync(data:SyncData|null){
     console.log("收到同步数据指令",data)
     if(!data){
@@ -320,7 +325,12 @@ async function sync(data:SyncData|null){
         playerRenderedList.value = [];
         animatorRendered.value = undefined
     }else{
-        renderPlayerList();
+        let reversed = false
+        if(props.playback){
+            reversed = lastSyncTFilterId > data.tFilterId
+        }
+        renderPlayerList(reversed);
+        lastSyncTFilterId = data.tFilterId
     }
     renderStaList();
     selectedDist.value = undefined;
