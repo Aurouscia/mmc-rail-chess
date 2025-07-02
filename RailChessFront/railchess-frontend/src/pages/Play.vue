@@ -175,10 +175,12 @@ function renderPathAnims() {
     const getPos = (sta:number)=>{
             const s = topoData.value!.Stations.find(x=>x[0]==sta);
             if(!s || !arena.value)return undefined
-            const x = s[1] / posBase * arena.value.clientWidth;
-            const y = s[2] / posBase * arena.value.clientHeight;
-            const left = x - side / 2 + 'px';
-            const top = y - side / 2 + 'px';
+            const xRatio = s[1] / posBase
+            const yRatio = s[2] / posBase
+            const sideXRatioHalf = (side/2) / arena.value.clientWidth;
+            const sideYRatioHalf = (side/2) / arena.value.clientHeight;
+            const left = (xRatio - sideXRatioHalf) * 100 + '%';
+            const top = (yRatio - sideYRatioHalf) * 100 + '%';
             return {left, top}
     }
     path.forEach(sta => {
@@ -701,6 +703,7 @@ canvas{
     line-height: 26px;
     font-size: 20px;
     text-align: center;
+    font-family: '宋体','serif';
 }
 .station.clickable{
     border-color: rgb(71, 171, 174);
