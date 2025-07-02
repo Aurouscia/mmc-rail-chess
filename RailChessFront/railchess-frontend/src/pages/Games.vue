@@ -8,6 +8,7 @@ import Loading from '../components/Loading.vue';
 import Search from '../components/Search.vue';
 import { router } from '../main';
 import { useFeVersionChecker } from '../utils/feVersionCheck';
+import { contact } from '../utils/consts';
 
 const { checkAndPop } = useFeVersionChecker()
 checkAndPop()
@@ -79,7 +80,12 @@ onMounted(async ()=>{
             {{ g.HostUserName }}
         </td>
     </tr>
-    <tr><td colspan="3">已结束的棋局会被封存，请在战绩页面使用回放功能</td></tr>
+    <tr><td colspan="3" class="notice">
+        注意：本游戏玩家较少<br/>
+        请<b>务必</b>在约好其他玩家后，再创建房间，不要创建房间后离开<br/>
+        请<b>务必</b>在确认房主在线后，再加入对局，以免开局被房主踢出<br/>
+        如果找不到一起玩的人，请考虑：{{ contact }}
+    </td></tr>
 </tbody></table>
 <Loading v-else></Loading>
 <SideBar ref="sidebar">
@@ -158,5 +164,9 @@ input[type=number]{
 table.list{
     table-layout: fixed;
     width: 100%;
+}
+.notice{
+    font-size: 14px;
+    color: #666
 }
 </style>
