@@ -375,7 +375,7 @@ function autoStaSize(){
 }
 
 async function visibilityChangedHandler(){
-    if(document.visibilityState==='visible'){
+    if(!props.playback && document.visibilityState==='visible'){
         await sgrc.syncMe()
     }
 }
