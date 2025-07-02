@@ -101,7 +101,7 @@ namespace RailChess.Play
             bool ended = false;
             bool playerAllOut = playerStatus.Count > 0 && playerStatus.All(x => x.Out == true);
             if (ourTopo.Stations is null)
-                throw new Exception("无车站，无法进行游戏");
+                throw new Exception("无车站，无法启动棋局");
             bool stationAllCaptured = captureEvents.Count >= ourTopo.Stations.Count;
 
             if (!playback && (playerAllOut || stationAllCaptured || game.Ended))

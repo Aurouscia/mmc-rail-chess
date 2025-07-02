@@ -34,14 +34,34 @@ export class SignalRClient{
         this.gameId = gameId;
         const baseUrl = import.meta.env.VITE_BASEURL;
         const url = baseUrl+"/Play";
+        const retryDelays = [500, 500, 1000, 1000, 2000, 2000, 4000, 4000]
+        const retryTotal = 15000
+        const retryMsgIntv = 3000
         this.conn = new signalR.HubConnectionBuilder()
             .withUrl(url,{ accessTokenFactory: () => jwtToken })
             .configureLogging(signalR.LogLevel.Information)
-            .withAutomaticReconnect()
+            .withAutomaticReconnect(retryDelays)
             .build();
-        this.conn.onreconnecting(()=>textMsgCall(getLocalTextMsg("正在重新连接",2)))
+        let reconMsgTimer = 0
+        let reconMsgCounter = 0
+        this.conn.onreconnecting(()=>{
+            const msgRecon = "失去连接，正在重连"
+            const msgFailed = "⚠⚠重连失败，请刷新页面⚠⚠"
+            textMsgCall(getLocalTextMsg(msgRecon, 2))
+            reconMsgCounter++
+            reconMsgTimer = window.setInterval(()=>{
+                let msg = msgRecon
+                if(reconMsgCounter >= retryTotal/retryMsgIntv){
+                    msg = msgFailed
+                }
+                textMsgCall(getLocalTextMsg(msg, 2))
+                reconMsgCounter++
+            }, retryMsgIntv)
+        })
         this.conn.onreconnected(()=>{
-            textMsgCall(getLocalTextMsg("成功重新连接",1))
+            window.clearInterval(reconMsgTimer)
+            reconMsgCounter = 0
+            textMsgCall(getLocalTextMsg("已成功重新连接", 1))
             this.syncMe();
         });
         this.conn.on(syncCallMethodName, syncCall);

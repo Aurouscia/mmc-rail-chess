@@ -442,7 +442,7 @@ onMounted(async()=>{
             t = "failed"
         }
         if(m.sender!=mInfo.Name)
-            pop.value.show(truncate(m.sender+":"+m.content, {length:30}), t)
+            pop.value.show(truncate(m.sender+"："+m.content, {length:30}), t)
     }
     sgrc = new SignalRClient(gameId,jwtToken||"", sync, textMsgCall);
 

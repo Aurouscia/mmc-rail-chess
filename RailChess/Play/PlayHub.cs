@@ -117,7 +117,7 @@ namespace RailChess.Play
             if (!ended)
             {
                 bool meJoined = _eventsService.MeJoined();
-                string callerMsg = meJoined ? "您已成功返回房间，请继续游戏" : "您已进入房间观战";
+                string callerMsg = meJoined ? "已返回房间" : "正在观战";
 
                 var g = _gameService.OurGame();
                 string rules = $"<br/>随机数范围<b>{g.RandMin}-{g.RandMax}</b>";
