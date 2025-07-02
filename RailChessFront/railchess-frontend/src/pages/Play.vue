@@ -14,7 +14,9 @@ import { useAnimator, AnimNode } from '../utils/pathAnim';
 import _, { truncate } from 'lodash'
 import { boxTypes } from '../components/Pop.vue';
 import Timeline from '../components/Timeline.vue';
+import { useRouter } from 'vue-router';
 
+const router = useRouter()
 const props = defineProps<{
     id:string,
     playback?:string
@@ -568,10 +570,12 @@ watch(props,()=>{
         <button v-show="meJoined && !meOut" class="cancel" @click="sgrc.out">退出本棋局</button>
         <button v-show="meOut" class="minor">已退出本棋局</button>
         <button v-show="meHost && !gameStarted && meJoined" @click="sgrc.gameStart">下令开始棋局</button>
-        <button v-show="gameStarted" class="minor">本棋局已开始</button>
+        <button v-show="gameStarted && !ended" class="minor">本棋局已开始</button>
+        <button v-show="ended" class="minor">本棋局已结束</button>
         <button v-show="meHost && !ended && !gameStarted" class="cancel" @click="sgrc.gameReset">下令重置房间</button>
         <button v-show="gameStarted && !ended" class="cancel" @click="sgrc.kickAfk">移除挂机玩家</button>
-        <button class="off" @click="$router.push('/')">返回主菜单</button>
+        <button v-show="ended" @click="router.replace('/playback/'+props.id)">查看本局回放</button>
+        <button class="off" @click="router.push('/')">返回主菜单</button>
         <div class="sideBarSlideOuter">
             背景不透明度：{{ bgOpacity }}
             <input type="range" v-model="bgOpacity" min="0" max="1" step="0.1">
