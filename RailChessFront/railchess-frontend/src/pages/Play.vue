@@ -37,7 +37,9 @@ const animTimers:number[] = []
 function renderPlayerList(){
     const playerListSplitted:Player[] = []
     playerListSplitted.push(...playerList.value.filter(p=>!p.out))
-    playerListSplitted.push(...playerList.value.filter(p=>p.out))
+    const outPlayers = [...playerList.value.filter(p=>p.out)]
+    outPlayers.sort((p1,p2)=>p2.score-p1.score)
+    playerListSplitted.push(...outPlayers)
     animTimers.forEach(t=>{
         clearTimeout(t)
     })
