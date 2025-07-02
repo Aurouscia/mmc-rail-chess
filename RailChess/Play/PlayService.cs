@@ -219,7 +219,9 @@ namespace RailChess.Play
                 return "对局已开始过";
             if (UserId != game.HostUserId)
                 return "只有房主能开始对局";
-            var playersCount = _eventsService.PlayersJoinEvents().Count;
+            var playerJoinCount = _eventsService.PlayersJoinEvents().Count;
+            var playerOutCount = _eventsService.PlayerOutEvents().Count;
+            var playersCount = playerJoinCount - playerOutCount;
             if (playersCount <= 1)
                 return "至少需要两人加入(在顶部显示)";
 
