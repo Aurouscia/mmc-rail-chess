@@ -274,6 +274,24 @@ async function select(){
         setPaths();
     }
 }
+let frameStatus = ''
+function getArenaStatus(){
+    //用于判断视角是否移动过
+    const f = frame.value
+    if(!f)
+        return
+    return `${f.scrollLeft}|${f.scrollTop}`
+}
+function frameDownHandlerForAnim(){
+    frameStatus = getArenaStatus() ?? ''
+}
+function frameUpHandlerForAnim(){
+    //仅在原地点击时停止播放，移动后松开的不算停止指令
+    const statusNow = getArenaStatus()
+    if(frameStatus == statusNow){
+        stopConnectionsAnim()
+    }
+}
 
 const randNumStyle = ref<CSSProperties>({});
 let changeRandNumTimer = 0;
@@ -603,8 +621,10 @@ watch(props,()=>{
     <div v-show="!gameStarted && !ended" class="status">等待房主开始中</div>
     <div v-show="ended" class="status">本对局已经结束</div>
 </div>
-<div class="frame" ref="frame" :class="{playbackFrame:playback, tooManySelections}">
-    <div class="arena" ref="arena" @click="stopConnectionsAnim">
+<div class="frame" ref="frame" :class="{playbackFrame:playback, tooManySelections}"
+    @mousedown="frameDownHandlerForAnim" @touchstart="frameDownHandlerForAnim"
+    @mouseup="frameUpHandlerForAnim" @touchend="frameUpHandlerForAnim">
+    <div class="arena" ref="arena">
         <img v-if="bgFileName" ref="bg" :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
         <div v-for="s in staRenderedList" :style="s" 
             :class="{clickable:clickableStations.includes(s.sId)&&nowMe&&!playback, selected:selectedDist==s.sId&&nowMe&&!playback}" 
