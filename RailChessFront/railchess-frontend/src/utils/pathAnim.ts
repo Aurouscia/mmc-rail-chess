@@ -1,4 +1,4 @@
-import { CSSProperties, nextTick, ref } from "vue"
+import { CSSProperties, ref } from "vue"
 import { sleep } from "./sleep";
 
 export interface AnimPos{
@@ -84,6 +84,7 @@ export interface AnimConnItem{
     a: number,
     b: number,
     text: string,
+    num: number,
     style:CSSProperties
 }
 
@@ -95,14 +96,24 @@ export function useConnectionAnimator(){
         stopConnectionsAnim()
         if(param.conns.length === 0)
             return
-        animatorRendered.value = param.conns.map<AnimConnItem>(x=>{
-            return {
-                a: x.a,
-                b: x.b,
-                text: x.text,
-                style: {...param.styleBase}
+        const items:AnimConnItem[] = []
+        param.conns.forEach(x=>{
+            const overlapped = items.find(y => y.a==x.a && y.b==x.b)
+            if(overlapped){
+                overlapped.num++
+            }
+            else{
+                items.push({
+                    a: x.a,
+                    b: x.b,
+                    text: x.text,
+                    num: 1,
+                    style: {...param.styleBase}
+                })
             }
         })
+        animatorRendered.value = items
+        const bias = 5
         const updateCall = async()=>{
             for(const item of animatorRendered.value){
                 item.style["transition-duration"] = '0ms'
@@ -112,11 +123,11 @@ export function useConnectionAnimator(){
                 let { top, left } = posA
                 item.style.left = left
                 item.style.top = top
-                await nextTick()
+                await sleep(bias)
                 const posB = param.getPos(item.b)
                 if(!posB)
                     continue
-                item.style["transition-duration"] = stepMs + 'ms';
+                item.style["transition-duration"] = stepMs-bias + 'ms';
                 ({ top, left } = posB)
                 item.style.left = left
                 item.style.top = top

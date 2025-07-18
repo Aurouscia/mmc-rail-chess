@@ -607,7 +607,7 @@ watch(props,()=>{
             :class="{clickable:clickableStations.includes(s.sId)&&nowMe&&!playback, selected:selectedDist==s.sId&&nowMe&&!playback}" 
             :key="s.sId" class="station" @click="clickStation(s.sId)"></div>
         <div v-if="animatorRendered" :style="animatorRendered.style" class="pathAnim">{{ animatorRendered.step }}</div>
-        <div v-for="i in connectionAnimatorRendered" :style="i.style" class="pathAnim connAnim">{{ i.text }}</div>
+        <div v-for="i in connectionAnimatorRendered" :style="i.style" class="pathAnim connAnim">{{ i.num }}</div>
     </div>
 </div>
 <button class="confirm menuEntry" @click="sidebar?.extend">菜单</button>
