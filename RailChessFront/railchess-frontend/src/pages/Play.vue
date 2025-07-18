@@ -217,6 +217,9 @@ function renderConnectionAnims(id:number){
             text})
     }
     for(const line of topo.Lines){
+        if(line.Stas.length <= 1)
+            continue
+        const isRing = line.Stas.length > 2 && line.Stas[0] === line.Stas[line.Stas.length-1]
         const idx = line.Stas.indexOf(id)
         if(idx===-1)
             continue
@@ -227,6 +230,10 @@ function renderConnectionAnims(id:number){
         }
         if(idx<line.Stas.length-1){
             const neib = line.Stas[idx+1]
+            addTwin(neib, text)
+        }
+        if(idx===0 && isRing){
+            const neib = line.Stas[line.Stas.length-2]
             addTwin(neib, text)
         }
         incre++
