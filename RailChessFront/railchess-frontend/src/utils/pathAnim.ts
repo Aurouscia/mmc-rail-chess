@@ -1,4 +1,4 @@
-import { CSSProperties, ref } from "vue"
+import { CSSProperties, nextTick, ref } from "vue"
 import { sleep } from "./sleep";
 
 export interface AnimPos{
@@ -68,4 +68,70 @@ export function useAnimator() {
         window.clearInterval(runningTimer)
     }
     return { animatorRendered, setPaths, stopPathAnim }
+}
+
+export interface AnimConn{
+    a: number, 
+    b: number,
+    text: string
+}
+export interface AnimConnsParam{
+    conns: AnimConn[],
+    getPos: (sta:number)=>AnimPos|undefined
+    styleBase:CSSProperties
+}
+export interface AnimConnItem{
+    a: number,
+    b: number,
+    text: string,
+    style:CSSProperties
+}
+
+export function useConnectionAnimator(){
+    const stepMs: number = 1000;
+    let runningTimer: number = 0;
+    let animatorRendered = ref<AnimConnItem[]>([]);
+    function setConnections(param:AnimConnsParam){
+        stopConnectionsAnim()
+        if(param.conns.length === 0)
+            return
+        animatorRendered.value = param.conns.map<AnimConnItem>(x=>{
+            return {
+                a: x.a,
+                b: x.b,
+                text: x.text,
+                style: {...param.styleBase}
+            }
+        })
+        const updateCall = async()=>{
+            for(const item of animatorRendered.value){
+                item.style["transition-duration"] = '0ms'
+                const posA = param.getPos(item.a)
+                if(!posA)
+                    continue
+                let { top, left } = posA
+                item.style.left = left
+                item.style.top = top
+                await nextTick()
+                const posB = param.getPos(item.b)
+                if(!posB)
+                    continue
+                item.style["transition-duration"] = stepMs + 'ms';
+                ({ top, left } = posB)
+                item.style.left = left
+                item.style.top = top
+            }
+        }
+        updateCall();
+        runningTimer = window.setInterval(updateCall, stepMs)
+    }
+    function stopConnectionsAnim(){
+        window.clearInterval(runningTimer);
+        animatorRendered.value = [];
+    }
+    return{
+        connectionAnimatorRendered: animatorRendered,
+        setConnections,
+        stopConnectionsAnim
+    }
 }

@@ -10,7 +10,7 @@ import { avtSrc,bgSrc } from '../utils/fileSrc';
 import { Scaler } from '../models/scale';
 import { SignalRClient } from '../utils/signalRClient';
 import TextMsgDisplay from '../components/TextMsgDisplay.vue';
-import { useAnimator, AnimNode } from '../utils/pathAnim';
+import { useAnimator, AnimNode, useConnectionAnimator, AnimConn } from '../utils/pathAnim';
 import _, { truncate } from 'lodash'
 import { boxTypes } from '../components/Pop.vue';
 import Timeline from '../components/Timeline.vue';
@@ -163,43 +163,82 @@ function renderStaList(){
 
 const pathAnimRenderedWidth = 26;
 const { animatorRendered, setPaths, stopPathAnim } = useAnimator();
+const { connectionAnimatorRendered, setConnections, stopConnectionsAnim } = useConnectionAnimator()
 const selectedDist = ref<number|undefined>();
+function animPosGet(sta:number){
+    const s = topoData.value!.Stations.find(x=>x[0]==sta);
+    if(!s || !arena.value)return undefined
+    const xRatio = s[1] / posBase
+    const yRatio = s[2] / posBase
+    const sideXRatioHalf = (pathAnimRenderedWidth/2) / arena.value.clientWidth;
+    const sideYRatioHalf = (pathAnimRenderedWidth/2) / arena.value.clientHeight;
+    const left = (xRatio - sideXRatioHalf) * 100 + '%';
+    const top = (yRatio - sideYRatioHalf) * 100 + '%';
+    return {left, top}
+}
+function animStyleBase():CSSProperties{
+    return {
+        width: pathAnimRenderedWidth - 4 + 'px',
+        height: pathAnimRenderedWidth - 4 + 'px',
+        borderWidth: '2px',
+        backgroundImage: undefined,
+    }
+}
 function renderPathAnims() {
     if (!topoData.value || !arena.value) { return; }
     if(!currentSelections.value || selectedDist.value===undefined){return;}
     const path = currentSelections.value.find(s=>s[s.length-1] == selectedDist.value);
     if(!path){return;}
-    var backgroundImage: string | undefined = undefined;
-    var side = pathAnimRenderedWidth;
     var nodes: AnimNode[] = [];
-    const getPos = (sta:number)=>{
-            const s = topoData.value!.Stations.find(x=>x[0]==sta);
-            if(!s || !arena.value)return undefined
-            const xRatio = s[1] / posBase
-            const yRatio = s[2] / posBase
-            const sideXRatioHalf = (side/2) / arena.value.clientWidth;
-            const sideYRatioHalf = (side/2) / arena.value.clientHeight;
-            const left = (xRatio - sideXRatioHalf) * 100 + '%';
-            const top = (yRatio - sideYRatioHalf) * 100 + '%';
-            return {left, top}
-    }
     path.forEach(sta => {
-        nodes.push({getPos,sta});
+        nodes.push({getPos:animPosGet,sta});
     });
-    const styleBase: CSSProperties = {
-        width: side - 4 + 'px',
-        height: side - 4 + 'px',
-        borderWidth: '2px',
-        backgroundImage,
-    };
     const animPath = {
-        dist:path[path.length-1],
-        styleBase,
+        dist: path[path.length-1],
+        styleBase: animStyleBase(),
         nodes: nodes
     }
     setPaths(animPath);
 }
+function renderConnectionAnims(id:number){
+    const topo = topoData.value
+    if(!topo)
+        return
+    let incre = 1
+    const conns:AnimConn[] = []
+    const addTwin = (neibId:number, text:string)=>{
+        conns.push({
+            a: id,
+            b: neibId,
+            text})
+        conns.push({
+            b: id,
+            a: neibId,
+            text})
+    }
+    for(const line of topo.Lines){
+        const idx = line.Stas.indexOf(id)
+        if(idx===-1)
+            continue
+        const text = String.fromCharCode(64 + incre)
+        if(idx>0){
+            const neib = line.Stas[idx-1]
+            addTwin(neib, text)
+        }
+        if(idx<line.Stas.length-1){
+            const neib = line.Stas[idx+1]
+            addTwin(neib, text)
+        }
+        incre++
+    }
+    setConnections({
+        styleBase: animStyleBase(),
+        conns,
+        getPos: animPosGet
+    })
+}
 function clickStation(id:number){
+    window.setTimeout(()=>renderConnectionAnims(id), 1)
     if(props.playback){
         return;
     }
@@ -211,6 +250,7 @@ function clickStation(id:number){
     renderPathAnims();
 }
 async function select(){
+    stopConnectionsAnim()
     if(props.playback){
         return;
     }
@@ -554,12 +594,13 @@ watch(props,()=>{
     <div v-show="ended" class="status">本对局已经结束</div>
 </div>
 <div class="frame" ref="frame" :class="{playbackFrame:playback, tooManySelections}">
-    <div class="arena" ref="arena">
+    <div class="arena" ref="arena" @click="stopConnectionsAnim">
         <img v-if="bgFileName" ref="bg" :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
         <div v-for="s in staRenderedList" :style="s" 
             :class="{clickable:clickableStations.includes(s.sId)&&nowMe&&!playback, selected:selectedDist==s.sId&&nowMe&&!playback}" 
             :key="s.sId" class="station" @click="clickStation(s.sId)"></div>
         <div v-if="animatorRendered" :style="animatorRendered.style" class="pathAnim">{{ animatorRendered.step }}</div>
+        <div v-for="i in connectionAnimatorRendered" :style="i.style" class="pathAnim connAnim">{{ i.text }}</div>
     </div>
 </div>
 <button class="confirm menuEntry" @click="sidebar?.extend">菜单</button>
@@ -700,10 +741,17 @@ canvas{
     z-index: 50;
     left: -100px;
     color:white;
-    line-height: 26px;
     font-size: 20px;
-    text-align: center;
-    font-family: '宋体','serif';
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: '微软雅黑','sans-serif';
+}
+.connAnim{
+    z-index: -1;
+    background-color: #fff;
+    color: #666;
+    transition-timing-function: linear;
 }
 .station.clickable{
     border-color: rgb(71, 171, 174);
@@ -743,6 +791,7 @@ canvas{
     position: relative;
     width: 100%;
     margin-bottom: -4px;
+    z-index: -10;
 }
 .arena{
     position: relative;
