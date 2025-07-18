@@ -162,24 +162,27 @@ function renderStaList(){
 }
 
 const pathAnimRenderedWidth = 26;
+const connAnimRenderedWidth = 18;
 const { animatorRendered, setPaths, stopPathAnim } = useAnimator();
 const { connectionAnimatorRendered, setConnections, stopConnectionsAnim } = useConnectionAnimator()
 const selectedDist = ref<number|undefined>();
-function animPosGet(sta:number){
+function animPosGet(sta:number, type:'path'|'conn'){
+    const side = type === 'path' ? pathAnimRenderedWidth : connAnimRenderedWidth
     const s = topoData.value!.Stations.find(x=>x[0]==sta);
     if(!s || !arena.value)return undefined
     const xRatio = s[1] / posBase
     const yRatio = s[2] / posBase
-    const sideXRatioHalf = (pathAnimRenderedWidth/2) / arena.value.clientWidth;
-    const sideYRatioHalf = (pathAnimRenderedWidth/2) / arena.value.clientHeight;
+    const sideXRatioHalf = (side/2) / arena.value.clientWidth;
+    const sideYRatioHalf = (side/2) / arena.value.clientHeight;
     const left = (xRatio - sideXRatioHalf) * 100 + '%';
     const top = (yRatio - sideYRatioHalf) * 100 + '%';
     return {left, top}
 }
-function animStyleBase():CSSProperties{
+function animStyleBase(type:'path'|'conn'):CSSProperties{
+    const side = type === 'path' ? pathAnimRenderedWidth : connAnimRenderedWidth
     return {
-        width: pathAnimRenderedWidth - 4 + 'px',
-        height: pathAnimRenderedWidth - 4 + 'px',
+        width: side - 4 + 'px',
+        height: side - 4 + 'px',
         borderWidth: '2px',
         backgroundImage: undefined,
     }
@@ -191,11 +194,11 @@ function renderPathAnims() {
     if(!path){return;}
     var nodes: AnimNode[] = [];
     path.forEach(sta => {
-        nodes.push({getPos:animPosGet,sta});
+        nodes.push({getPos:s=>animPosGet(s,'path'),sta});
     });
     const animPath = {
         dist: path[path.length-1],
-        styleBase: animStyleBase(),
+        styleBase: animStyleBase('path'),
         nodes: nodes
     }
     setPaths(animPath);
@@ -239,9 +242,9 @@ function renderConnectionAnims(id:number){
         incre++
     }
     setConnections({
-        styleBase: animStyleBase(),
+        styleBase: animStyleBase('conn'),
         conns,
-        getPos: animPosGet
+        getPos: s=>animPosGet(s, 'conn')
     })
 }
 function clickStation(id:number){
@@ -759,6 +762,7 @@ canvas{
     background-color: #fff;
     color: #666;
     transition-timing-function: linear;
+    font-size: 14px;
 }
 .station.clickable{
     border-color: rgb(71, 171, 174);
