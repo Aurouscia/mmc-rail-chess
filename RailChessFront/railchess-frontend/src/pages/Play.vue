@@ -15,6 +15,8 @@ import _, { truncate } from 'lodash'
 import { boxTypes } from '../components/Pop.vue';
 import Timeline from '../components/Timeline.vue';
 import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { usePlayOptionsStore } from '../utils/stores/playOptionsStore';
 
 const router = useRouter()
 const props = defineProps<{
@@ -437,8 +439,7 @@ const sidebar = ref<InstanceType<typeof SideBar>>();
 const msgs = ref<TextMsg[]>([]);
 const frame = ref<HTMLDivElement>();
 const arena = ref<HTMLDivElement>();
-const bgOpacity = ref<number>(0.4);
-const staSizeRatio = ref<number>(0.8);
+const { bgOpacity, staSizeRatio } = storeToRefs(usePlayOptionsStore())
 const staSize = ref<number>(0.8)
 function autoStaSize(){
     if(!frame.value || !arena.value){return;}
@@ -453,6 +454,9 @@ function autoStaSize(){
     if(staSize.value < 0.4)
         staSize.value = 0.4
 }
+watch(staSizeRatio, ()=>{
+    renderStaList()
+})
 
 async function visibilityChangedHandler(){
     if(!props.playback && document.visibilityState==='visible'){
@@ -514,16 +518,25 @@ onMounted(async()=>{
     }
     sgrc = new SignalRClient(gameId,jwtToken||"", sync, textMsgCall);
 
-    bgOpacity.value = parseFloat(localStorage.getItem(opacityStoreKey)||"0.4")||0.4;
-    if(bgOpacity.value<0)
-        bgOpacity.value = 0
-    if(bgOpacity.value>1)
-        bgOpacity.value = 1
-    staSizeRatio.value = parseFloat(localStorage.getItem(staSizeRatioStoreKey)||"1")||1;
-    if(staSizeRatio.value<0.3)
-        staSizeRatio.value = 0.3
-    if(staSizeRatio.value>1)
-        staSizeRatio.value = 1
+    //旧版兼容性
+    localStorage.removeItem('staSize')
+    localStorage.removeItem('staSizeAuto')
+    const bgO = localStorage.getItem(opacityStoreKey)
+    if(bgO){
+        const bgONum = parseFloat(bgO);
+        if(!isNaN(bgONum)){
+            bgOpacity.value = bgONum
+        }
+    }
+    localStorage.removeItem(opacityStoreKey)
+    const sr = localStorage.getItem(staSizeRatioStoreKey)
+    if(sr){
+        const srNum = parseFloat(sr);
+        if(!isNaN(srNum)){
+            staSizeRatio.value = srNum
+        }
+    }
+    localStorage.removeItem(staSizeRatioStoreKey)
 
     await init();
     await sgrc.connect();
@@ -563,15 +576,11 @@ function toggleScaler(){
     }
 }
 
+//<obsolete>
 const opacityStoreKey = "bgOpacity";
-watch(bgOpacity,(newVal)=>{
-    localStorage.setItem(opacityStoreKey,String(newVal));
-})
 const staSizeRatioStoreKey = "staSizeRatio";
-watch(staSizeRatio,(newVal)=>{
-    localStorage.setItem(staSizeRatioStoreKey,String(newVal));
-    renderStaList();
-})
+//</obsolete>
+
 const randNumText = computed<string>(()=>{
     if(props.playback){
         return '▲回放中'
