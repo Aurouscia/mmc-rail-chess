@@ -251,7 +251,8 @@ function renderConnectionAnims(id:number){
     })
 }
 function clickStation(id:number){
-    window.setTimeout(()=>renderConnectionAnims(id), 1)
+    if(connDisplayMode.value==='anim')
+        window.setTimeout(()=>renderConnectionAnims(id), 1)
     if(props.playback){
         return;
     }
@@ -437,10 +438,11 @@ function send(){
 }
 
 const sidebar = ref<InstanceType<typeof SideBar>>();
+const sidebarOptions = ref<InstanceType<typeof SideBar>>();
 const msgs = ref<TextMsg[]>([]);
 const frame = ref<HTMLDivElement>();
 const arena = ref<HTMLDivElement>();
-const { bgOpacity, staSizeRatio } = storeToRefs(usePlayOptionsStore())
+const { bgOpacity, staSizeRatio, connDisplayMode } = storeToRefs(usePlayOptionsStore())
 const staSize = ref<number>(0.8)
 function autoStaSize(){
     if(!frame.value || !arena.value){return;}
@@ -641,7 +643,10 @@ watch(props,()=>{
         <div v-for="i in connectionAnimatorRendered" :style="i.style" class="pathAnim connAnim">{{ i.num }}</div>
     </div>
 </div>
-<button class="confirm menuEntry" @click="sidebar?.extend">菜单</button>
+<div class="menuEntries">
+    <button class="minor" @click="sidebarOptions?.extend">设置</button>
+    <button class="confirm" @click="sidebar?.extend">菜单</button>
+</div>
 <div class="scaleBtn" :style="{right:scalerPosRight+'px'}">
     <button class="scaleFold off" @click="toggleScaler">缩放</button>
     <button @click="scaler?.autoMutiple(5)">500%</button>
@@ -669,15 +674,24 @@ watch(props,()=>{
         <button v-show="gameStarted && !ended" class="cancel" @click="sgrc.kickAfk">移除挂机玩家</button>
         <button v-show="ended" @click="router.replace('/playback/'+props.id)">查看本局回放</button>
         <button class="off" @click="router.push('/')">返回主菜单</button>
-        <div class="sideBarSlideOuter">
-            背景不透明度：{{ bgOpacity }}
-            <input type="range" v-model="bgOpacity" min="0" max="1" step="0.1">
-        </div>
-        <div class="sideBarSlideOuter">
-            站点标记尺寸倍率：{{ staSizeRatio }}
-            <input type="range" v-model="staSizeRatio" min="0.3" max="1.0" step="0.1">
-            <div style="font-size: 12px;">站点有最小尺寸限制，视角近时调整才看得到效果</div>
-        </div>
+    </div>
+</SideBar>
+<SideBar ref="sidebarOptions">
+    <div class="sideBarOption">
+        <b>背景不透明度：{{ bgOpacity }}</b>
+        <input type="range" v-model="bgOpacity" min="0" max="1" step="0.1">
+    </div>
+    <div class="sideBarOption">
+        <b>站点标记尺寸倍率：{{ staSizeRatio }}</b>
+        <input type="range" v-model="staSizeRatio" min="0.3" max="1.0" step="0.1">
+        <div style="font-size: 12px;">站点有最小尺寸限制<br/>视角近时调整才看得到效果</div>
+    </div>
+    <div class="sideBarOption">
+        <b>查看车站连接关系</b>
+        <select v-model="connDisplayMode">
+            <option :value="'none'">关闭</option>
+            <option :value="'anim'">动画</option>
+        </select>
     </div>
 </SideBar>
 <Timeline v-if="playback" :game-id="gameId" @view-time="t=>sgrc.syncMe(t)"></Timeline>
@@ -732,13 +746,17 @@ canvas{
 .randNumIsAB{
     font-size: 22px;
 }
-.sideBarSlideOuter input{
+.sideBarOption input{
     margin: 0px;
 }
-.sideBarSlideOuter{
+.sideBarOption{
     text-align: center;
-    border-top: 1px solid #ccc;
-    padding-top: 5px;
+    border-bottom: 1px solid #ccc;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
 }
 .sidebarBtns{
     width: 200px;
@@ -845,12 +863,14 @@ canvas{
 .playbackFrame{
     bottom: 80px;
 }
-.menuEntry{
+.menuEntries{
     position: fixed;
     right:7px;
-    top:65px;
-    width: 65px;
-    border: 2px solid white;
+    top:68px;
+    display: flex;
+    gap: 1px;
+    background-color: white;
+    border-radius: 8px;
 }
 .playerData{
     font-size: 14px;
