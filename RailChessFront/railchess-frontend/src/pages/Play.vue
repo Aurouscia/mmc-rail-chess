@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, CSSProperties, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { injectApi, injectHideTopbar, injectHttp, injectPop, injectUserInfo } from '../provides';
+import { injectApi, injectHideTopbar, injectPop, injectUserInfo } from '../provides';
 import { OcpStatus, Player, SyncData, TextMsg } from '../models/play';
 import SideBar from '../components/SideBar.vue';
 import { RailChessTopo,Sta,posBase } from '../models/map';
@@ -17,6 +17,7 @@ import Timeline from '../components/Timeline.vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { usePlayOptionsStore } from '../utils/stores/playOptionsStore';
+import { useJwtTokenStore } from '../utils/stores/jwtTokenStore';
 
 const router = useRouter()
 const props = defineProps<{
@@ -481,7 +482,6 @@ function disposePollTimer(){
 
 var api:Api;
 var me:number;
-var jwtToken:string|null;
 var sgrc:SignalRClient
 const moveLocked = ref(false)
 const timeline = ref<GameTimeline>()
@@ -489,9 +489,7 @@ const msgDisp = ref<InstanceType<typeof TextMsgDisplay>>()
 onMounted(async()=>{
     injectHideTopbar()();
     api = injectApi();
-    var http = injectHttp();
     const pop = injectPop();
-    jwtToken = http.jwtToken;
     
     loadingBgTimer = setTimeout(()=>{
         pop.value.show("地图加载中请稍后", "warning")
@@ -516,6 +514,7 @@ onMounted(async()=>{
         if(m.sender!=mInfo.Name)
             pop.value.show(truncate(m.sender+"："+m.content, {length:30}), t)
     }
+    const jwtToken = useJwtTokenStore().jwtToken
     sgrc = new SignalRClient(gameId,jwtToken||"", sync, textMsgCall);
 
     //旧版兼容性

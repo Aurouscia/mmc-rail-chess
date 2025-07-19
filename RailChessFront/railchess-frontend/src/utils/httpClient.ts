@@ -1,5 +1,8 @@
 import axios, { Axios } from 'axios'
 import {AxiosError} from 'axios'
+import { useJwtTokenStore } from './stores/jwtTokenStore'
+import { storeToRefs } from 'pinia'
+import { Ref } from 'vue'
 
 export type ApiResponse = {
     success: boolean
@@ -13,32 +16,38 @@ export interface ApiRequestHeader{
     Authorization:string|undefined
 }
 
+//<obsolete>
 const storageKey = "fcloudAuthToken"
+//</obsolete>
 const defaultFailResp:ApiResponse = {data:undefined,success:false,errmsg:"失败"}
 
 export class HttpClient{
-    jwtToken:string|null=null
     httpCallBack:HttpCallBack
     ax:Axios
+    jwtToken:Ref<string|undefined>
     constructor(httpCallBack:HttpCallBack){
-        this.jwtToken = localStorage.getItem(storageKey);
+        const refs = storeToRefs(useJwtTokenStore())
+        this.jwtToken = refs.jwtToken
+        const jwtTokenLegacy = localStorage.getItem(storageKey);
+        if(jwtTokenLegacy){
+            this.jwtToken.value = jwtTokenLegacy
+        }
+        localStorage.removeItem(storageKey)
         this.httpCallBack = httpCallBack;
         this.ax = axios.create({
             baseURL: import.meta.env.VITE_BASEURL,
             validateStatus: (n)=>n < 500
-          });
+        });
     }
     setToken(token:string){
-        this.jwtToken = token;
-        localStorage.setItem(storageKey,token);
+        this.jwtToken.value = token;
     }
     clearToken(){
-        this.jwtToken = null;
-        localStorage.removeItem(storageKey);
+        this.jwtToken.value = undefined;
     }
     private headers(){
         return {
-            Authorization: `Bearer ${this.jwtToken}`
+            Authorization: `Bearer ${this.jwtToken.value}`
         }
     }
     private showErrToUser(err:AxiosError){
