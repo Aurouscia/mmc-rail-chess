@@ -294,13 +294,6 @@ input[type=number]{
 .mapCol{
     width: 50%;
 }
-table.list{
-    table-layout: fixed;
-    min-width: 100%;
-}
-table.list tr:hover td{
-    background-color: #e6e6e6;
-}
 .notice{
     font-size: 14px;
     color: #666

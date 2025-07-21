@@ -3,15 +3,6 @@
   padding: 0px;
 }
 
-.main {
-  margin: auto;
-  margin-top: var(--main-div-margin-top);
-  width: calc(100% - 40px);
-  max-width: 1000px;
-  overflow-x: auto;
-  padding-left: 20px;
-  padding-right: 20px;
-}
 .main>* {
   overflow: auto;
 }
@@ -28,6 +19,13 @@ table th{
 }
 table tr.noneBackground td{
   background:none;
+}
+table.list{
+    table-layout: fixed;
+    min-width: 100%;
+}
+table.list tr:hover td{
+    background-color: #e2e2e2;
 }
 
 

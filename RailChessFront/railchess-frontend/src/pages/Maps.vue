@@ -145,11 +145,12 @@ onMounted(async()=>{
             <button class="gray" @click="search='我上传的';load()">我的</button>
         </div>
     </div>
+    <div style="overflow-x: auto;">
     <table class="list" v-if="data"><tbody>
         <tr>
-            <th class="titleTh">名称</th>
-            <th>作者</th>
-            <th></th>
+            <th class="titleTh" style="min-width: 200px;">名称</th>
+            <th style="min-width: 130px;">作者</th>
+            <th style="width: 100px;"></th>
         </tr>
         <tr v-for="m in data.Items">
             <td>
@@ -182,6 +183,7 @@ onMounted(async()=>{
     </tbody></table>
     <Loading v-else>
     </Loading>
+    </div>
 </div>
 <SideBar ref="sidebar">
     <h1>{{ editing && editing.Id>0 ? editing.Title : '新建棋盘' }}</h1>
@@ -262,7 +264,12 @@ input[type=file]{
     color:#777
 }
 .authorName{
+    display: block;
     cursor: pointer;
+    max-width: 30vw;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 .authorName:hover{
     text-decoration: underline;
@@ -285,10 +292,6 @@ input[type=file]{
 }
 .titleTh{
     width:50%;
-}
-table.list{
-    table-layout: fixed;
-    width: 100%;
 }
 .aboveTable{
     display: flex;
