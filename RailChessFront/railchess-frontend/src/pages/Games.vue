@@ -183,9 +183,16 @@ onMounted(async ()=>{
             </td>
         </tr>
         <tr>
+            <td>对局名称</td>
+            <td>
+                <input v-model="creating.GameName" placeholder="非必填"/>
+            </td>
+        </tr>
+        <tr>
             <td colspan="2">
                 <Search :source="api.map.quickSearch" :allow-free-input="false" 
                     @done="(_x,id)=>{if(creating){creating.UseMapId=id;create()}}" :placeholder="'使用棋盘名称'"></Search>
+                <div class="note">选择棋盘后，点击右侧确认，即可创建房间</div>
             </td>
         </tr>
     </tbody></table>
@@ -221,6 +228,9 @@ onMounted(async ()=>{
 .gameStatus{
     color:#666;
     font-size: 12px;
+}
+input{
+    width: 140px;   
 }
 input[type=number]{
     width: 80px;
