@@ -85,11 +85,12 @@ onMounted(async ()=>{
 <template>
 <h1>正在进行</h1>
 <button class="confirm" @click="sidebar?.extend">新建棋局</button>
+<div style="overflow-x: auto;">
 <table v-if="active" class="list"><tbody>
     <tr>
-        <th class="mapCol">棋盘</th>
-        <th></th>
-        <th>房主</th>
+        <th style="min-width: 200px;" class="mapCol">棋盘</th>
+        <th style="min-width: 100px;"></th>
+        <th style="min-width: 100px;">房主</th>
         <th>信息</th>
     </tr>
     <tr v-for="g in active.Items">
@@ -129,6 +130,7 @@ onMounted(async ()=>{
     </td></tr>
 </tbody></table>
 <Loading v-else></Loading>
+</div>
 <SideBar ref="sidebar">
     <h1>创建棋局</h1>
     <table v-if="creating"><tbody>
@@ -242,6 +244,7 @@ onMounted(async ()=>{
 .moreInfo{
     font-size: 14px;
     color: #666;
+    white-space: nowrap;
 }
 .gameName{
     font-weight: bold;
@@ -256,8 +259,8 @@ onMounted(async ()=>{
     border-top: 1px solid #666;
     width: fit-content;
     margin: auto;
-    margin-top: 2px;
-    padding-top: 2px;
+    margin-top: 6px;
+    padding-top: 6px;
     display: flex;
     align-items: center;
 }
@@ -279,7 +282,10 @@ input[type=number]{
 }
 table.list{
     table-layout: fixed;
-    width: 100%;
+    min-width: 100%;
+}
+table.list tr:hover td{
+    background-color: #e6e6e6;
 }
 .notice{
     font-size: 14px;

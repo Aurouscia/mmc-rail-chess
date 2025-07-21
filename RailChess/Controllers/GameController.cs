@@ -204,8 +204,10 @@ namespace RailChess.Controllers
                     IsPublic = string.IsNullOrWhiteSpace(game.AllowUserIdCsv);
                     MoreInfo = 
                         $"玩家回合限制{game.ThinkSecsPerTurn}秒;" +
-                        $"卡住{game.StucksToLose}次出局;" + 
-                        $"随机数[{RandNum.AlgTypeName(game.RandAlg)}]{game.RandMin}-{game.RandMax}";
+                        $"卡住{game.StucksToLose}次出局;" +
+                        $"允许换乘{game.AllowTransfer}次;" +
+                        $"随机数[{RandNum.AlgTypeName(game.RandAlg)}]{game.RandMin}-{game.RandMax};" +
+                        $"出生点[{SpawnRule.SpawnRuleTypeName(game.SpawnRule)}]";
                     if (game.Started)
                         StartedMins = (int)(DateTime.Now - game.StartTime).TotalMinutes;
                     else

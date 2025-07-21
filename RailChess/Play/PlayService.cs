@@ -209,12 +209,7 @@ namespace RailChess.Play
                     }
                 }   
             }
-            var spawnRule = ourGame.SpawnRule;
-            List<int> spawnCandidates;
-            if (spawnRule == SpawnRuleType.TwinExchange)
-                spawnCandidates = _coreGraphProvider.TwinExchanges();
-            else
-                spawnCandidates = _coreGraphProvider.PureTerminals();
+            List<int> spawnCandidates = SpawnRule.Spawn(_coreGraphProvider, ourGame.SpawnRule);
             var otherPlayersJoinEvents = _eventsService.PlayersJoinEvents();
             var occupiedStations = otherPlayersJoinEvents.ConvertAll(x => x.StationId);
             var spawnAvailable = spawnCandidates.Except(occupiedStations).ToList();
