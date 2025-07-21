@@ -2,6 +2,7 @@ export interface RailChessGame{
     Id?:number
     HostUserId?:number
     UseMapId:number
+    GameName?:string
     Started?:boolean
     StartTime?:string
     Ended?:boolean
@@ -16,6 +17,9 @@ export interface RailChessGame{
     AllowTransfer:number
     AiPlayer: AiPlayerType
     SpawnRule: SpawnRuleType
+    ThinkSecsPerTurn: number
+    ThinkSecsPerGame: number
+    AllowUserIdCsv?: string
 }
 export enum RandAlgType
 {

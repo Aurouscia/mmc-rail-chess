@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using RailChess.Models;
+using RailChess.Models.COM;
 using RailChess.Models.DbCtx;
 using RailChess.Play.Services;
 using RailChess.Services;
@@ -202,6 +203,21 @@ namespace RailChess.Controllers
                 return this.ApiResp($"已为用户 {u.Name}({u.Id}) 重置密码为 {newPwd}");
             }
             return this.ApiFailedResp("未找到该用户");
+        }
+
+        public IActionResult QuickSearch(string s)
+        {
+            var users = _context.Users
+                .Where(x => x.Name != null && x.Name.Contains(s))
+                .OrderBy(x => x.Id)
+                .Take(6)
+                .ToList();
+            var res = new QuickSearchResult();
+            foreach(var u in users)
+            {
+                res.Items.Add(new(u.Name ?? "??", null, u.Id));
+            }
+            return this.ApiResp(res);
         }
 
         public class UserRankingListItem

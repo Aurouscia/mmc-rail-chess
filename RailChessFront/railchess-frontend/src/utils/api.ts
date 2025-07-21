@@ -72,6 +72,16 @@ export class Api{
                 if(res.success){
                     return res.data as UserRankingListItem[]
                 }
+            },
+            quickSearch: async(s:string)=>{
+                const resp = await this.httpClient.request(
+                    "/api/User/QuickSearch",
+                    "get",
+                    {s}
+                );
+                if(resp.success){
+                    return resp.data as QuickSearchResult
+                }
             }
         }
     }

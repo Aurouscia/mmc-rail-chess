@@ -2,14 +2,16 @@
 import { onMounted, ref } from 'vue';
 import SideBar from '../components/SideBar.vue';
 import { AiPlayerType, GameActiveResult, RailChessGame, RandAlgType, SpawnRuleType } from '../models/game';
-import { Api } from '../utils/api';
-import { injectApi, injectUserInfo } from '../provides';
+import { injectApi, injectPop, injectUserInfo } from '../provides';
 import Loading from '../components/Loading.vue';
 import Search from '../components/Search.vue';
 import { router } from '../main';
 import { useFeVersionChecker } from '../utils/feVersionCheck';
 import { contact } from '../utils/consts';
 
+const api = injectApi()
+const pop = injectPop()
+const me = ref<number>(0)
 const { checkAndPop } = useFeVersionChecker()
 checkAndPop()
 
@@ -25,6 +27,7 @@ const creating = ref<RailChessGame>();
 const sidebar = ref<InstanceType<typeof SideBar>>();
 async function create(){
     if(creating.value){
+        creating.value.AllowUserIdCsv = getAllowUserCsv();
         const resp = await api.game.create(creating.value);
         if(resp){
             sidebar.value?.fold();
@@ -39,10 +42,27 @@ async function deleteGame(id:number){
     await api.game.delete(id);
     await loadActive();
 }
-var api:Api
-const me = ref<number>(0);
+
+const allowUsers = ref<{name:string, id:number}[]>([])
+function addAllowUser(name:string, id:number){
+    if(allowUsers.value.length>=10){
+        pop.value.show('最多10个用户', 'failed')
+        return;
+    }
+    if(!allowUsers.value.some(x=>x.id == id))
+        allowUsers.value.push({name, id})
+}
+function removeAllowUser(id:number){
+    const idx = allowUsers.value.findIndex(x=>x.id==id)
+    if(idx>=0){
+        allowUsers.value.splice(idx, 1)
+    }
+}
+function getAllowUserCsv(){
+    return allowUsers.value.map(x=>x.id).join(',')
+}
+
 onMounted(async ()=>{
-    api = injectApi();
     me.value = (await injectUserInfo().getIdentityInfo()).Id;
     await loadActive();
     creating.value = {
@@ -54,7 +74,10 @@ onMounted(async ()=>{
         AllowReverseAtTerminal:false,
         AllowTransfer:1,
         AiPlayer:AiPlayerType.None,
-        SpawnRule:SpawnRuleType.Terminal
+        SpawnRule:SpawnRuleType.Terminal,
+        ThinkSecsPerTurn: 60,
+        ThinkSecsPerGame: 0,
+        AllowUserIdCsv: ''
     }
 })
 </script>
@@ -137,6 +160,28 @@ onMounted(async ()=>{
             <td>暂不支持设定</td>
         </tr>
         <tr>
+            <td>
+                玩家回合<br/>时间限制
+            </td>
+            <td>
+                <input v-model="creating.ThinkSecsPerTurn" placeholder="单位为秒" type="number"/>秒
+            </td>
+        </tr>
+        <tr>
+            <td>允许加入<br/>玩家名单</td>
+            <td>
+                <div class="allowUsers">
+                    <div v-for="u in allowUsers" class="allowUser">
+                        <span>{{ u.name }}</span>
+                        <button @click="removeAllowUser(u.id)" class="cancel">x</button>
+                    </div>
+                </div>
+                <Search :source="api.identites.user.quickSearch" :allow-free-input="false"
+                    @done="addAllowUser" :compact="true" :placeholder="'玩家名称'"></Search>
+                <div class="note">留空：任何人可加入</div>
+            </td>
+        </tr>
+        <tr>
             <td colspan="2">
                 <Search :source="api.map.quickSearch" :allow-free-input="false" 
                     @done="(_x,id)=>{if(creating){creating.UseMapId=id;create()}}" :placeholder="'使用棋盘名称'"></Search>
@@ -147,6 +192,27 @@ onMounted(async ()=>{
 </template>
 
 <style scoped>
+.note{
+    font-size: 12px;
+    color: #666;
+}
+.allowUsers{
+    margin-bottom: 3px;
+}
+.allowUser{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 5px;
+    padding: 3px;
+    border-bottom: 1px solid #aaa;
+}
+.allowUser>span{
+    max-width: 110px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .mapName{
     font-weight: bold;
     cursor: pointer;
