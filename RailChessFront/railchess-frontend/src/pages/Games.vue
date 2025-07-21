@@ -179,6 +179,7 @@ onMounted(async ()=>{
                 <Search :source="api.identites.user.quickSearch" :allow-free-input="false"
                     @done="addAllowUser" :compact="true" :placeholder="'玩家名称'"></Search>
                 <div class="note">留空：任何人可加入</div>
+                <div class="note">无需设置房主自己</div>
             </td>
         </tr>
         <tr>

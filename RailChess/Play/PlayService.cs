@@ -195,7 +195,22 @@ namespace RailChess.Play
                 return "对局已开始，不能加入";
             if (_eventsService.MeJoined())
                 return "已在对局中";
-            var spawnRule = _gameService.OurGame().SpawnRule;
+            var ourGame = _gameService.OurGame();
+            var allowUserIdCsv = ourGame.AllowUserIdCsv;
+            if (UserId != ourGame.HostUserId)
+            {
+                //如果不是房主，那么判断是否允许加入
+                if (!string.IsNullOrWhiteSpace(allowUserIdCsv))
+                {
+                    //如果allowUserIdCsv有值，那么需要检查当前玩家是否在里面
+                    var allowUserIds = allowUserIdCsv.Split(',');
+                    if (!allowUserIds.Contains(UserId.ToString()))
+                    {
+                        return "不在本局玩家名单内";
+                    }
+                }   
+            }
+            var spawnRule = ourGame.SpawnRule;
             List<int> spawnCandidates;
             if (spawnRule == SpawnRuleType.TwinExchange)
                 spawnCandidates = _coreGraphProvider.TwinExchanges();
