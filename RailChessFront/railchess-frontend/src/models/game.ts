@@ -51,9 +51,12 @@ export interface GameActiveResult{
 }
 export interface GameActiveResultItem{
     Data:RailChessGame
-    MapName:string
-    HostUserName:string
+    GameName?:string
+    MapName?:string
+    HostUserName?:string
     StartedMins:number
+    IsPublic:boolean
+    MoreInfo?:string
 }
 
 export interface GameTimeline

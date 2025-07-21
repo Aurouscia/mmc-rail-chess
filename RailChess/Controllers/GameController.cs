@@ -189,14 +189,23 @@ namespace RailChess.Controllers
             public class GameActiveResultItem
             {
                 public RailChessGame Data { get; set; }
+                public string? GameName { get; set; }
                 public string? MapName { get; set; }
                 public string? HostUserName { get; set; }
                 public int StartedMins { get; set; }
+                public bool IsPublic { get; set; }
+                public string? MoreInfo { get; set; }
                 public GameActiveResultItem(RailChessGame game, string mapName, string hostUserName)
                 {
                     Data = game;
+                    GameName = game.GameName;
                     MapName = mapName;
                     HostUserName = hostUserName;
+                    IsPublic = string.IsNullOrWhiteSpace(game.AllowUserIdCsv);
+                    MoreInfo = 
+                        $"玩家回合限制{game.ThinkSecsPerTurn}秒;" +
+                        $"卡住{game.StucksToLose}次出局;" + 
+                        $"随机数[{RandNum.AlgTypeName(game.RandAlg)}]{game.RandMin}-{game.RandMax}";
                     if (game.Started)
                         StartedMins = (int)(DateTime.Now - game.StartTime).TotalMinutes;
                     else

@@ -86,14 +86,27 @@ onMounted(async ()=>{
 <h1>正在进行</h1>
 <button class="confirm" @click="sidebar?.extend">新建棋局</button>
 <table v-if="active" class="list"><tbody>
-    <tr><th class="mapCol">棋盘</th><th></th> <th>房主</th></tr>
+    <tr>
+        <th class="mapCol">棋盘</th>
+        <th></th>
+        <th>房主</th>
+        <th>信息</th>
+    </tr>
     <tr v-for="g in active.Items">
         <td>
-            <div class="mapName">
+            <div class="gameName">
+                {{ g.GameName || g.MapName }}
+            </div>
+            <div class="mapName" v-if="g.GameName">
                 {{ g.MapName }}
             </div>
             <div v-if="g.StartedMins>=0" class="gameStatus">已开始{{ g.StartedMins }}分钟</div>
-            <div v-else class="gameStatus">正在等人</div>
+            <div v-else class="gameStatus">
+                <div>正在等人</div>
+                <div class="publicOrNot" :style="{backgroundColor: g.IsPublic ? 'green':'orangered'}">
+                    {{ g.IsPublic ? '公共':'私人' }}
+                </div>
+            </div>
         </td>
         <td>
             <button @click="enter(g.Data.Id||0)">进入</button>
@@ -102,8 +115,13 @@ onMounted(async ()=>{
         <td>
             {{ g.HostUserName }}
         </td>
+        <td class="moreInfo">
+            <div v-for="line in g.MoreInfo?.split(';')">
+                {{ line }}
+            </div>
+        </td>
     </tr>
-    <tr><td colspan="3" class="notice">
+    <tr><td colspan="4" class="notice">
         注意：本游戏玩家较少<br/>
         请<b>务必</b>在约好其他玩家后，再创建房间，不要创建房间后离开<br/>
         请<b>务必</b>在确认房主在线后，再加入对局，以免开局被房主踢出<br/>
@@ -221,13 +239,34 @@ onMounted(async ()=>{
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.mapName{
+.moreInfo{
+    font-size: 14px;
+    color: #666;
+}
+.gameName{
     font-weight: bold;
-    cursor: pointer;
+}
+.mapName{
+    font-size: 14px;
+    color: #666;
 }
 .gameStatus{
     color:#666;
-    font-size: 12px;
+    font-size: 14px;
+    border-top: 1px solid #666;
+    width: fit-content;
+    margin: auto;
+    margin-top: 2px;
+    padding-top: 2px;
+    display: flex;
+    align-items: center;
+}
+.gameStatus .publicOrNot{
+    display: inline-block;
+    margin-left: 3px;
+    padding: 1px;
+    border-radius: 5px;
+    color: white;
 }
 input{
     width: 140px;   

@@ -19,6 +19,20 @@ namespace RailChess.Utils
                 _ => throw new NotImplementedException()
             };
         }
+        public static string? AlgTypeName(RandAlgType type)
+        {
+            return type switch
+            {
+                RandAlgType.Uniform => "均匀",
+                RandAlgType.UniformAB => "均匀双步数",
+                RandAlgType.Gaussian10 => "高斯1.0",
+                RandAlgType.Gaussian15 => "高斯1.5",
+                RandAlgType.Gaussian20 => "高斯2.0",
+                RandAlgType.Gaussian25 => "高斯2.5",
+                RandAlgType.AlwaysNegativeOne => "自由移动",
+                _ => "???"
+            };
+        }
 
         /// <summary>
         /// 类全局共用的随机数生成器
