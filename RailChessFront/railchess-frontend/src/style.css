@@ -137,6 +137,14 @@ h1 {
   color: #666;
   font-weight: normal;
 }
+h1.h1WithBtns{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+h1.h1WithBtns div{
+  font-size: medium;
+}
 
 
 a{

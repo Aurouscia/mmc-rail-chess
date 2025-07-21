@@ -83,8 +83,13 @@ onMounted(async ()=>{
 </script>
 
 <template>
-<h1>正在进行</h1>
-<button class="confirm" @click="sidebar?.extend">新建棋局</button>
+<h1 class="h1WithBtns">
+    正在进行
+    <div>
+        <button class="confirm" @click="sidebar?.extend">新建棋局</button>
+    </div>
+</h1>
+
 <div style="overflow-x: auto;">
 <table v-if="active" class="list"><tbody>
     <tr>
