@@ -5,6 +5,7 @@
         public int Id { get; set; }
         public int HostUserId { get; set; }
         public int UseMapId { get; set; }
+        public string? GameName { get; set; }
         public DateTime CreateTime { get; set; }
         public bool Started { get; set; }
         public DateTime StartTime { get; set; }
@@ -20,6 +21,9 @@
         public int AllowTransfer { get; set; }
         public AiPlayerType AiPlayer { get; set; }
         public SpawnRuleType SpawnRule { get; set; }
+        public int ThinkSecsPerTurn { get; set; }
+        public int ThinkSecsPerGame { get; set; }
+        public string? AllowUserIdCsv { get; set; }
 
         public bool Deleted { get;set; }
     }
