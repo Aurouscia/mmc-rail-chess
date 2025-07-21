@@ -77,7 +77,7 @@ defineExpose({moveDown})
     border-radius: 5px;
 }
 .msgs{
-    height: calc(100vh - 320px);
+    height: calc(100vh - 380px);
     width: 270px;
     overflow-x: hidden;
     overflow-y: scroll;

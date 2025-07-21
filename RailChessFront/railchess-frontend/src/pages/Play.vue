@@ -667,7 +667,7 @@ watch(props,()=>{
         <button v-show="!gameStarted && !meJoined" @click="sgrc.join">加入本棋局</button>
         <button v-show="meJoined && !meOut" class="cancel" @click="sgrc.out">退出本棋局</button>
         <button v-show="meOut" class="minor">已退出本棋局</button>
-        <button v-show="meHost && !gameStarted && meJoined" @click="sgrc.gameStart">下令开始棋局</button>
+        <button v-show="meHost && !gameStarted" @click="sgrc.gameStart">下令开始棋局</button>
         <button v-show="gameStarted && !ended" class="minor">本棋局已开始</button>
         <button v-show="ended" class="minor">本棋局已结束</button>
         <button v-show="meHost && !ended && !gameStarted" class="cancel" @click="sgrc.gameReset">下令重置房间</button>
