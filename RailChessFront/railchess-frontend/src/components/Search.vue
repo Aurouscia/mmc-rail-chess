@@ -19,6 +19,7 @@ const selectedDesc = ref<string>();
 const cands = ref<QuickSearchResult>();
 const isSearching = ref<boolean>(false);
 const inputing = ref<boolean>(false);
+const input = ref<HTMLInputElement>()
 var timer:number = 0;
 const delay:number = 500;
 function refreshCand(){
@@ -99,10 +100,13 @@ function keyEventHandler(e:KeyboardEvent){
             const item = cands.value.Items[selectCand.value];
             if(item){
                 clickCand(item)
+                input.value?.focus()
             }
         }
         else if(doneBtnStatus.value){
-            done()
+            if(input.value === document.activeElement){
+                done()
+            }
         }
     }
 }
@@ -122,7 +126,7 @@ onUnmounted(()=>{
     <div class="searchOuter">
         <div class="search" :class="{compact}">
             <div class="write">
-                <input v-model="searching" @input="refreshCand" :placeholder="props.placeholder" />
+                <input v-model="searching" @input="refreshCand" ref="input" :placeholder="props.placeholder" />
                 <button class="confirm" :class="{ disabled: !doneBtnStatus }" @click="done">确认</button>
             </div>
             <div v-if="cands && searching" class="cand">
