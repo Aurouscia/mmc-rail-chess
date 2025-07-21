@@ -69,6 +69,8 @@ namespace RailChess.Controllers
                 return this.ApiFailedResp("卡住出局次数设置有问题");
             if (game.AllowTransfer < 0 || game.AllowTransfer > 2)
                 return this.ApiFailedResp("允许换乘次数设置有问题");
+            if (game.ThinkSecsPerTurn < 10 || game.ThinkSecsPerTurn > 99 * 60)
+                return this.ApiFailedResp("玩家回合时间限制设置有问题");
             try
             {
                 _ = RandNum.Run(game.RandAlg, game.RandMin, game.RandMax);

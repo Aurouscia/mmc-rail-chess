@@ -20,7 +20,6 @@ namespace RailChess.Play
         
         private int _gameId;
         private int _userId;
-        private const int allowKickSecs = 60;
         public int GameId { get => _gameId; set 
             {
                 if (value <= 0) throw new Exception("请从正确入口进入");
@@ -298,6 +297,7 @@ namespace RailChess.Play
             return null;
         }
 
+        private int AllowKickSecs => _gameService.OurGame().ThinkSecsPerTurn;
         public string? KickAfkCall(out string? clearedPlayerName)
         {
             if (!_eventsService.MeJoined())
@@ -305,9 +305,9 @@ namespace RailChess.Play
                 clearedPlayerName = null;
                 return "仅棋局内玩家可踢出挂机者";
             }
-            static string errmsg(int leftWaitSecs)
+            string errmsg(int leftWaitSecs)
             {
-                return $"请等待，玩家挂机{allowKickSecs}秒后才可移出，<b>剩余{leftWaitSecs}秒</b>";
+                return $"请等待，玩家挂机{AllowKickSecs}秒后才可移出，<b>剩余{leftWaitSecs}秒</b>";
             }
             var leftSecs = KickAfk(fake:false, out clearedPlayerName);
             if(leftSecs == -1) //成功踢掉
@@ -334,10 +334,10 @@ namespace RailChess.Play
         {
             // LastKickAfkTime 必然大于 LastOperation.Time，所以可以先检查这里
             int lastKickSecs = (int)(DateTime.Now - LastKickAfkTime).TotalSeconds;
-            if (lastKickSecs < allowKickSecs)
+            if (lastKickSecs < AllowKickSecs)
             {
                 clearedPlayerName = null;
-                return allowKickSecs - lastKickSecs;
+                return AllowKickSecs - lastKickSecs;
             }
 
             int player = _playerService.CurrentPlayer();
@@ -356,7 +356,7 @@ namespace RailChess.Play
                 }
             }
             int stuckSecs = (int)(DateTime.Now - lastOpTime).TotalSeconds;
-            if (!fake && stuckSecs >= allowKickSecs)
+            if (!fake && stuckSecs >= AllowKickSecs)
             {
                 //如果已经超时，而且不是fake模式，则真踢人
                 _eventsService.Add(RailChessEventType.PlayerOut, 0, player, true);
@@ -365,7 +365,7 @@ namespace RailChess.Play
                 return -1;
             }
             clearedPlayerName = null;
-            return allowKickSecs - stuckSecs;
+            return AllowKickSecs - stuckSecs;
         }
     }
 }
