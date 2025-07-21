@@ -34,6 +34,7 @@ async function create(){
             await loadActive();
         }
     }
+    initCreating()
 }
 function enter(id:number){
     router.push({name:'play',params:{id}});
@@ -62,9 +63,8 @@ function getAllowUserCsv(){
     return allowUsers.value.map(x=>x.id).join(',')
 }
 
-onMounted(async ()=>{
-    me.value = (await injectUserInfo().getIdentityInfo()).Id;
-    await loadActive();
+function initCreating(){
+    allowUsers.value = []
     creating.value = {
         UseMapId: 0,
         RandAlg: RandAlgType.Uniform,
@@ -79,6 +79,12 @@ onMounted(async ()=>{
         ThinkSecsPerGame: 0,
         AllowUserIdCsv: ''
     }
+}
+
+onMounted(async ()=>{
+    initCreating()
+    me.value = (await injectUserInfo().getIdentityInfo()).Id;
+    await loadActive();
 })
 </script>
 
@@ -138,7 +144,7 @@ onMounted(async ()=>{
 </div>
 <SideBar ref="sidebar">
     <h1>创建棋局</h1>
-    <table v-if="creating"><tbody>
+    <table v-if="creating && me>0"><tbody>
         <tr>
             <td>随机数</td>
             <td>
@@ -221,6 +227,9 @@ onMounted(async ()=>{
             </td>
         </tr>
     </tbody></table>
+    <div v-else style="color: red;font-size: 20px;text-align: center;">
+        请先登录
+    </div>
 </SideBar>
 </template>
 
