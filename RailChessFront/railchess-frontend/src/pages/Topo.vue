@@ -409,7 +409,7 @@ function windowResizeHandler(){
 </script>
 
 <template>
-  <div class="topbar">
+  <div class="topoTopbar">
     <div class="lineList">
       <div v-for="line,idx in lines" @click="SelectLine(line.Id)" :class="line.Id == selectedLineId ? 'selected btn' : 'btn'" :key="line.Id">
         [{{ idx }}]{{ line.Stas.length }}站
@@ -547,8 +547,8 @@ canvas{
 .manual{
   color:#333
 }
-.topbar{
-  position:absolute;
+.topoTopbar{
+  position:fixed;
   top:0px;
   left:0px;
   right: 0px;
