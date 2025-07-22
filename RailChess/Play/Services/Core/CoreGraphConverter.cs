@@ -11,10 +11,12 @@ namespace RailChess.Play.Services.Core
                 return null;
             Dictionary<int, Sta> ss = topo.Stations.ToDictionary
                 (x => x.Id, x => new Sta(x.Id));
+            Dictionary<int, List<int>> linesDict = [];
             topo.Lines.ForEach(line =>
             {
                 if (line.Stas is not null && line.Stas.Count > 1)
                 {
+                    linesDict.Add(line.Id, line.Stas);
                     for (int i = 0; i < line.Stas.Count; i++)
                     {
                         int staId = line.Stas[i];
@@ -42,7 +44,7 @@ namespace RailChess.Play.Services.Core
                     }
                 }
             });
-            return new Graph(ss.Values.ToList());
+            return new Graph(ss.Values.ToList(), linesDict);
         }
     }
 }

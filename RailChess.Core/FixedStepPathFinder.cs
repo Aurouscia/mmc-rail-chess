@@ -32,7 +32,7 @@ namespace RailChess.Core
             if (stepsA == -1 && stepsB == 0)
             {
                 //如果步数为-1，可一步走到任何未被其他玩家占领的地方
-                var mineOrEmpty = graph.Stations.Where(x => 
+                var mineOrEmpty = graph.Stations.Where(x =>
                     (x.Owner == 0 || x.Owner == userId) && x.Id != from);
                 return mineOrEmpty
                     .Select(x => new List<int> { from, x.Id })
@@ -40,10 +40,12 @@ namespace RailChess.Core
             }
 
             Queue<LinedPath> paths = new();
+            bool conjudge(LinedSta s0, LinedSta s1, LinedSta? s2)
+                => IsRangeConsecutiveByLine(graph, s0, s1, s2);
             var startPoint = graph.Stations.Find(x => x.Id == from) ?? throw new Exception("算路异常:找不到指定起始点");
             var startStas = startPoint.Neighbors.ConvertAll(x => new LinedSta(x.LineId, startPoint));
             //路径均有首个点（出发点）
-            startStas.ConvertAll(x => new LinedPath(x)).ForEach(paths.Enqueue);
+            startStas.ConvertAll(x => new LinedPath(x, conjudge)).ForEach(paths.Enqueue);
 
             List<LinedPath>? stepsAArchive = null;
             //如果有两种情况，则存储记录步数为A的路径中间产物
@@ -71,7 +73,7 @@ namespace RailChess.Core
                     if (newPath.TransferredTimes > maxiumTransfer)
                         continue;//不准换乘次数超出限制
                     paths.Enqueue(newPath);
-                    if(stepsAArchive is { } && newPath.Count == stepsA + 1)
+                    if (stepsAArchive is { } && newPath.Count == stepsA + 1)
                         stepsAArchive.Add(newPath);
                 }
                 if (paths.Count == 0) break;
@@ -96,53 +98,61 @@ namespace RailChess.Core
 
         private static bool DuplicatePathRange(List<LinedSta> currentPath, LinedSta newPoint)
         {
-            for(int i=0;i<currentPath.Count-1;i++)
+            for (int i = 0; i < currentPath.Count - 1; i++)
             {
                 var a = currentPath[i];
-                var b = currentPath[i+1];
+                var b = currentPath[i + 1];
                 if (a.Equals(currentPath[^1]) && b.Equals(newPoint))
-                    return true; 
+                    return true;
             }
             return false;
         }
-    }
-    public class LinedPath
-    {
-        public List<LinedSta> Stations { get; }
-        public int TransferredTimes { get; private set; }
-        public LinedSta? Tail { get; private set; }
-        public int Count => Stations.Count;
-        public LinedPath()
+
+        private static bool IsRangeConsecutiveByLine(Graph graph,
+            LinedSta newSta, LinedSta tailSta, LinedSta? beforeTailSta)
         {
-            Stations = new();
-            Tail = null;
-        }
-        public LinedPath(LinedSta head)
-        {
-            Stations = new() { head };
-            Tail = head;
-        }
-        public LinedPath(LinedPath basedOn, LinedSta newSta)
-        {
-            Stations = new(basedOn.Stations);
-            TransferredTimes = basedOn.TransferredTimes;
-            Grow(newSta);
+            if (newSta.LineId != tailSta.LineId)
+                return false;
+            //if (beforeTailSta is null)
+                return true;
         }
 
-        public void Grow(LinedSta sta)
+        private delegate bool ConsecutiveJudgment(
+            LinedSta newSta, LinedSta tailSta, LinedSta? beforeTailSta);
+        private class LinedPath
         {
-            if (Stations.Count >= 1)
+            public List<LinedSta> Stations { get; }
+            public int TransferredTimes { get; private set; }
+            public LinedSta? Tail => Stations.LastOrDefault();
+            public int Count => Stations.Count;
+            public ConsecutiveJudgment ConJudge { get; } 
+            public LinedPath(LinedSta head, ConsecutiveJudgment conJudge)
             {
-                if (sta.LineId != Stations[^1].LineId)
-                    TransferredTimes += 1;
+                Stations = [ head ];
+                ConJudge = conJudge;
             }
-            Stations.Add(sta);
-            Tail = sta;
-        }
+            public LinedPath(LinedPath basedOn, LinedSta newSta)
+            {
+                Stations = [..basedOn.Stations];
+                TransferredTimes = basedOn.TransferredTimes;
+                ConJudge = basedOn.ConJudge;
+                Grow(newSta);
+            }
 
-        public IEnumerable<int> ToIds()
-        {
-            return Stations.ConvertAll(x=>x.Station.Id);
+            private void Grow(LinedSta sta)
+            {
+                if (Tail is not null)
+                {
+                    if (!ConJudge(sta, Tail, null))
+                        TransferredTimes++;
+                }
+                Stations.Add(sta);
+            }
+
+            public IEnumerable<int> ToIds()
+            {
+                return Stations.ConvertAll(x=>x.Station.Id);
+            }
         }
     }
 }

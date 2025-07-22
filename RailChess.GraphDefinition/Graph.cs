@@ -3,16 +3,37 @@
     public class Graph
     {
         public List<Sta> Stations { get; }
+        public Dictionary<int, List<int>> Lines { get; }
+        /// <summary>
+        /// 玩家位置<br/>
+        /// 与其他两个不变的不同，这个应根据对局的演进重新设置
+        /// </summary>
         public Dictionary<int, int> UserPosition { get; }
-        public Graph(List<Sta> stations)
+        /// <summary>
+        /// 构造图
+        /// </summary>
+        /// <param name="stations">车站</param>
+        /// <param name="lines">线路（可不提供）</param>
+        public Graph(
+            List<Sta> stations, Dictionary<int, List<int>>? lines = null)
         {
             Stations = stations;
-            UserPosition = new();
+            UserPosition = [];
+            Lines = lines ?? [];
         }
-        public Graph(List<Sta> stations, Dictionary<int, int> userPosition)
+        /// <summary>
+        /// 构造图，单元测试专用（直接设置玩家位置）
+        /// </summary>
+        /// <param name="stations">车站</param>
+        /// <param name="userPosition">玩家位置</param>
+        /// <param name="lines">线路（可不提供）</param>
+        public Graph(
+            List<Sta> stations, Dictionary<int, int> userPosition,
+            Dictionary<int, List<int>>? lines = null)
         {
             Stations = stations;
             UserPosition = userPosition;
+            Lines = lines ?? [];
         }
     }
     public class LinedSta
