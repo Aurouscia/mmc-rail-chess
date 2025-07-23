@@ -196,11 +196,11 @@ namespace RailChess.Controllers
             var u = _context.Users.Where(x=>x.Name == userName).FirstOrDefault();
             if(u is { })
             {
-                string newPwd = "123456789";
+                string newPwd = RandNum.Uniform(100000, 999999).ToString();
                 string pwdMd5 = MD5Helper.GetMD5Of(newPwd);
                 u.Pwd = pwdMd5;
                 _context.SaveChanges();
-                return this.ApiResp($"已为用户 {u.Name}({u.Id}) 重置密码为 {newPwd}");
+                return this.ApiResp($"已为用户 {u.Name}({u.Id}) 重置密码为 {newPwd}", success:true);
             }
             return this.ApiFailedResp("未找到该用户");
         }
