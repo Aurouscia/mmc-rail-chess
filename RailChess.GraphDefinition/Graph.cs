@@ -36,6 +36,10 @@
             Lines = lines ?? [];
         }
     }
+    /// <summary>
+    /// 带有线路id的站点<br/>
+    /// 直观理解：指的是某一个站台（例如：人民广场站1号线部分、人民广场站8号线部分）
+    /// </summary>
     public class LinedSta
     {
         public int LineId { get; set; }

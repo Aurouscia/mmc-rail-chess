@@ -157,6 +157,198 @@ namespace RailChess.Core.Test
         }
 
         [TestMethod]
+        public void TransferOnRingTail()
+        {
+            // 1为环线终点，在不允许换乘的情况下
+            // 应该可以两步从6走到2
+            
+            // 1--2--3
+            // |     |
+            // 6--5--4
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            Sta sta4 = new(4, 1);
+            Sta sta5 = new(5, 1);
+            Sta sta6 = new(6, 1);
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            sta3.TwowayConnect(sta4, 1);
+            sta4.TwowayConnect(sta5, 1);
+            sta5.TwowayConnect(sta6, 1);
+            sta6.TwowayConnect(sta1, 1);
+            List<Sta> stas = [sta1, sta2, sta3, sta4, sta5, sta6];
+            Graph g = new(stas, new Dictionary<int, List<int>>()
+            {
+                { 1, [1, 2, 3, 4, 5, 6, 1] }
+            });
+            g.UserPosition.Add(1, 6);
+            int stepCount = 2;
+            int maxTransfer = 0;
+            var valid = _finder.IsValidMove(g, 1, 2, stepCount, maxTransfer);
+            Assert.IsTrue(valid);
+        }
+
+        [TestMethod]
+        public void TransferOnSelfIntersectT()
+        {
+            // 线路为123452，不允许换乘的情况下，两步：
+            // 可以：从1到3（可以在2两侧找到1、3）
+            // 不可以：从1到5（无法在2两侧找到1、5）
+
+            // 1--2--3
+            //    |  |
+            //    5--4
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            Sta sta4 = new(4, 1);
+            Sta sta5 = new(5, 1);
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            sta3.TwowayConnect(sta4, 1);
+            sta4.TwowayConnect(sta5, 1);
+            sta5.TwowayConnect(sta2, 1);
+            List<Sta> stas = [sta1, sta2, sta3, sta4, sta5];
+            Graph g = new(stas, new Dictionary<int, List<int>>()
+            {
+                { 1, [1, 2, 3, 4, 5, 2] }
+            });
+            g.UserPosition.Add(1, 1);
+            int stepCount = 2;
+            int maxTransfer = 0;
+            Assert.IsTrue(_finder.IsValidMove(g, 1, 3, stepCount, maxTransfer));
+            Assert.IsFalse(_finder.IsValidMove(g, 1, 5, stepCount, maxTransfer));
+            Assert.IsTrue(_finder.IsValidMove(g, 1, 5, stepCount, 1));
+        }
+
+        [TestMethod]
+        public void TransferOnSelfIntersectCross()
+        {
+            // 线路为1234526，不允许换乘的情况下
+            // 两步可以：从1到3、从5到6
+            // 两步不可以：从1到5、从1到6
+            // 三步可以：从3到2
+            // 三步不可以：从3到4
+
+            //    6
+            //    |
+            // 1--2--3
+            //    |  |
+            //    5--4
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            Sta sta4 = new(4, 1);
+            Sta sta5 = new(5, 1);
+            Sta sta6 = new(6, 1);
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            sta3.TwowayConnect(sta4, 1);
+            sta4.TwowayConnect(sta5, 1);
+            sta5.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta6, 1);
+            List<Sta> stas = [sta1, sta2, sta3, sta4, sta5, sta6];
+            Graph g = new(stas, new Dictionary<int, List<int>>()
+            {
+                { 1, [1, 2, 3, 4, 5, 2, 6] }
+            });
+            int uid = 1;
+            g.UserPosition.Add(uid, 5);
+            int stepCount = 2;
+            int maxTransfer = 0;
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 6, stepCount, maxTransfer)); //5-6可以
+            g.UserPosition[uid] = 1;
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 3, stepCount, maxTransfer)); //1-3可以
+            Assert.IsFalse(_finder.IsValidMove(g, uid, 5, stepCount, maxTransfer)); //1-5不行
+            Assert.IsFalse(_finder.IsValidMove(g, uid, 6, stepCount, maxTransfer)); //1-6不行
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 5, stepCount, 1)); //但是改成允许换乘又可以了
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 6, stepCount, 1)); //但是改成允许换乘又可以了
+            stepCount = 3;
+            g.UserPosition[uid] = 3;
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 2, stepCount, maxTransfer)); //3-2可以
+            Assert.IsFalse(_finder.IsValidMove(g, uid, 4, stepCount, maxTransfer)); //3-4不行
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 4, stepCount, 1)); //但是改成允许换乘又可以了
+        }
+
+        [TestMethod]
+        public void TransferOnSelfIntersectY()
+        {
+            //线路为12324，不允许换乘的情况下
+            //两步可从1到3，但不能从1到4
+
+            // 1--2--3
+            //   /
+            //  4
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            Sta sta4 = new(4, 1);
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            sta2.TwowayConnect(sta4, 1);
+            List<Sta> stas = [sta1, sta2, sta3, sta4];
+            Graph g = new(stas, new Dictionary<int, List<int>>()
+            {
+                { 1, [1, 2, 3, 2, 4] }
+            });
+            int uid = 1;
+            g.UserPosition.Add(uid, 1);
+            int stepCount = 2;
+            int maxTransfer = 0;
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 3, stepCount, maxTransfer));
+            Assert.IsFalse(_finder.IsValidMove(g, uid, 4, stepCount, maxTransfer));
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 4, stepCount, 1));
+        }
+
+        [TestMethod]
+        public void TransferOnRingTailCross()
+        {
+            //线路为1231451，在不允许换乘的情况下：
+            //两步可以：从3到4、从2到5
+            //两步不可以：从3到5、从2到4、从2到3、从4到5
+
+            // 2   5
+            // |\ /|
+            // | 1 |
+            // |/ \|
+            // 3   4
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            Sta sta4 = new(4, 1);
+            Sta sta5 = new(5, 1);
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            sta3.TwowayConnect(sta1, 1);
+            sta1.TwowayConnect(sta4, 1);
+            sta4.TwowayConnect(sta5, 1);
+            sta5.TwowayConnect(sta1, 1);
+            List<Sta> stas = [sta1, sta2, sta3, sta4, sta5];
+            Graph g = new(stas, new Dictionary<int, List<int>>()
+            {
+                { 1, [1, 2, 3, 1, 4, 5, 1] }
+            });
+            int uid = 1;
+            g.UserPosition.Add(uid, 1);
+            int stepCount = 2;
+            int maxTransfer = 0;
+            g.UserPosition[uid] = 3;
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 4, stepCount, maxTransfer)); //可以3-4
+            Assert.IsFalse(_finder.IsValidMove(g, uid, 5, stepCount, maxTransfer)); //不能3-5
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 5, stepCount, 1)); //可换乘后又可以了
+            g.UserPosition[uid] = 2;
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 5, stepCount, maxTransfer)); //可以2-5
+            Assert.IsFalse(_finder.IsValidMove(g, uid, 4, stepCount, maxTransfer)); //不能2-4
+            Assert.IsFalse(_finder.IsValidMove(g, uid, 3, stepCount, maxTransfer)); //不能2-3
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 4, stepCount, 1)); //可换乘后又可以了
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 3, stepCount, 1)); //可换乘后又可以了
+            g.UserPosition[uid] = 4;
+            Assert.IsFalse(_finder.IsValidMove(g, uid, 5, stepCount, maxTransfer)); //不能4-5
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 5, stepCount, 1)); //可换乘后又可以了
+        }
+
+        [TestMethod]
         public void OverlappedLines()
         {
             // 1

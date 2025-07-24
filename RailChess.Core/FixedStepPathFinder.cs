@@ -43,6 +43,7 @@ namespace RailChess.Core
             bool conjudge(LinedSta s0, LinedSta s1, LinedSta? s2)
                 => IsRangeConsecutiveByLine(graph, s0, s1, s2);
             var startPoint = graph.Stations.Find(x => x.Id == from) ?? throw new Exception("算路异常:找不到指定起始点");
+            //出发：可从该站的任何线路出发，所以按每个“邻点(LinedSta)”的线路创建一个出发点
             var startStas = startPoint.Neighbors.ConvertAll(x => new LinedSta(x.LineId, startPoint));
             //路径均有首个点（出发点）
             startStas.ConvertAll(x => new LinedPath(x, conjudge)).ForEach(paths.Enqueue);
@@ -111,10 +112,71 @@ namespace RailChess.Core
         private static bool IsRangeConsecutiveByLine(Graph graph,
             LinedSta newSta, LinedSta tailSta, LinedSta? beforeTailSta)
         {
+            //  o-----o---->o
+            //  ↑     ↑     ↑
+            //  |     |     newSta（线路新延长的点）
+            //  |     tailSta（线路中已有）
+            //  beforeTailSta（线路中已有）
+            //
+            //站点的线路号变化：必然换乘了
             if (newSta.LineId != tailSta.LineId)
                 return false;
-            //if (beforeTailSta is null)
+            if (graph.Lines.Count == 0 || beforeTailSta is null)
+            {
+                //未提供线路信息（单元测试环境）或目前只有两个点
+                //无法进行换乘判断，直接返回true
                 return true;
+            }
+            //判断自交换乘
+            if (graph.Lines.TryGetValue(tailSta.LineId, out var line))
+            {
+                var tailId = tailSta.Station.Id;
+                //找出tailSta在线路中的所有索引
+                var tailStaIdxs = new List<int>();
+                for(int i = 0; i < line.Count; i++)
+                {
+                    if (line[i] == tailId)
+                        tailStaIdxs.Add(i);
+                }
+                //如果tailSta仅出现过一次，那么这里肯定不存在自交，直接返回true
+                if (tailStaIdxs.Count <= 1)
+                    return true;
+                var lastIdx = line.Count - 1;
+                var isRing = tailStaIdxs.First() == 0 && tailStaIdxs.Last() == lastIdx;
+                foreach(var i in tailStaIdxs)
+                {
+                    int adjIdx0 = -1;
+                    int adjIdx1 = -1;
+                    if(i == 0 || i == lastIdx)
+                    {
+                        if (isRing)
+                        {
+                            //是环线：至少长度为3
+                            adjIdx0 = 1;
+                            adjIdx1 = lastIdx - 1;
+                        }
+                        else
+                        {
+                            //不是环线，在这肯定不可能“连续区间”
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        adjIdx0 = i - 1;
+                        adjIdx1 = i + 1;
+                    }
+                    int adj0 = line.ElementAt(adjIdx0);
+                    int adj1 = line.ElementAt(adjIdx1);
+                    if (adj0 == newSta.Station.Id && adj1 == beforeTailSta.Station.Id)
+                        return true;
+                    if (adj1 == newSta.Station.Id && adj0 == beforeTailSta.Station.Id)
+                        return true;
+                }
+                return false;//没有找到连续走法
+            }
+            //找不到线路
+            throw new Exception("算路异常：找不到线路" + tailSta.LineId);
         }
 
         private delegate bool ConsecutiveJudgment(
@@ -143,7 +205,10 @@ namespace RailChess.Core
             {
                 if (Tail is not null)
                 {
-                    if (!ConJudge(sta, Tail, null))
+                    LinedSta? beforeTailSta = null;
+                    if(Stations.Count >= 2)
+                        beforeTailSta = Stations[^2];
+                    if (!ConJudge(sta, Tail, beforeTailSta))
                         TransferredTimes++;
                 }
                 Stations.Add(sta);
