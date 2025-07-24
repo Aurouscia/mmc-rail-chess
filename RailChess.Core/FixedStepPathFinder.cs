@@ -66,7 +66,11 @@ namespace RailChess.Core
                 if (tail is null) continue;
                 foreach (var n in tail.Station.Neighbors)
                 {
-                    if (n.Station.Owner != 0 && n.Station.Owner != userId) continue;//不是自己的/空的就不能往这走
+                    if (p.TransferredTimes == maxiumTransfer)
+                        if (p.Tail?.LineId != n.LineId)
+                            continue;//已经到了换乘上限，不能还往别的线跑
+                    if (n.Station.Owner != 0 && n.Station.Owner != userId)
+                        continue;//不是自己的/空的就不能往这走
                     if (p.Stations.Count >= 2)
                     {
                         var lastButOne = p.Stations[^2];
