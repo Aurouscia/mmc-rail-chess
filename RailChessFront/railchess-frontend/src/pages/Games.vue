@@ -30,11 +30,11 @@ async function create(){
         creating.value.AllowUserIdCsv = getAllowUserCsv();
         const resp = await api.game.create(creating.value);
         if(resp){
+            initCreating()
             sidebar.value?.fold();
             await loadActive();
         }
     }
-    initCreating()
 }
 function enter(id:number){
     router.push({name:'play',params:{id}});
