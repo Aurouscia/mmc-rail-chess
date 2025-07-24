@@ -55,8 +55,12 @@ namespace RailChess.Core
 
             while (true)
             {
-                if (DateTime.Now > limit)
-                    throw new Exception("计算超时，请联系管理员");
+                if (!DisableTimeoutTestOnly)
+                {
+                    //大抵是开销极低的
+                    if (DateTime.Now > limit)
+                        throw new Exception("计算超时，请联系管理员");
+                }
                 var p = paths.Dequeue();
                 var tail = p.Tail;
                 if (tail is null) continue;
@@ -96,6 +100,8 @@ namespace RailChess.Core
             var paths = FindAllPaths(graph, userId, steps, maxiumTransfer);
             return paths.Any(x => x.LastOrDefault() == to);
         }
+
+        public static bool DisableTimeoutTestOnly { get; set; } = false;
 
         private static bool DuplicatePathRange(List<LinedSta> currentPath, LinedSta newPoint)
         {

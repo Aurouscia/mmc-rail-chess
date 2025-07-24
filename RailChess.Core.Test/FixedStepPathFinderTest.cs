@@ -10,6 +10,9 @@ namespace RailChess.Core.Test
         public FixedStepPathFinderTest()
         {
             _finder = new FixedStepPathFinder();
+
+            //测试中关掉超时机制，以便断点调试
+            FixedStepPathFinder.DisableTimeoutTestOnly = true;
         }
         [TestMethod]
         public void Simple()
@@ -127,8 +130,14 @@ namespace RailChess.Core.Test
             Sta sta10 = new(10, 1);
             Sta sta11 = new(11, 1);
             Sta sta12 = new(12, 1);
-            List<Sta> stas = new() { sta1,sta2,sta3, sta4, sta5, sta6, sta7, sta8, sta9, sta10, sta11, sta12 };
-            Graph g = new(stas);
+            List<Sta> stas = [sta1, sta2, sta3, sta4, sta5, sta6, sta7, sta8, sta9, sta10, sta11, sta12];
+            Dictionary<int, List<int>> lines = new()
+            {
+                { 1, [11, 1, 3, 7, 10] },
+                { 2, [12, 1, 2, 5, 9] },
+                { 3, [4, 5, 6, 7, 8] }
+            };
+            Graph g = new(stas, lines);
             g.UserPosition.Add(1,4);
             sta11.TwowayConnect(sta1, 1);
             sta1.TwowayConnect(sta3, 1);

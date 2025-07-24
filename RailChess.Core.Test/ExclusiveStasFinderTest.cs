@@ -10,6 +10,9 @@ namespace RailChess.Core.Test
         public ExclusiveStasFinderTest()
         {
             _finder = new ExclusiveStasFinder();
+
+            //测试中关掉超时机制，以便断点调试
+            //ExclusiveStasFinder.DisableTimeoutTestOnly = true;
         }
         [TestMethod]
         public void Simple()
@@ -133,10 +136,12 @@ namespace RailChess.Core.Test
             var sta3 = new Sta(3, 3);
             var sta4 = new Sta(4, 0);
             var sta5 = new Sta(5, 0);
-            var sta6 = new Sta(6, 3); 
+            var sta6 = new Sta(6, 3);
+            // 历史bug：
             // 玩家1在位置2，为玩家1计算Exclusive车站时，
             // 位置6被玩家3占了，导致位于7的2号玩家无法到达3，但可以到达9（加入了"otherReachable" HashSet），
             // 导致位于10的3号玩家一出门就被判定为无法占领更多点，结束计算，没算入其能到达的3号位置
+            // 最终导致玩家1错误地占领了位置3（目前已修复）
             var sta7 = new Sta(7, 2);
             var sta8 = new Sta(8, 0);
             var sta9 = new Sta(9, 0);

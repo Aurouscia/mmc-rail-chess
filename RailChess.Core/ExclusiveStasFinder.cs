@@ -26,8 +26,11 @@ namespace RailChess.Core
 
                 while (true)
                 {
-                    if (DateTime.Now > limit)
-                        throw new Exception("计算超时，请联系管理员");
+                    if (!DisableTimeoutTestOnly)
+                    {
+                        if (DateTime.Now > limit)
+                            throw new Exception("计算超时，请联系管理员");
+                    }
                     var a = active.Dequeue();
                     foreach (var n in a.Neighbors)
                     {
@@ -48,5 +51,7 @@ namespace RailChess.Core
             }
             return allStas.ConvertAll(x=>x.Id).Except(othersReachable);
         }
+
+        public static bool DisableTimeoutTestOnly { get; set; } = false;
     }
 }
