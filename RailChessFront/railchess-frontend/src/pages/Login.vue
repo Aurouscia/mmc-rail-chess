@@ -10,7 +10,6 @@ import { useRouter } from 'vue-router';
 import { User } from '../models/user';
 import Loading from '../components/Loading.vue';
 import Avatar from '../components/Avatar.vue';
-import { contact } from '../utils/consts';
 
 const router = useRouter();
 const userName = ref<string>("")
@@ -21,6 +20,7 @@ var httpClient:HttpClient;
 var api:Api;
 var pop:Ref<InstanceType<typeof Pop>>
 var tabs = ref<InstanceType<typeof SwitchingTabs>>();
+const contact = import.meta.env.VITE_CONTACT
 async function Login(){
     const token = await api.identites.authen.login({
         userName:userName.value,
@@ -86,7 +86,7 @@ onMounted(async()=>{
         :texts="identityInfo&&identityInfo.Id>0 ? ['登录','注册','个人中心'] : ['登录','注册']">
         <div>
         <div>
-            <table><tobdy>
+            <table><tbody>
                 <tr>
                     <td>昵称</td>
                     <td>
@@ -99,7 +99,7 @@ onMounted(async()=>{
                         <input v-model="password" type="password"/>
                     </td>
                 </tr>
-            </tobdy></table>
+            </tbody></table>
             <div class="login">
                 <button @click="Login" class="confirm">登&nbsp;录</button>
             </div>

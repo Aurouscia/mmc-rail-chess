@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { contact } from '../utils/consts';
 import { useFeVersionChecker } from '../utils/feVersionCheck';
 
+const intro = import.meta.env.VITE_INTRO
+const contact = import.meta.env.VITE_CONTACT
+const nonProfitNotice = import.meta.env.VITE_NONPROFIT_NOTICE
 const { checkAndPop } = useFeVersionChecker()
 checkAndPop()
 </script>
@@ -10,11 +12,13 @@ checkAndPop()
 <h1>欢迎来到轨交棋</h1>
     <div>
         <img src="/railchessLogo.svg" class="logo"/>
-        <p>
-            轨交棋是一款基于地铁线路图的棋类游戏，玩家需要在地铁图上沿着线路移动，
-            尽可能多的"占领"车站，并堵截其他玩家的行动，最终获得最高分数。
+        <p v-if="intro">
+            {{ intro }}
         </p>
-        <div class="contact">
+        <p v-if="nonProfitNotice" style="color: cornflowerblue;">
+            {{ nonProfitNotice }}
+        </p>
+        <div v-if="contact" class="contact">
             {{ contact }}
         </div>
     </div>
