@@ -84,4 +84,17 @@ a{
 a:hover{
   text-decoration: underline;
 }
+@media screen and (max-width: 500px) {
+  .topbar{
+    width: calc(100vw - 10px);
+    padding-right: 10px;
+  }
+  .topbar-item{
+    padding: 0px 6px 0px 6px;
+    font-size: 19px;
+  }
+  .right .topbar-item{
+    font-size: 14px;
+  }
+}
 </style>

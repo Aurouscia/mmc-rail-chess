@@ -58,4 +58,9 @@ div p{
     color: gray;
     margin-bottom: 8px;
 }
+@media screen and (min-width: 1200px) {
+    div p{
+        text-align: center;
+    }
+}
 </style>
