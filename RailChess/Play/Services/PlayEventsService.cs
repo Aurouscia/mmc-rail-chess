@@ -99,21 +99,25 @@ namespace RailChess.Play.Services
             return OurEvents().Where(x => x.EventType == RailChessEventType.RandNumGened).LastOrDefault()?.StationId ?? 0;
         }
 
+        private static readonly Lock addLock = new();
         public void Add(RailChessEventType type, int stationId, int userId, bool saveChanges=true)
         {
-            RailChessEvent ev = new()
+            lock (addLock)
             {
-                EventType = type,
-                GameId = this.GameId,
-                PlayerId = userId,
-                StationId = stationId,
-                Time = DateTime.Now
-            };
-            _context.Events.Add(ev);
-            if(saveChanges)
-                _context.SaveChanges();
-            var list = OurEvents();
-            list.Add(ev);
+                RailChessEvent ev = new()
+                {
+                    EventType = type,
+                    GameId = this.GameId,
+                    PlayerId = userId,
+                    StationId = stationId,
+                    Time = DateTime.Now
+                };
+                _context.Events.Add(ev);
+                if(saveChanges)
+                    _context.SaveChanges();
+                var list = OurEvents();
+                list.Add(ev);
+            }
         }
 
         public void Add(RailChessEventType type, int stationId, bool saveChanges = true)

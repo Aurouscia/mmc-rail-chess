@@ -25,38 +25,42 @@ namespace RailChess.Play.Services
         {
             cacheInstance.Remove(UserIdCacheKey(id));
         }
+        private readonly static Lock playerGetLock = new();
         public List<User> Get(List<int> ids)
         {
-            List<int> notFound = new();
-            List<User> res = new();
-            ids.ForEach(id =>
+            lock (playerGetLock)
             {
-                var u = _cache.Get<User>(UserIdCacheKey(id));
-                if (u is null)
-                    notFound.Add(id);
-                else
-                    res.Add(u);
-            });
-            if (notFound.Count == 0)
-                return res;
-
-            var notFoundUs = _context.Users.Where(x => notFound.Contains(x.Id)).ToList();
-            notFoundUs.ForEach(u =>
-            {
-                _cache.Set<User>(UserIdCacheKey(u.Id), u, new MemoryCacheEntryOptions()
+                List<int> notFound = new();
+                List<User> res = new();
+                ids.ForEach(id =>
                 {
-                    SlidingExpiration = TimeSpan.FromMinutes(30)
+                    var u = _cache.Get<User>(UserIdCacheKey(id));
+                    if (u is null)
+                        notFound.Add(id);
+                    else
+                        res.Add(u);
                 });
-            });
-            res.AddRange(notFoundUs);
+                if (notFound.Count == 0)
+                    return res;
 
-            res.Sort((x, y) =>
-            {
-                int idx1 = ids.IndexOf(x.Id);
-                int idx2 = ids.IndexOf(y.Id);
-                return idx1 - idx2;
-            });
-            return res;
+                var notFoundUs = _context.Users.Where(x => notFound.Contains(x.Id)).ToList();
+                notFoundUs.ForEach(u =>
+                {
+                    _cache.Set<User>(UserIdCacheKey(u.Id), u, new MemoryCacheEntryOptions()
+                    {
+                        SlidingExpiration = TimeSpan.FromMinutes(30)
+                    });
+                });
+                res.AddRange(notFoundUs);
+
+                res.Sort((x, y) =>
+                {
+                    int idx1 = ids.IndexOf(x.Id);
+                    int idx2 = ids.IndexOf(y.Id);
+                    return idx1 - idx2;
+                });
+                return res;
+            }
         }
         public User Get(int id)
         {

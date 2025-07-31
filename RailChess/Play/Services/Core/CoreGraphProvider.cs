@@ -45,22 +45,26 @@ namespace RailChess.Play.Services.Core
             });
             return graph;
         }
+        private static readonly Lock graphGetLock = new();
         private Graph GetPlainGraph()
         {
-            var plainGraph = _cache.Get<Graph>(PlainGraphCacheKey);
-            if(plainGraph is null) 
+            lock (graphGetLock)
             {
-                plainGraph = BuildPlainGraph();
-                _cache.Set(PlainGraphCacheKey, plainGraph, new MemoryCacheEntryOptions()
+                var plainGraph = _cache.Get<Graph>(PlainGraphCacheKey);
+                if (plainGraph is null)
                 {
-                    SlidingExpiration = TimeSpan.FromMinutes(30)
-                });
+                    plainGraph = BuildPlainGraph();
+                    _cache.Set(PlainGraphCacheKey, plainGraph, new MemoryCacheEntryOptions()
+                    {
+                        SlidingExpiration = TimeSpan.FromMinutes(30)
+                    });
+                }
+                else
+                    _logger.LogDebug("游戏[{gameId}]_从缓存取出核心图", _topoService.GameId);
+                plainGraph.UserPosition.Clear();
+                plainGraph.Stations.ForEach(x => x.Owner = 0);
+                return plainGraph;
             }
-            else
-                _logger.LogDebug("游戏[{gameId}]_从缓存取出核心图", _topoService.GameId);
-            plainGraph.UserPosition.Clear();
-            plainGraph.Stations.ForEach(x => x.Owner = 0);
-            return plainGraph;
         }
         private Graph BuildPlainGraph()
         {
