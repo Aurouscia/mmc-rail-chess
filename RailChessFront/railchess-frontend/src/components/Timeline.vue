@@ -71,10 +71,14 @@ function seekSame(dir:'left'|'right'){
     }
 }
 function selectedItem(needAutoScroll?:boolean){
-    const nextEid = data.value?.Items[selectedIdx.value+1]?.EId
-    emit('viewTime', nextEid)
-    if(needAutoScroll){
-        autoScroll()
+    const e = data.value?.Items[selectedIdx.value+1]
+    if(e){
+        console.log(e)
+        const nextEid = e.EId
+        emit('viewTime', nextEid)
+        if(needAutoScroll){
+            autoScroll()
+        }
     }
 }
 function autoScroll() {

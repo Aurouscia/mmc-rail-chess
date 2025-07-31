@@ -141,36 +141,43 @@ namespace RailChess.Play
         /// <returns></returns>
         public async Task Select(SelectRequest request)
         {
-            int userId = Service.UserId;
-            if(userId != _playerService.CurrentPlayer())
+            try
             {
-                await SendTextMsg("不是你的回合",defaultSender, TextMsgType.Err, Clients.Caller);
-                return;
-            }
-            var name = _playerService.Get(userId).Name;
-            if (request.Path is null || request.Path.Count<=1)
-            {
-                var loc = _eventsService.PlayerLocateEvents().Where(x => x.PlayerId == userId).Select(x=>x.StationId).FirstOrDefault();
-                _eventsService.Add(RailChessEventType.PlayerStuck, loc, true);
-                await SendTextMsg($"<b>{name}</b>无路可走，卡住一次",defaultSender,TextMsgType.Important);
-
-                var stuckTimes = _eventsService.PlayerStuckEvents().OfUser(userId).Count;
-                if (stuckTimes >= _gameService.OurGame().StucksToLose)
+                int userId = Service.UserId;
+                if(userId != _playerService.CurrentPlayer())
                 {
-                    await SendTextMsg($"<b>{name}</b>已卡住{stuckTimes}次，出局", defaultSender, TextMsgType.Err);
-                    Service.Leave();
+                    await SendTextMsg("请刷新后重试", defaultSender, TextMsgType.Err, Clients.Caller);
+                    return;
                 }
+                var name = _playerService.Get(userId).Name;
+                if (request.Path is null || request.Path.Count <= 1)
+                {
+                    var loc = _eventsService.PlayerLocateEvents().Where(x => x.PlayerId == userId).Select(x => x.StationId).FirstOrDefault();
+                    _eventsService.Add(RailChessEventType.PlayerStuck, loc, true);
+                    await SendTextMsg($"<b>{name}</b>无路可走，卡住一次", defaultSender, TextMsgType.Important);
+
+                    var stuckTimes = _eventsService.PlayerStuckEvents().OfUser(userId).Count;
+                    if (stuckTimes >= _gameService.OurGame().StucksToLose)
+                    {
+                        await SendTextMsg($"<b>{name}</b>已卡住{stuckTimes}次，出局", defaultSender, TextMsgType.Err);
+                        Service.Leave();
+                    }
+                    await SyncAll();
+                    return;
+                }
+                string? errmsg = Service.Select(request.Path.Last(), out int captured);
+                if (errmsg is not null)
+                {
+                    await SendTextMsg(errmsg, defaultSender, TextMsgType.Err, Clients.Caller);
+                    return;
+                }
+                await SendTextMsg($"<b>{name}</b>已落子，新占领{captured}个车站");
                 await SyncAll();
-                return;
             }
-            string? errmsg = Service.Select(request.Path.Last(), out int captured);
-            if (errmsg is not null) 
+            catch (Exception ex)
             {
-                await SendTextMsg(errmsg, defaultSender, TextMsgType.Err, Clients.Caller);
-                return;
+                await SendTextMsg($"出错：{ex.Message}", defaultSender, TextMsgType.Err, Clients.Caller);
             }
-            await SendTextMsg($"<b>{name}</b>已落子，新占领{captured}个车站");
-            await SyncAll();
         }
 
         [Authorize]

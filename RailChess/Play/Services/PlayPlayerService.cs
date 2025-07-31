@@ -100,12 +100,6 @@ namespace RailChess.Play.Services
             var players = GetOrdered(playerIds, lastPlayer);
             return players;
         }
-        public List<User> GetAll()
-        {
-            var playerIds = _eventsService.PlayersJoinEvents().ConvertAll(x => x.PlayerId);
-            var players = Get(playerIds);
-            return players;
-        }
         public int CurrentPlayer()
         {
             var list = GetOrdered();

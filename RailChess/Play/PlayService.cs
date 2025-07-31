@@ -264,7 +264,7 @@ namespace RailChess.Play
             if (!_coreCaller.IsValidMove(dist))
             {
                 captured = 0;
-                return "移动不合法，请刷新后重选";
+                return "请刷新后重试";
             }
             _eventsService.Add(RailChessEventType.PlayerMoveTo, dist, false);
             var distNewlyCaptured = false;
