@@ -21,28 +21,46 @@ namespace RailChess.Play.Services
             _cache = cache;
         }
         private string EventsCacheKey() => $"rces_{GameId}";
+        private static readonly Lock ourEventsLock = new();
         public List<RailChessEvent> OurEvents()
         {
-            string key = EventsCacheKey();
-            var list = _cache.Get<List<RailChessEvent>>(key);
-            if (list is null)
+            lock (ourEventsLock)
             {
-                list = _context.Events.OfGame(GameId).ToList();
-                _cache.Set(key, list, new MemoryCacheEntryOptions()
+                string key = EventsCacheKey();
+                var list = _cache.Get<List<RailChessEvent>>(key);
+                bool needRefetch = false;
+                if (list is not null)
                 {
-                    SlidingExpiration = TimeSpan.FromMinutes(30)
-                });
+                    //由于“缓存非最新”的问题无法解决，每次在这里检查是否最新
+                    int maxIdInDb = _context.Events.OfGame(GameId)
+                        .OrderByDescending(x => x.Id)
+                        .Select(x => x.Id).FirstOrDefault();
+                    int maxIdInCache = list.LastOrDefault()?.Id ?? 0;
+                    if (maxIdInDb != maxIdInCache)
+                        needRefetch = true;
+                }
+                if (list is null || needRefetch)
+                {
+                    list = _context.Events.OfGame(GameId).OrderBy(x => x.Id).ToList();
+                    _cache.Set(key, list, new MemoryCacheEntryOptions()
+                    {
+                        SlidingExpiration = TimeSpan.FromMinutes(30)
+                    });
+                }
+                if (TFiltered)
+                {
+                    var firstExceed = list.FindIndex(x => x.Id >= TFilterId);
+                    list = list.GetRange(0, firstExceed);
+                }
+                return list;
             }
-            if (TFiltered)
-            {
-                var firstExceed = list.FindIndex(x => x.Id >= TFilterId);
-                list = list.GetRange(0, firstExceed);
-            }
-            return list;
         }
         public void ClearOurEventsCache()
         {
-            _cache.Remove(EventsCacheKey());
+            lock (ourEventsLock)
+            {
+                _cache.Remove(EventsCacheKey());
+            }
         }
         public List<RailChessEvent> MyEvents() 
             => OurEvents().FindAll(x => x.PlayerId == UserId);
@@ -99,25 +117,20 @@ namespace RailChess.Play.Services
             return OurEvents().Where(x => x.EventType == RailChessEventType.RandNumGened).LastOrDefault()?.StationId ?? 0;
         }
 
-        private static readonly Lock addLock = new();
-        public void Add(RailChessEventType type, int stationId, int userId, bool saveChanges=true)
+        public void Add(RailChessEventType type, int stationId, int userId, bool saveChanges = true)
         {
-            lock (addLock)
+            RailChessEvent ev = new()
             {
-                RailChessEvent ev = new()
-                {
-                    EventType = type,
-                    GameId = this.GameId,
-                    PlayerId = userId,
-                    StationId = stationId,
-                    Time = DateTime.Now
-                };
-                _context.Events.Add(ev);
-                if(saveChanges)
-                    _context.SaveChanges();
-                var list = OurEvents();
-                list.Add(ev);
-            }
+                EventType = type,
+                GameId = this.GameId,
+                PlayerId = userId,
+                StationId = stationId,
+                Time = DateTime.Now
+            };
+            _context.Events.Add(ev);
+            if (saveChanges)
+                _context.SaveChanges();
+            ClearOurEventsCache();
         }
 
         public void Add(RailChessEventType type, int stationId, bool saveChanges = true)
