@@ -1,7 +1,8 @@
-﻿
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace RailChess.Models.Game
 {
+    [Index(nameof(GameId))]
     public class RailChessEvent
     {
         public int Id { get; set; }
