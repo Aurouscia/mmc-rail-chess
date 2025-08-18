@@ -24,11 +24,24 @@ namespace RailChess.Play.Services.Core
             _cache = cache;
             _logger = logger;
         }
-        private string PlainGraphCacheKey => $"plainGraphOfGame_{_topoService.GameId}";
 
+        private Graph? GraphThisScope { get; set; } //非static，每个scope独立，不会有线程不安全问题
         public Graph GetGraph()
         {
-            var graph = GetPlainGraph();
+            var latestOpId = _eventsService.LatestOperation()?.Id ?? 0;
+            //判断当前结果是否过期
+            if (GraphThisScope is { } && GraphThisScope.OpEventId == latestOpId)
+            {
+                //未过期（eventId相同）可直接使用
+                //LatestOperation未变，则玩家位置、站点拥有者必然完全相同，无需重新计算
+                _logger.LogDebug("游戏[{gameId}]_直接使用同Scope已构建核心图", _topoService.GameId);
+                return GraphThisScope;
+            }
+            _logger.LogDebug("游戏[{gameId}]_构建核心图", _topoService.GameId);
+            var topo = _topoService.OurTopo();
+            var graph = _converter.Convert(topo) ?? throw new Exception("地图数据异常(无法构建图)");
+            graph.OpEventId = latestOpId; //设置当前的lastestOpId
+            GraphThisScope = graph; //保存下来（仅本scope存在，非static）
             var ocps = _eventsService.PlayerCaptureEvents().ConvertAll(x =>new { x.PlayerId, x.StationId });
             ocps.ForEach(o =>
             {
@@ -45,38 +58,10 @@ namespace RailChess.Play.Services.Core
             });
             return graph;
         }
-        private static readonly Lock graphGetLock = new();
-        private Graph GetPlainGraph()
-        {
-            lock (graphGetLock)
-            {
-                var plainGraph = _cache.Get<Graph>(PlainGraphCacheKey);
-                if (plainGraph is null)
-                {
-                    plainGraph = BuildPlainGraph();
-                    _cache.Set(PlainGraphCacheKey, plainGraph, new MemoryCacheEntryOptions()
-                    {
-                        SlidingExpiration = TimeSpan.FromMinutes(30)
-                    });
-                }
-                else
-                    _logger.LogDebug("游戏[{gameId}]_从缓存取出核心图", _topoService.GameId);
-                plainGraph.UserPosition.Clear();
-                plainGraph.Stations.ForEach(x => x.Owner = 0);
-                return plainGraph;
-            }
-        }
-        private Graph BuildPlainGraph()
-        {
-            _logger.LogDebug("游戏[{gameId}]_构建核心图", _topoService.GameId);
-            var topo = _topoService.OurTopo();
-            var graph = _converter.Convert(topo) ?? throw new Exception("地图数据异常(无法构建图)");
-            return graph;
-        }
 
         public Dictionary<int,int> StationDirections()
         {
-            var graph = GetPlainGraph();
+            var graph = GetGraph();
             return _evaluator.StationDirections(graph);
         }
         public int TotalDirections(List<int> staIds)
@@ -104,7 +89,7 @@ namespace RailChess.Play.Services.Core
         }
         public List<int> TwinExchanges()
         {
-            var graph = GetPlainGraph();
+            var graph = GetGraph();
             var res = graph.Stations.Where(x =>
             {
                 var n = x.Neighbors;

@@ -2,6 +2,7 @@
 {
     public class Graph
     {
+        public int OpEventId { get; set; }
         public List<Sta> Stations { get; }
         public Dictionary<int, List<int>> Lines { get; }
         /// <summary>

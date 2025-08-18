@@ -34,7 +34,7 @@ namespace RailChess.Play.Services
             catch(Exception ex)
             {
                 //TODO：没那么异常的异常（房间已满之类的）与真异常应该区分开
-                //_logger.LogError(ex, "[异常]");
+                _logger.LogError(ex, "[异常]{msg}", ex.Message);
                 await invocationContext.Hub.Clients.Caller.SendAsync(
                     method: PlayHub.textMsgMethod,
                     arg1: new TextMsg(ex.Message, PlayHub.defaultSender, TextMsgType.Err));
