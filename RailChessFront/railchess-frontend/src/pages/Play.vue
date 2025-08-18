@@ -672,7 +672,7 @@ watch(props,()=>{
         <button v-show="ended" class="minor">本棋局已结束</button>
         <button v-show="meHost && !ended && !gameStarted" class="cancel" @click="sgrc.gameReset">下令重置房间</button>
         <button v-show="gameStarted && !ended" class="cancel" @click="sgrc.kickAfk">移除挂机玩家</button>
-        <button v-show="ended" @click="router.replace('/playback/'+props.id)">查看本局回放</button>
+        <button v-show="ended && !playback" @click="router.replace('/playback/'+props.id)">查看本局回放</button>
         <button class="off" @click="router.push('/')">返回主菜单</button>
     </div>
 </SideBar>

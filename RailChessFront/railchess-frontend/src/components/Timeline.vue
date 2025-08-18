@@ -71,14 +71,18 @@ function seekSame(dir:'left'|'right'){
     }
 }
 function selectedItem(needAutoScroll?:boolean){
-    const e = data.value?.Items[selectedIdx.value+1]
-    if(e){
-        console.log(e)
-        const nextEid = e.EId
-        emit('viewTime', nextEid)
-        if(needAutoScroll){
-            autoScroll()
-        }
+    if(!data.value?.Items)
+        return
+    const len = data.value.Items.length
+    const idx = selectedIdx.value
+    let nextEventId:number
+    if(idx < len-1)
+        nextEventId = data.value.Items[idx+1].EId
+    else
+        nextEventId = 0
+    emit('viewTime', nextEventId)
+    if(needAutoScroll){
+        autoScroll()
     }
 }
 function autoScroll() {
