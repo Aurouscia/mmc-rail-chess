@@ -76,8 +76,8 @@ namespace RailChess.Core
                         var lastButOne = p.Stations[^2];
                         if (lastButOne.Station.Id == n.Station.Id) continue; //不能掉头往回跑
                     }
-                    if (DuplicatePathRange(p.Stations, n))
-                        continue;//不准走已经走过的区间（但是已经过的站还是可以再次经过的）
+                    //if (DuplicatePathRange(p.Stations, n))
+                        //continue;//不准走已经走过的区间（但是已经过的站还是可以再次经过的）
                     LinedPath newPath = new(p, n);
                     if (newPath.TransferredTimes > maxiumTransfer)
                         continue;//不准换乘次数超出限制
@@ -87,6 +87,7 @@ namespace RailChess.Core
                 }
                 if (paths.Count == 0) break;
                 if (paths.All(x => x.Count >= stepsAB + 1)) break;
+                //由于paths是队列，所以每个潜在路径都是按顺序逐个延长的，满足上一句的条件，应该长度全都一样
             }
 
             IEnumerable<LinedPath> pathsFinal = paths.AsEnumerable();
@@ -107,17 +108,19 @@ namespace RailChess.Core
 
         public static bool DisableTimeoutTestOnly { get; set; } = false;
 
-        private static bool DuplicatePathRange(List<LinedSta> currentPath, LinedSta newPoint)
-        {
-            for (int i = 0; i < currentPath.Count - 1; i++)
-            {
-                var a = currentPath[i];
-                var b = currentPath[i + 1];
-                if (a.Equals(currentPath[^1]) && b.Equals(newPoint))
-                    return true;
-            }
-            return false;
-        }
+        //private static bool DuplicatePathRange(List<LinedSta> currentPath, LinedSta newPoint)
+        //{
+        //    for (int i = 0; i < currentPath.Count - 1; i++)
+        //    {
+        //        var a = currentPath[i].Station.Id;
+        //        var b = currentPath[i + 1].Station.Id;
+        //        var tailId = currentPath[^1].Station.Id;
+        //        var newId = newPoint.Station.Id;
+        //        if ((a == tailId && b == newId) || (a == newId && b == tailId))
+        //            return true;
+        //    }
+        //    return false;
+        //}
 
         private static bool IsRangeConsecutiveByLine(Graph graph,
             LinedSta newSta, List<LinedSta> existingPath)

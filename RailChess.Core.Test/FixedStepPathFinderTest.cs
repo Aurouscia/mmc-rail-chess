@@ -101,7 +101,7 @@ namespace RailChess.Core.Test
             CollectionAssert.AreEquivalent(new List<int>() { 2 }, paths5);
 
             var paths6 = _finder.FindAllPaths(graph, 1, 6).ToList().ConvertAll(x => x.Last());
-            CollectionAssert.AreEquivalent(new List<int>() { 1 }, paths6);
+            CollectionAssert.AreEquivalent(new List<int>() { 1, 3, 4 }, paths6);
         }
 
         [TestMethod]
@@ -204,7 +204,7 @@ namespace RailChess.Core.Test
             // 线路为123452，不允许换乘的情况下，两步：
             // 可以：从1到3（可以在2两侧找到1、3）
             // 不可以：从1到5（无法在2两侧找到1、5）
-
+            
             // 1--2--3
             //    |  |
             //    5--4
@@ -225,9 +225,8 @@ namespace RailChess.Core.Test
             });
             g.UserPosition.Add(1, 1);
             int stepCount = 2;
-            int maxTransfer = 0;
-            Assert.IsTrue(_finder.IsValidMove(g, 1, 3, stepCount, maxTransfer));
-            Assert.IsFalse(_finder.IsValidMove(g, 1, 5, stepCount, maxTransfer));
+            Assert.IsTrue(_finder.IsValidMove(g, 1, 3, stepCount, 0));
+            Assert.IsFalse(_finder.IsValidMove(g, 1, 5, stepCount, 0));
             Assert.IsTrue(_finder.IsValidMove(g, 1, 5, stepCount, 1));
         }
 
@@ -382,6 +381,7 @@ namespace RailChess.Core.Test
             Assert.IsTrue(_finder.IsValidMove(g, uid, 4, stepCount, 0)); //1-4可以
             Assert.IsFalse(_finder.IsValidMove(g, uid, 6, stepCount, 0)); //1-6不行
             Assert.IsTrue(_finder.IsValidMove(g, uid, 6, stepCount, 1)); //1-6可以（换乘一次的话）
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 6, steps: 7, 0)); //走7步的话，1-6可以无需换乘
             g.UserPosition[uid] = 5;
             Assert.IsTrue(_finder.IsValidMove(g, uid, 6, stepCount, 0)); //5-6可以
             Assert.IsFalse(_finder.IsValidMove(g, uid, 4, stepCount, 0)); //5-4不行
@@ -424,6 +424,7 @@ namespace RailChess.Core.Test
             Assert.IsTrue(_finder.IsValidMove(g, uid, 5, stepCount, 0)); //1-5可以
             Assert.IsFalse(_finder.IsValidMove(g, uid, 7, stepCount, 0)); //1-7不行
             Assert.IsTrue(_finder.IsValidMove(g, uid, 7, stepCount, 1)); //1-7可以（换乘一次的话）
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 7, steps: 9, 0)); //走9步的话，1-7可以无需换乘
             g.UserPosition[uid] = 6;
             Assert.IsTrue(_finder.IsValidMove(g, uid, 7, stepCount, 0)); //6-7可以
             Assert.IsFalse(_finder.IsValidMove(g, uid, 5, stepCount, 0)); //6-5不行

@@ -50,19 +50,6 @@
             LineId = lineId;
             Station = station;
         }
-        public override bool Equals(object? obj)
-        {
-            if (obj is LinedSta otherSta)
-            {
-                return this.Station.Id == otherSta.Station.Id && this.LineId == otherSta.LineId;
-            }
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Station.Id.GetHashCode() + this.LineId.GetHashCode();
-        }
     }
     public class Sta
     {
