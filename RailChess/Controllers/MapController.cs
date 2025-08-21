@@ -13,7 +13,7 @@ namespace RailChess.Controllers
     [Authorize]
     public class MapController : Controller
     {
-        private const int mapBgFileMaxSize = 5 * 1000 * 1000;
+        private const int mapBgFileMaxSize = 10 * 1024 * 1024;
         private readonly RailChessContext _context;
         private readonly int _userId;
         private readonly CoreGraphConverter _graphConverter;

@@ -111,7 +111,7 @@ namespace RailChess.Controllers
             var u = _context.Users.Find(_userId);
             if (u is null)
                 return BadRequest();
-            if (avatar.Length > 5 * 1000 * 1000)
+            if (avatar.Length > 5 * 1024 * 1024)
                 return this.ApiFailedResp("请勿上传过大图片");
             string ext = Path.GetExtension(avatar.FileName).ToLower();
             if (!supportedAvatarExts.Contains(ext))
