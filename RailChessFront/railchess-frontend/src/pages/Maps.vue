@@ -30,6 +30,17 @@ async function load(){
     }
 }
 
+const authorSearchPrefix = "作者："
+const mineSearch = "作者：我自己"
+async function searchAuthorName(authorName:string) {
+    search.value = `${authorSearchPrefix}${authorName}`
+    await load()
+}
+async function searchMine() {
+    search.value = mineSearch;
+    await load()
+}
+
 const sidebar = ref<InstanceType<typeof SideBar>>();
 const editing = ref<RailChessMapIndexResultItem>();
 const file = ref<InstanceType<typeof HTMLInputElement>>();
@@ -142,7 +153,7 @@ onMounted(async()=>{
                 <option :value="'score'">分数</option>
             </select>
             <button @click="create" class="confirm">新建</button>
-            <button class="gray" @click="search='我上传的';load()">我的</button>
+            <button class="gray" @click="searchMine">我的</button>
         </div>
     </div>
     <div style="overflow-x: auto;">
@@ -168,7 +179,9 @@ onMounted(async()=>{
                 </div>
             </td>
             <td>
-                <span class="authorName" @click="search = m.Author; load();">{{ m.Author }}</span>
+                <span class="authorName" @click="searchAuthorName(m.Author)">
+                    {{ m.Author }}
+                </span>
             </td>
             <td>
                 <div class="ops">
@@ -266,7 +279,6 @@ input[type=file]{
 .authorName{
     display: block;
     cursor: pointer;
-    max-width: 30vw;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;

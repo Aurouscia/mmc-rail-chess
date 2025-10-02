@@ -18,7 +18,8 @@ namespace RailChess.Controllers
         private readonly int _userId;
         private readonly CoreGraphConverter _graphConverter;
         private readonly CoreGraphEvaluator _graphEvaluator;
-        private const string myMaps = "我上传的";
+        private const string myMaps = "作者：我自己";
+        private const string authorSearchPrefix = "作者：";
         private const string orderByScore = "score";
 
         public MapController(
@@ -35,15 +36,23 @@ namespace RailChess.Controllers
         {
             search ??= "";
             var q = _context.Maps.Where(x => x.Deleted == false);
-            if(search.Trim() == myMaps)
+            if (search.Trim() == myMaps)
                 q = q.Where(x => x.Author == _userId);
-            else if(!string.IsNullOrWhiteSpace(search))
+            else if (!string.IsNullOrWhiteSpace(search))
             {
-                var u = _context.Users.FirstOrDefault(x => x.Name == search);
-                if(u is not null)
-                    q = q.Where(x => x.Author == u.Id);
+                if (search.StartsWith(authorSearchPrefix))
+                {
+                    search = search[authorSearchPrefix.Length..];
+                    var uid = _context.Users
+                        .Where(x => x.Name == search)
+                        .Select(x => x.Id)
+                        .FirstOrDefault();
+                    q = q.Where(x => x.Author == uid);
+                }
                 else
+                {
                     q = q.Where(x => x.Title != null && x.Title.Contains(search));
+                }
             }
             if (orderBy == orderByScore)
                 q = q.OrderByDescending(x => x.TotalDirections);
