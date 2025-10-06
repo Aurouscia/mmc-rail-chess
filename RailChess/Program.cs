@@ -3,6 +3,7 @@ using RailChess.Models.DbCtx;
 using RailChess.Play;
 using RailChess.Play.Services;
 using RailChess.Services;
+using RailChess.Utils.Startup;
 using Serilog;
 
 
@@ -28,27 +29,12 @@ try
     });
     builder.Services.AddPlayLogics();
 
-    string localVueCors = "localVueCors";
-    builder.Services.AddCors(options =>
-    {
-        options.AddPolicy(localVueCors, builder =>
-        {
-            builder.WithOrigins("http://127.0.0.1:5173")
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials();
-            builder.WithOrigins("http://localhost:5173")
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials();
-        });
-    });
+    builder.Services.AddCors(c);
 
     var app = builder.Build();
 
-    //app.UseHttpsRedirection();
+    app.UseConfiguredCors();
     app.UseFileServer();
-    app.UseCors(localVueCors);
 
     app.UseRouting();
 
