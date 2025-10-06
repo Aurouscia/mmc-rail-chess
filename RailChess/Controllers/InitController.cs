@@ -4,23 +4,24 @@ using RailChess.Models.DbCtx;
 
 namespace RailChess.Controllers
 {
-    public class InitController:Controller
+    public class InitController(
+        RailChessContext context,
+        IConfiguration config
+        ) : Controller
     {
-        private readonly RailChessContext _context;
+        private readonly static Lock lockObj = new();
 
-        public InitController(RailChessContext context)
+        [Route("/Init/Mi/{masterKey}")]
+        public IActionResult Mi(string masterKey)
         {
-            _context = context;
-        }
-
-        public IActionResult Mi()
-        {
-            object lockObj = new();
+            var masterKeyShouldBe = config["MasterKey"] ?? Path.GetRandomFileName();
+            if (masterKeyShouldBe != masterKey)
+                return this.ApiFailedResp("MasterKey错误");
             lock (lockObj)
             {
                 try
                 {
-                    _context.Database.Migrate();
+                    context.Database.Migrate();
                 }
                 catch (Exception ex)
                 {
