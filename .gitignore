@@ -363,17 +363,22 @@ MigrationBackup/
 FodyWeavers.xsd
 
 
-# prod config file
+# 特定环境的配置文件
+/RailChess/appsettings.Development.json
 /RailChess/appsettings.Production.json
 
 
-# db file
+# sqlite文件
 /RailChess/Data/fcloud3.db
 /RailChess/Data/fcloud3.db-shm
 /RailChess/Data/fcloud3.db-wal
 
-# front end build output target
+# 静态资源目录（需要的话放在前端项目的public里）
 /RailChess/wwwroot/*
 
+# 版本标记机制
 /RailChessFront/railchess-frontend/src/build/feVersion.js
 /RailChessFront/railchess-frontend/public/feVersion.txt
+
+# 转换器临时文件
+/RailChess/Data/Convert/**
