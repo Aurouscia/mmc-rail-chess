@@ -9,21 +9,21 @@
   },
   "dependencies": {
     "@aurouscia/au-undo-redo": "^0.3.0",
-    "@microsoft/signalr": "^8.0.7",
-    "axios": "^1.10.0",
+    "@microsoft/signalr": "^9.0.6",
+    "axios": "^1.12.2",
     "lodash": "^4.17.21",
     "pinia": "^3.0.3",
-    "pinia-plugin-persistedstate": "^4.4.1",
-    "vue": "^3.5.17",
+    "pinia-plugin-persistedstate": "^4.5.0",
+    "vue": "^3.5.22",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
     "@aurouscia/vite-app-version": "^0.2.0",
     "@types/lodash": "^4.17.20",
-    "@vitejs/plugin-vue": "^6.0.0",
+    "@vitejs/plugin-vue": "^6.0.1",
     "execa": "^9.6.0",
-    "typescript": "^5.8.3",
-    "vite": "^7.0.5",
-    "vue-tsc": "^3.0.3"
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9",
+    "vue-tsc": "^3.1.1"
   }
 }
