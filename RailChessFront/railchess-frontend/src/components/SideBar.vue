@@ -84,7 +84,7 @@ const emit = defineEmits<{
     bottom: 0px;
     display: flex;
     flex-direction: column;
-    transition: 0.5s;
+    transition: 0.3s;
     background-color: white;
     box-shadow: none;
     z-index: 1001;
@@ -96,7 +96,7 @@ const emit = defineEmits<{
     top: 0px;bottom:0px;
     left: 0px;right:0px;
     display: none;
-    transition: 0.5s;
+    transition: 0.3s;
     z-index: 1000;
 }
 </style>

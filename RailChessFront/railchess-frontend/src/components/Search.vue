@@ -182,11 +182,6 @@ onUnmounted(()=>{
 .candItem.selected .desc{
     color: white;
 }
-.candItem div{
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
 .noResult{
     color:#999;
     background-color: white;
@@ -237,12 +232,14 @@ onUnmounted(()=>{
     position: relative;
 }
 .search.compact{
-    width: 170px;
+    width: 160px;
 }
 .search.compact input{
-    width: 130px;
+    width: 120px;
 }
 .search.compact .cand{
+    word-break: break-all;
+    font-size: 14px;
     width: 110px;
 }
 

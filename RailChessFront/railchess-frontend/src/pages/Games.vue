@@ -226,6 +226,12 @@ onMounted(async ()=>{
                 <div class="note">选择棋盘后，点击右侧确认，即可创建房间</div>
             </td>
         </tr>
+        <tr>
+            <td colspan="2" class="notice">
+                注意：本游戏玩家较少，请<b>务必</b>在约好其他玩家后，再创建房间，不要创建房间后离开。
+                如果找不到一起玩的人，请考虑：{{ contact }}
+            </td>
+        </tr>
     </tbody></table>
     <div v-else style="color: red;font-size: 20px;text-align: center;">
         请先登录
@@ -250,10 +256,9 @@ onMounted(async ()=>{
     border-bottom: 1px solid #aaa;
 }
 .allowUser>span{
-    max-width: 110px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    word-break: break-all;
+    font-size: 14px;
+    max-width: 130px;
 }
 .moreInfo{
     font-size: 14px;
