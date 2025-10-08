@@ -66,7 +66,7 @@ namespace RailChess.Core
             }
             else
             {
-                //未提供线路信息（单元测试环境）
+                //未提供线路信息（单元测试环境）统一加到第0位置
                 startStas = startPoint.Neighbors.ConvertAll(x => new LinedStaCollapsed(x.LineId, startPoint, 0));
             }
             // 将出发点转换为路径
@@ -88,9 +88,12 @@ namespace RailChess.Core
                         throw new Exception("计算超时，请联系管理员");
                 }
                 var p = paths.Dequeue();
-                var tail = p.Tail;
-                if (tail is null) continue;
-                foreach (var n in tail.Station.Neighbors)
+                if (p.Redundant)
+                    continue; // 跳过被标记为抛弃的路线
+                var pTail = p.Tail;
+                if (pTail is null) 
+                    continue;
+                foreach (var n in pTail.Station.Neighbors)
                 {
                     if (p.TransferredTimes == maxiumTransfer)
                         if (p.Tail?.LineId != n.LineId)
@@ -106,31 +109,67 @@ namespace RailChess.Core
                     foreach (var ncr in nCollapseRes)
                     {
                         bool needTransfer = false;
-                        if(tail.LineId == ncr.LineId)
+                        if(pTail.LineId == ncr.LineId)
                         {
                             // 线路一样：判断自交（线上索引是否相邻）
                             if (graph.Lines.Count > 0) {
-                                var line = graph.Lines[tail.LineId];
-                                needTransfer = !IsSerialNeighborInLine(tail.IndexChosen, ncr.IndexChosen, line);
+                                // 仅在有线路信息时进入判断
+                                var line = graph.Lines[pTail.LineId];
+                                needTransfer = !IsSerialNeighborInLine(pTail.IndexChosen, ncr.IndexChosen, line);
                             }
                         }
                         else
                         {
-                            // 线路不一样：必然是换乘（但不一定合法）
+                            // 线路不一样：必然是换乘（但不一定能这么走）
                             needTransfer = true;
                             // 线路不一样：确保新点和其线上的tail点相邻，否则continue
                             if (graph.Lines.Count > 0 && graph.LineStaIndexes is { })
                             {
-                                var line = graph.Lines[tail.LineId];
-                                var tailOnNLineIndexes = graph.LineStaIndexes[n.LineId][tail.Station.Id];
+                                // 仅在有线路信息时进入判断
+                                var line = graph.Lines[pTail.LineId];
+                                var tailOnNLineIndexes = graph.LineStaIndexes[n.LineId][pTail.Station.Id];
                                 if (tailOnNLineIndexes.All(x => !IsSerialNeighborInLine(x, ncr.IndexChosen, line)))
                                     continue;
                             }
                         }
+                        var transferredTimesNew = p.TransferredTimes;
                         if (needTransfer)
                         {
-                            if (p.TransferredTimes + 1 > maxiumTransfer)
+                            transferredTimesNew += 1;
+                            if (transferredTimesNew > maxiumTransfer)
                                 continue; // 不准换乘次数超出限制
+                        }
+                        if (graph.Lines.Count > 0)
+                        {
+                            // 避免添加多余线路
+                            // 如果“新路线”与“已有路线”的第n、n-1站一致（站id、线路id、线中索引都一致）
+                            // 那么认为“新路线”与“已有路线”冲突，抛弃已换乘次数更多的那个
+                            bool newPathRedundant = false;
+                            foreach(var ep in paths)
+                            {
+                                bool conflict = false;
+                                if (ep.Tail?.IsEquivAs(ncr) ?? false)
+                                {
+                                    if (ep.Count < 2)
+                                        conflict = true; // 唯一站一致（不太可能），冲突
+                                    else
+                                    {
+                                        var epLastButOne = ep.Stations[^2];
+                                        if (epLastButOne.IsEquivAs(pTail))
+                                            conflict = true; // 第n、n-1站一致，冲突
+                                    }
+                                }
+                                if (conflict)
+                                {
+                                    if (ep.TransferredTimes > transferredTimesNew)
+                                        ep.Redundant = true; // 标记原路线为多余的（抛弃）
+                                    else
+                                        newPathRedundant = true; // 标记新路线为多余的（不添加）
+                                    break;
+                                }
+                            }
+                            if (newPathRedundant)
+                                continue; // 新路线多余：不构造，直接去下个循环
                         }
                         LinedPath newPath = new(p, ncr, needTransfer);
                         paths.Enqueue(newPath);
@@ -139,7 +178,7 @@ namespace RailChess.Core
                     }
                 }
                 if (paths.Count == 0) break;
-                if (paths.All(x => x.Count >= stepsAB + 1)) break;
+                if (paths.Peek().Count >= stepsAB + 1) break;
                 //由于paths是队列，所以每个潜在路径都是按顺序逐个延长的，满足上一句的条件，应该长度全都一样
             }
 
@@ -167,6 +206,7 @@ namespace RailChess.Core
             public int TransferredTimes { get; private set; }
             public LinedStaCollapsed? Tail => Stations.LastOrDefault();
             public int Count => Stations.Count;
+            public bool Redundant { get; set; }
             public LinedPath(LinedStaCollapsed head)
             {
                 Stations = [head];
@@ -219,6 +259,12 @@ namespace RailChess.Core
                 return sta.Indexes is { }
                     ? sta.Indexes.ConvertAll(x => new LinedStaCollapsed(sta, x)) ?? []
                     : [new(sta, 0)]; // 无线路信息（单元测试环境）
+            }
+            public bool IsEquivAs(LinedStaCollapsed other)
+            {
+                return this.LineId == other.LineId
+                    && this.Station.Id == other.Station.Id
+                    && this.IndexChosen == other.IndexChosen;
             }
         }
 

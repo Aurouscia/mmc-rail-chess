@@ -479,6 +479,37 @@ namespace RailChess.Core.Test
         }
 
         [TestMethod]
+        public void TransferOnUTip()
+        {
+            // 1-2-3-4-5
+            // ------|--
+            // ------|
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            Sta sta4 = new(4, 1);
+            Sta sta5 = new(5, 1);
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            sta3.TwowayConnect(sta4, 1);
+            sta4.TwowayConnect(sta5, 2);
+            List<Sta> stas = [sta1, sta2, sta3, sta4, sta5];
+            Graph g = new(stas, new Dictionary<int, List<int>>()
+            {
+                { 1, [1, 2, 3, 4, 3, 2, 1] },
+                { 2, [4, 5] }
+            });
+            int uid = 1;
+            g.UserPosition.Add(uid, 1);
+            int stepCount = 4;
+            int to = 5;
+            Assert.IsFalse(_finder.IsValidMove(g, uid, to, stepCount, maxiumTransfer: 0));
+            Assert.IsTrue(_finder.IsValidMove(g, uid, to, stepCount, maxiumTransfer: 1));
+            Assert.IsTrue(_finder.IsValidMove(g, uid, to, stepCount, maxiumTransfer: 2));
+            Assert.IsTrue(_finder.IsValidMove(g, uid, to, stepCount, maxiumTransfer: 3));
+        }
+
+        [TestMethod]
         public void OverlappedLines()
         {
             // 1
@@ -541,7 +572,12 @@ namespace RailChess.Core.Test
             Sta sta8 = new(8, 1);
             List<Sta> stas = new() { sta1, sta2, sta3, sta4, sta5, sta6, sta7, sta8 };
             Dictionary<int, int> userPosition = new() { { 1, 1 } };
-            Graph g = new(stas, userPosition);
+            Graph g = new(stas, userPosition, new Dictionary<int, List<int>>()
+            {
+                { 1, [1, 2, 3, 4, 5, 2, 1] },
+                { 2, [6, 4, 5, 2, 3, 4, 6] },
+                { 3, [7, 3, 5, 8] }
+            });
             sta1.TwowayConnect(sta2, 1);
             sta2.TwowayConnect(sta3, 1);
             sta3.TwowayConnect(sta4, 1);
