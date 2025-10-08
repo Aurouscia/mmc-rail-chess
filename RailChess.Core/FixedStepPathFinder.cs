@@ -48,6 +48,7 @@ namespace RailChess.Core
             }
 
             Queue<LinedPath> paths = [];
+            HashSet<int> confirmedDest = [];
             var startPoint = graph.Stations.Find(x => x.Id == from) ?? throw new Exception("算路异常:找不到指定起始点");
             //出发：可从该站的任何线路的任何索引出发，全部作为初始路径
             List<LinedStaCollapsed> startStas = [];
@@ -93,8 +94,12 @@ namespace RailChess.Core
                 var pTail = p.Tail;
                 if (pTail is null) 
                     continue;
+                // 元素数=已走步数+1，所以元素数=步数上限时，说明还差最后一个元素
+                bool pNearFull = p.Count == stepsAB; 
                 foreach (var n in pTail.Station.Neighbors)
                 {
+                    if (pNearFull && confirmedDest.Contains(n.Station.Id))
+                        continue; // 接近终点，但该终点已有其他路线作为终点，无需再进来
                     if (p.TransferredTimes == maxiumTransfer)
                         if (p.Tail?.LineId != n.LineId)
                             continue; // 已经到了换乘上限，不能还往别的线跑
@@ -109,10 +114,11 @@ namespace RailChess.Core
                     foreach (var ncr in nCollapseRes)
                     {
                         bool needTransfer = false;
-                        if(pTail.LineId == ncr.LineId)
+                        if (pTail.LineId == ncr.LineId)
                         {
                             // 线路一样：判断自交（线上索引是否相邻）
-                            if (graph.Lines.Count > 0) {
+                            if (graph.Lines.Count > 0)
+                            {
                                 // 仅在有线路信息时进入判断
                                 var line = graph.Lines[pTail.LineId];
                                 needTransfer = !IsSerialNeighborInLine(pTail.IndexChosen, ncr.IndexChosen, line);
@@ -141,11 +147,11 @@ namespace RailChess.Core
                         }
                         if (graph.Lines.Count > 0)
                         {
-                            // 避免添加多余线路
+                            // （半路上）避免添加多余线路
                             // 如果“新路线”与“已有路线”的第n、n-1站一致（站id、线路id、线中索引都一致）
                             // 那么认为“新路线”与“已有路线”冲突，抛弃已换乘次数更多的那个
                             bool newPathRedundant = false;
-                            foreach(var ep in paths)
+                            foreach (var ep in paths)
                             {
                                 bool conflict = false;
                                 if (ep.Tail?.IsEquivAs(ncr) ?? false)
@@ -175,6 +181,11 @@ namespace RailChess.Core
                         paths.Enqueue(newPath);
                         if (stepsAArchive is { } && newPath.Count == stepsA + 1)
                             stepsAArchive.Add(newPath);
+                        if (newPath.Count == stepsAB + 1) // 元素数量为步数+1：已完结
+                        {  
+                            confirmedDest.Add(ncr.Station.Id); //该线路已完结：添加到确认的终点
+                            break; // 无需再尝试同邻点的其他坍缩情况，直接开始尝试下一个邻点
+                        }
                     }
                 }
                 if (paths.Count == 0) break;
