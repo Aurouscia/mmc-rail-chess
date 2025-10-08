@@ -19,12 +19,20 @@ namespace RailChess.Core
                 return FindAllPaths(graph, userId, stepsA, stepsB, maxiumTransfer);
             }
         }
-        private static IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, int stepsA, int stepsB, int maxiumTransfer = int.MaxValue)
+
+        /// <summary>
+        /// 特别感谢Momochai(SlinkierApple13)对算法优化的指导
+        /// </summary>
+        private static IEnumerable<IEnumerable<int>> FindAllPaths(
+            Graph graph, int userId, int stepsA, int stepsB, int maxiumTransfer = int.MaxValue)
         {
             var limit = DateTime.Now.AddSeconds(3);
             int stepsAB = stepsA + stepsB;
             if (stepsA == 0 && stepsB == 0)
                 return new List<List<int>>();
+
+            if (!graph.BuildingCompleted)
+                graph.CompleteBuilding();
 
             if (!graph.UserPosition.TryGetValue(userId, out int from))
                 throw new Exception("算路异常:找不到玩家位置");
@@ -39,14 +47,32 @@ namespace RailChess.Core
                     .ToList();
             }
 
-            Queue<LinedPath> paths = new();
-            bool conjudge(LinedSta newSta, List<LinedSta> exitsingPath)
-                => IsRangeConsecutiveByLine(graph, newSta, exitsingPath);
+            Queue<LinedPath> paths = [];
             var startPoint = graph.Stations.Find(x => x.Id == from) ?? throw new Exception("算路异常:找不到指定起始点");
-            //出发：可从该站的任何线路出发，所以按每个“邻点(LinedSta)”的线路创建一个出发点
-            var startStas = startPoint.Neighbors.ConvertAll(x => new LinedSta(x.LineId, startPoint));
-            //路径均有首个点（出发点）
-            startStas.ConvertAll(x => new LinedPath(x, conjudge)).ForEach(paths.Enqueue);
+            //出发：可从该站的任何线路的任何索引出发，全部作为初始路径
+            List<LinedStaCollapsed> startStas = [];
+            if(graph.LineStaIndexes is { })
+            {
+                foreach(var lineKv in graph.LineStaIndexes)
+                {
+                    var lineId = lineKv.Key;
+                    var dict = lineKv.Value;
+                    if (dict.TryGetValue(startPoint.Id, out var indexes))
+                    {
+                        var ress = indexes.ConvertAll(x => new LinedStaCollapsed(lineId, startPoint, x));
+                        startStas.AddRange(ress);
+                    }
+                }
+            }
+            else
+            {
+                //未提供线路信息（单元测试环境）
+                startStas = startPoint.Neighbors.ConvertAll(x => new LinedStaCollapsed(x.LineId, startPoint, 0));
+            }
+            // 将出发点转换为路径
+            var initPaths = startStas.Select(x => new LinedPath(x));
+            foreach(var p in initPaths)
+                paths.Enqueue(p);
 
             List<LinedPath>? stepsAArchive = null;
             //如果有两种情况，则存储记录步数为A的路径中间产物
@@ -68,22 +94,49 @@ namespace RailChess.Core
                 {
                     if (p.TransferredTimes == maxiumTransfer)
                         if (p.Tail?.LineId != n.LineId)
-                            continue;//已经到了换乘上限，不能还往别的线跑
+                            continue; // 已经到了换乘上限，不能还往别的线跑
                     if (n.Station.Owner != 0 && n.Station.Owner != userId)
-                        continue;//不是自己的/空的就不能往这走
+                        continue; // 不是自己的/空的就不能往这走
                     if (p.Stations.Count >= 2)
                     {
                         var lastButOne = p.Stations[^2];
                         if (lastButOne.Station.Id == n.Station.Id) continue; //不能掉头往回跑
                     }
-                    //if (DuplicatePathRange(p.Stations, n))
-                        //continue;//不准走已经走过的区间（但是已经过的站还是可以再次经过的）
-                    LinedPath newPath = new(p, n);
-                    if (newPath.TransferredTimes > maxiumTransfer)
-                        continue;//不准换乘次数超出限制
-                    paths.Enqueue(newPath);
-                    if (stepsAArchive is { } && newPath.Count == stepsA + 1)
-                        stepsAArchive.Add(newPath);
+                    var nCollapseRes = LinedStaCollapsed.Collapse(n);
+                    foreach (var ncr in nCollapseRes)
+                    {
+                        bool needTransfer = false;
+                        if(tail.LineId == ncr.LineId)
+                        {
+                            // 线路一样：判断自交（线上索引是否相邻）
+                            if (graph.Lines.Count > 0) {
+                                var line = graph.Lines[tail.LineId];
+                                needTransfer = !IsSerialNeighborInLine(tail.IndexChosen, ncr.IndexChosen, line);
+                            }
+                        }
+                        else
+                        {
+                            // 线路不一样：必然是换乘（但不一定合法）
+                            needTransfer = true;
+                            // 线路不一样：确保新点和其线上的tail点相邻，否则continue
+                            if (graph.Lines.Count > 0 && graph.LineStaIndexes is { })
+                            {
+                                var line = graph.Lines[tail.LineId];
+                                var tailOnNLineIndexes = graph.LineStaIndexes[n.LineId][tail.Station.Id];
+                                if (tailOnNLineIndexes.All(x => !IsSerialNeighborInLine(x, ncr.IndexChosen, line)))
+                                    continue;
+                            }
+                        }
+                        if (needTransfer)
+                        {
+                            if (p.TransferredTimes + 1 > maxiumTransfer)
+                                continue; // 不准换乘次数超出限制
+                        }
+                        LinedPath newPath = new(p, ncr, needTransfer);
+                        paths.Enqueue(newPath);
+                        if (stepsAArchive is { } && newPath.Count == stepsA + 1)
+                            stepsAArchive.Add(newPath);
+                    }
                 }
                 if (paths.Count == 0) break;
                 if (paths.All(x => x.Count >= stepsAB + 1)) break;
@@ -95,7 +148,7 @@ namespace RailChess.Core
                 pathsFinal = pathsFinal.Concat(stepsAArchive);
             return pathsFinal
                 .Where(x => (x.Count == stepsA + 1) || (x.Count == stepsAB + 1))
-                .DistinctBy(x => x.Tail!.Station.Id)
+                .DistinctBy(x => x.Tail?.Station.Id)
                 .Select(x => x.ToIds())
                 .ToList();
         }
@@ -108,114 +161,23 @@ namespace RailChess.Core
 
         public static bool DisableTimeoutTestOnly { get; set; } = false;
 
-        //private static bool DuplicatePathRange(List<LinedSta> currentPath, LinedSta newPoint)
-        //{
-        //    for (int i = 0; i < currentPath.Count - 1; i++)
-        //    {
-        //        var a = currentPath[i].Station.Id;
-        //        var b = currentPath[i + 1].Station.Id;
-        //        var tailId = currentPath[^1].Station.Id;
-        //        var newId = newPoint.Station.Id;
-        //        if ((a == tailId && b == newId) || (a == newId && b == tailId))
-        //            return true;
-        //    }
-        //    return false;
-        //}
-
-        private static bool IsRangeConsecutiveByLine(Graph graph,
-            LinedSta newSta, List<LinedSta> existingPath)
-        {
-            //  ...--o---o---->o
-            //       ↑   ↑     ↑
-            //       |   |     newSta（路线新延长的点）
-            //  existingPath（路线中已有的同线路点（至少一个元素））
-
-
-            //站点的线路号变化：必然换乘了
-            var tailSta = existingPath.LastOrDefault();
-            if (tailSta is null)
-                return true;
-            if (tailSta.LineId != newSta.LineId)
-                return false;
-            if (graph.Lines.Count == 0 || existingPath.Count == 1)
-            {
-                //未提供线路信息（单元测试环境）或目前路径只有一个点
-                //无需进行换乘判断，直接返回true
-                return true;
-            }
-            //判断自交换乘
-            if (graph.Lines.TryGetValue(tailSta.LineId, out var line))
-            {
-                var tailId = tailSta.Station.Id;
-                //找出tailSta在线路中出现几次
-                var tailStaFoundInLine = 0;
-                for (int i = 0; i < line.Count; i++)
-                {
-                    if (line[i] == tailId)
-                        tailStaFoundInLine++;
-                }
-                //如果tailSta仅出现过一次，那么这里肯定不存在自交，直接返回true
-                if (tailStaFoundInLine <= 1)
-                    return true;
-                //如果上面这行没return，说明line非空
-                //接下来判断existingPath+newSta是否为线路中连续的一段
-                //环线：至少3个点且首尾相同
-                bool isRing = line.Count >= 3 && line.First() == line.Last();
-                List<int> lineStaIds;
-                if (!isRing)
-                    lineStaIds = line; //非环线：直接使用line
-                else
-                {
-                    //环线：重复一次，可覆盖所有情况（本就不允许走重复区间，不存在绕多圈情况）
-                    lineStaIds = new(line.Count * 2 - 1);
-                    lineStaIds.AddRange(line);
-                    lineStaIds.RemoveAt(lineStaIds.Count - 1);
-                    lineStaIds.AddRange(line); 
-                }
-                var pathSameLineStaIds = new List<int>(2) { newSta.Station.Id };
-                for (int i = existingPath.Count - 1; i >= 0; i--)
-                {
-                    var staI = existingPath[i];
-                    pathSameLineStaIds.Add(staI.Station.Id);
-                    if (staI.LineId != newSta.LineId)
-                        break;
-                }
-                return IsListSliceOfList(pathSameLineStaIds, lineStaIds);
-            }
-            //找不到线路
-            throw new Exception("算路异常：找不到线路" + tailSta.LineId);
-        }
-
-        private delegate bool ConsecutiveJudgment(
-            LinedSta newSta, List<LinedSta> existingPath);
         private class LinedPath
         {
-            public List<LinedSta> Stations { get; }
+            public List<LinedStaCollapsed> Stations { get; }
             public int TransferredTimes { get; private set; }
-            public LinedSta? Tail => Stations.LastOrDefault();
+            public LinedStaCollapsed? Tail => Stations.LastOrDefault();
             public int Count => Stations.Count;
-            public ConsecutiveJudgment ConJudge { get; }
-            public LinedPath(LinedSta head, ConsecutiveJudgment conJudge)
+            public LinedPath(LinedStaCollapsed head)
             {
                 Stations = [head];
-                ConJudge = conJudge;
             }
-            public LinedPath(LinedPath basedOn, LinedSta newSta)
+            public LinedPath(LinedPath basedOn, LinedStaCollapsed newSta, bool transfer)
             {
                 Stations = [.. basedOn.Stations];
                 TransferredTimes = basedOn.TransferredTimes;
-                ConJudge = basedOn.ConJudge;
-                Grow(newSta);
-            }
-
-            private void Grow(LinedSta sta)
-            {
-                if (Tail is not null)
-                {
-                    if (!ConJudge(sta, Stations))
-                        TransferredTimes++;
-                }
-                Stations.Add(sta);
+                Stations.Add(newSta);
+                if (transfer)
+                    TransferredTimes++;
             }
 
             public IEnumerable<int> ToIds()
@@ -224,35 +186,59 @@ namespace RailChess.Core
             }
         }
 
-        public static bool IsListSliceOfList(List<int> sliceList, List<int> baseList)
+        /// <summary>
+        /// 带有所属线路id+在线路中的索引的站点<br/>
+        /// <see cref="LinedSta"/>虽然指定了线路，但可能在线路中多次出现<br/>
+        /// “确定其在线路中的索引”这个操作称为“坍缩 Collapse”（模仿量子力学的概念）
+        /// </summary>
+        private class LinedStaCollapsed : LinedSta
         {
-            var a = baseList;
-            var b = sliceList;
-            if (b == null || a == null || b.Count == 0 || b.Count > a.Count)
-                return false;
-            if(scan())
-                return true;
-            b.Reverse();
-            return scan();
-
-            bool scan()
+            public LinedStaCollapsed(
+                LinedSta sta, int indexChosen
+                ) : base(sta.LineId, sta.Station)
             {
-                for (int i = 0; i <= a.Count - b.Count; i++)
-                {
-                    bool match = true;
-                    for (int j = 0; j < b.Count; j++)
-                    {
-                        if (a[i + j] != b[j])
-                        {
-                            match = false;
-                            break;
-                        }
-                    }
-                    if (match)
-                        return true;
-                }
-                return false;
+                IndexChosen = indexChosen;
             }
+            public LinedStaCollapsed(
+                int lineId, Sta station, int indexChosen
+                ) : base(lineId, station)
+            {
+                IndexChosen = indexChosen;
+            }
+            /// <summary>
+            /// 其在<see cref="LinedSta.LineId"/>中的索引
+            /// </summary>
+            public int IndexChosen { get; }
+            /// <summary>
+            /// 将<see cref="LinedSta"/>在其所属线路中的索引的所有可能性全部列出来
+            /// </summary>
+            /// <param name="sta">目标</param>
+            /// <returns>坍缩结果</returns>
+            public static List<LinedStaCollapsed> Collapse(LinedSta sta)
+            {
+                return sta.Indexes is { }
+                    ? sta.Indexes.ConvertAll(x => new LinedStaCollapsed(sta, x)) ?? []
+                    : [new(sta, 0)]; // 无线路信息（单元测试环境）
+            }
+        }
+
+        /// <summary>
+        /// 判断两个索引在线路中是否相邻<br/>
+        /// 环线：长度至少3且首尾id相同
+        /// </summary>
+        /// <param name="indexA">索引a</param>
+        /// <param name="indexB">索引b</param>
+        /// <param name="line">线路</param>
+        /// <returns>是否相邻</returns>
+        private static bool IsSerialNeighborInLine(int indexA, int indexB, List<int> line)
+        {
+            var isRing = line.Count >= 3 && line.First() == line.Last();
+            var diff = Math.Abs(indexA - indexB);
+            if (diff == 1)
+                return true;
+            if (isRing)
+                return diff == line.Count - 2;
+            return false;
         }
     }
 }

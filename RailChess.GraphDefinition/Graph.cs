@@ -36,19 +36,71 @@
             UserPosition = userPosition;
             Lines = lines ?? [];
         }
+
+        /// <summary>
+        /// 已完成构造图的收尾工作
+        /// </summary>
+        public bool BuildingCompleted { get; private set; } = false;
+        /// <summary>
+        /// Dictionary[线路号, Dictionary[车站号, List[车站在线路中的索引]]]<br/>
+        /// 在<see cref="CompleteBuilding"/>中被设置
+        /// </summary>
+        public Dictionary<int, Dictionary<int, List<int>>>? LineStaIndexes { get; private set; } = null;
+        /// <summary>
+        /// 构造图的收尾工作，在进行了所有<see cref="Sta.TwowayConnect"/>之后调用一次<br/>
+        /// 会为算出所有站在其在线路中的索引，赋值给<see cref="LineStaIndexes"/><br/>
+        /// 并使用其值填充<see cref="LinedSta.Indexes"/>
+        /// </summary>
+        public void CompleteBuilding()
+        {
+            if (BuildingCompleted)
+                return;
+            if (Lines.Count == 0)
+                return; //未提供线路信息（单元测试环境）
+            LineStaIndexes = [];
+            foreach(var line in Lines)
+            {
+                var lineId = line.Key;
+                var stas = line.Value;
+                Dictionary<int, List<int>> staIndexesHere = [];
+                for(int i = 0; i < stas.Count; i++)
+                {
+                    var s = stas[i];
+                    bool found = staIndexesHere.TryGetValue(s, out var indexes);
+                    indexes ??= [];
+                    indexes.Add(i);
+                    if(!found)
+                        staIndexesHere.Add(s, indexes);
+                }
+                LineStaIndexes.Add(lineId, staIndexesHere);
+            }
+            foreach(var s in Stations)
+            {
+                foreach(var n in s.Neighbors)
+                {
+                    if(n.LineId > 0)
+                        n.Indexes = LineStaIndexes[n.LineId][n.Station.Id];
+                }
+            }
+            BuildingCompleted = true;
+        }
     }
     /// <summary>
     /// 带有线路id的站点<br/>
     /// 直观理解：指的是某一个站台（例如：人民广场站1号线部分、人民广场站8号线部分）
     /// </summary>
-    public class LinedSta
+    public class LinedSta(int lineId, Sta station)
     {
-        public int LineId { get; set; }
-        public Sta Station { get; set; }
-        public LinedSta(int lineId, Sta station)
+        public int LineId { get; } = lineId;
+        public Sta Station { get; } = station;
+        /// <summary>
+        /// 车站在<see cref="LineId"/>所指线路中的索引，可能有多个<br/>
+        /// 该索引在<see cref="Graph.CompleteBuilding"/>中被自动设置
+        /// </summary>
+        public List<int>? Indexes { get; set; } = null;
+        public override string ToString()
         {
-            LineId = lineId;
-            Station = station;
+            return $"{Station}_on_line{LineId}";
         }
     }
     public class Sta
