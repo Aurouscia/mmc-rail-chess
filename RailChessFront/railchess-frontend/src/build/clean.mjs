@@ -8,7 +8,7 @@ export function clean(){
             rmSync(folderPath, { recursive: true });
             console.log('成功删除assets目录');
         }
-        mkdirSync(folderPath);
+        mkdirSync(folderPath, { recursive: true });
     } catch (err) {
         console.error('assets目录删除失败：', err);
     }
