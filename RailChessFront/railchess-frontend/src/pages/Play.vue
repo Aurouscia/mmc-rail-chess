@@ -655,7 +655,8 @@ watch(props,()=>{
     <button @click="scaler?.autoMutiple(1)">占满</button>
     <button @click="scaler?.autoMutiple(1,true)">总览</button>
 </div>
-<button v-show="selectedDist && !ended && !playback" class="decideBtn" @click="select">确认选择</button>
+<!--选中站id可能为0，所以不能直接作为布尔值用-->
+<button v-show="selectedDist!=undefined && !ended && !playback" class="decideBtn" @click="select">确认选择</button>
 <button v-show="gameStarted && !ended && !playback && playerList[0]?.id==me && !currentSelections?.length" class="cancel decideBtn" @click="select">无路可走</button>
 <SideBar ref="sidebar">
     <TextMsgDisplay :msgs="msgs" ref="msgDisp"></TextMsgDisplay>
