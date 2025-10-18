@@ -17,8 +17,8 @@ const props = defineProps<{
 }>()
 const bgImg = ref<string>();
 const lines = ref<Line[]>([]);
-const stations = ref<StaParsed[]>([]),
-selectedLineId = ref<number>(-1);
+const stations = ref<StaParsed[]>([]);
+const selectedLineId = ref<number>(-1);
 
 const autoSave = 20
 interface TempStore{lines:Line[],stations:StaParsed[]}
@@ -319,7 +319,7 @@ function repairDone(changed:boolean){
 
 var api:Api;
 var disposeListeners:()=>void;
-var movingSta:number = 0;
+let movingSta:number = -1;
 const sb = ref<InstanceType<typeof SideBar>>();
 const pop = injectPop()
 onMounted(async()=>{
@@ -362,13 +362,13 @@ onMounted(async()=>{
     }
     x = x/cvsWidth.value*posBase;
     y = y/cvsHeight.value*posBase;
-    if(movingSta==0){
+    if(movingSta==-1){
       var s = stations.value.find(s=>CloseTo(s,x,y));
-      movingSta = s?.Id || 0;
+      movingSta = s?.Id ?? -1;
     }
   },
   (x,y)=>{
-    if(movingSta>0){
+    if(movingSta>=0){
       x = x/cvsWidth.value*posBase;
       y = y/cvsHeight.value*posBase;
       var s = stations.value.find(s=>s.Id==movingSta);
@@ -378,7 +378,7 @@ onMounted(async()=>{
       }
     }
   },(x,y)=>{
-    if(movingSta>0){
+    if(movingSta>=0){
       x = Math.round(x/cvsWidth.value*posBase);
       y = Math.round(y/cvsHeight.value*posBase);
       var s = stations.value.find(s=>s.Id==movingSta);
@@ -387,7 +387,7 @@ onMounted(async()=>{
         Render();
       }
     }
-    movingSta = 0;
+    movingSta = -1;
     ssSave()
   });
   document.oncontextmenu = function(e){
