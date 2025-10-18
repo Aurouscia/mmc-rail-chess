@@ -363,22 +363,28 @@ MigrationBackup/
 FodyWeavers.xsd
 
 
-# ÌØ¶¨»·¾³µÄÅäÖÃÎÄ¼ş
+# ç‰¹å®šç¯å¢ƒçš„é…ç½®æ–‡ä»¶
 /RailChess/appsettings.Development.json
 /RailChess/appsettings.Production.json
 
 
-# sqliteÎÄ¼ş
+# sqliteæ–‡ä»¶
 /RailChess/Data/fcloud3.db
 /RailChess/Data/fcloud3.db-shm
 /RailChess/Data/fcloud3.db-wal
 
-# ¾²Ì¬×ÊÔ´Ä¿Â¼£¨ĞèÒªµÄ»°·ÅÔÚÇ°¶ËÏîÄ¿µÄpublicÀï£©
+# é™æ€èµ„æºç›®å½•ï¼ˆéœ€è¦çš„è¯æ”¾åœ¨å‰ç«¯é¡¹ç›®çš„publicé‡Œï¼‰
 /RailChess/wwwroot/*
 
-# °æ±¾±ê¼Ç»úÖÆ
+# ç‰ˆæœ¬æ ‡è®°æœºåˆ¶
 /RailChessFront/railchess-frontend/src/build/feVersion.js
 /RailChessFront/railchess-frontend/public/feVersion.txt
 
-# ×ª»»Æ÷ÁÙÊ±ÎÄ¼ş
+# è½¬æ¢å™¨ä¸´æ—¶æ–‡ä»¶
 /RailChess/Data/Convert/**
+
+# è‹¹æœçš„ä¸´æ—¶æ–‡ä»¶
+.DS_Store
+
+# riderçš„æœ¬åœ°é…ç½®
+.idea/
