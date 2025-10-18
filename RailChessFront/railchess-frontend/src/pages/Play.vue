@@ -225,22 +225,18 @@ function renderConnectionAnims(id:number){
     for(const line of topo.Lines){
         if(line.Stas.length <= 1)
             continue
-        const isRing = line.Stas.length > 2 && line.Stas[0] === line.Stas[line.Stas.length-1]
-        const idx = line.Stas.indexOf(id)
-        if(idx===-1)
-            continue
-        const text = String.fromCharCode(64 + incre)
-        if(idx>0){
-            const neib = line.Stas[idx-1]
-            addTwin(neib, text)
-        }
-        if(idx<line.Stas.length-1){
-            const neib = line.Stas[idx+1]
-            addTwin(neib, text)
-        }
-        if(idx===0 && isRing){
-            const neib = line.Stas[line.Stas.length-2]
-            addTwin(neib, text)
+        const text = String.fromCharCode(64 + incre) //初版中用来标注线路名称的，现在已弃用
+        for(let idx=0; idx<line.Stas.length; idx++){
+            if(id != line.Stas[idx])
+                continue
+            if(idx>0){
+                const neib = line.Stas[idx-1]
+                addTwin(neib, text)
+            }
+            if(idx<line.Stas.length-1){
+                const neib = line.Stas[idx+1]
+                addTwin(neib, text)
+            }
         }
         incre++
     }
