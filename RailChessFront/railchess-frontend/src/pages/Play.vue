@@ -108,9 +108,9 @@ function textAttention(style:CSSProperties){
 }
 
 const staRenderedWidth = 30;
-type CSSWithSId = CSSProperties & {sId:number}
-type StaRendered = Record<number, CSSWithSId>
-const staRenderedList = ref<StaRendered>({});
+type StaRendered = {sId:number, classes:string[], styles:CSSProperties}
+type StaRenderedRecord = Record<number, StaRendered>
+const staRenderedRecord = ref<StaRenderedRecord>({});
 function renderStaList(){
     if(!topoData.value || !arena.value){return;}
     const aw = arena.value.clientWidth;
@@ -125,7 +125,7 @@ function renderStaList(){
         var side = size;
         var backgroundImage:string|undefined = undefined;
         var zIndex = undefined;
-        var shadow = undefined;
+        const classes = [];
 
         var atByPlayer = playerList.value.find(x=>x.atSta==id);
         var occupiedByPlayer = ocpStatus.value.find(x=>x.stas.includes(id));
@@ -135,7 +135,7 @@ function renderStaList(){
             backgroundImage = `url("${avtSrc(atByPlayer.avtFileName)}")`;
             zIndex = 21;
             if(atByPlayer.id === newOcps.value?.playerId){
-                shadow = "0px 0px 5px 5px black"
+                classes.push('atByPlayer')
             } 
         }
         else if(occupiedByPlayer){
@@ -148,19 +148,21 @@ function renderStaList(){
         }
         if(isNewOcp){
             zIndex = 14;
-            shadow = "0px 0px 5px 5px orange"
+            classes.push('isNewOcp')
         }
-        const style:CSSWithSId = {
+        const style:StaRendered = {
             sId: id,
-            left:x-side/2+'px',
-            top:y-side/2+'px',
-            width:side-4+'px',
-            height:side-4+'px',
-            backgroundImage,
-            boxShadow:shadow,
-            zIndex
+            classes,
+            styles:{
+                left:x-side/2+'px',
+                top:y-side/2+'px',
+                width:side-4+'px',
+                height:side-4+'px',
+                backgroundImage,
+                zIndex
+            }
         };
-        staRenderedList.value[id] = style;
+        staRenderedRecord.value[id] = style;
     }
 }
 
@@ -632,8 +634,11 @@ watch(props,()=>{
     @mouseup="frameUpHandlerForAnim" @touchend="frameUpHandlerForAnim">
     <div class="arena" ref="arena">
         <img v-if="bgFileName" ref="bg" :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
-        <div v-for="s in staRenderedList" :style="s" 
-            :class="{clickable:clickableStations.includes(s.sId)&&nowMe&&!playback, selected:selectedDist==s.sId&&nowMe&&!playback}" 
+        <div v-for="s in staRenderedRecord" :style="s.styles" 
+            :class="[{
+                clickable:clickableStations.includes(s.sId)&&nowMe&&!playback,
+                selected:selectedDist==s.sId&&nowMe&&!playback,  
+            }, ...s.classes]" 
             :key="s.sId" class="station" @click="clickStation(s.sId)"></div>
         <div v-if="animatorRendered" :style="animatorRendered.style" class="pathAnim">{{ animatorRendered.step }}</div>
         <div v-for="i in connectionAnimatorRendered" :style="i.style" class="pathAnim connAnim">{{ i.num }}</div>
@@ -828,6 +833,12 @@ canvas{
     box-shadow: 0px 0px 15px 10px green;
     animation: none;
     z-index: 20 !important;
+}
+.station.atByPlayer{
+    box-shadow: 0px 0px 5px 5px black;
+}
+.station.isNewOcp{
+    box-shadow: 0px 0px 5px 5px orange;
 }
 @keyframes stationSpark {
   from {box-shadow:0px 0px 5px 5px cadetblue}
