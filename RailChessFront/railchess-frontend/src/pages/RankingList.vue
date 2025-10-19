@@ -35,7 +35,7 @@ onMounted(async()=>{
         </tr>
         <tr v-for="u in data" @click="jumpToPlayerLog(u.UId)" :key="u.UId">
             <td class="avtTd">
-                <img v-if="u.UAvt" :src="avtSrc(u.UAvt)" width="35" height="35">
+                <img v-if="u.UAvt" :src="avtSrc(u.UAvt)" width="35" height="35" loading="lazy">
             </td>
             <td>
                 {{ u.UName }}

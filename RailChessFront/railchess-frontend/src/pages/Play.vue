@@ -685,17 +685,17 @@ watch(props,()=>{
 </SideBar>
 <SideBar ref="sidebarOptions">
     <div class="sideBarOption">
-        <b>背景不透明度：{{ bgOpacity }}</b>
-        <input type="range" v-model="bgOpacity" min="0" max="1" step="0.05">
+        <b>背景不透明度：{{ bgOpacity?.toFixed(2) }}</b>
+        <input type="range" v-model.number="bgOpacity" min="0" max="1" step="0.05">
     </div>
     <div class="sideBarOption">
-        <b>站点标记尺寸倍率：{{ staSizeRatio }}</b>
-        <input type="range" v-model="staSizeRatio" min="0.3" max="1.0" step="0.05">
+        <b>站点标记尺寸倍率：{{ staSizeRatio?.toFixed(2) }}</b>
+        <input type="range" v-model.number="staSizeRatio" min="0.3" max="1.0" step="0.05">
         <div style="font-size: 12px;">站点有最小尺寸限制<br/>视角近时调整才看得到效果</div>
     </div>
     <div class="sideBarOption">
-        <b>未占站点不透明度：{{ vacuumStaOpacity }}</b>
-        <input type="range" v-model="vacuumStaOpacity" min="0.1" max="1.0" step="0.05">
+        <b>未占站点不透明度：{{ vacuumStaOpacity?.toFixed(2) }}</b>
+        <input type="range" v-model.number="vacuumStaOpacity" min="0.1" max="1.0" step="0.05">
     </div>
     <div class="sideBarOption">
         <b>查看车站连接关系</b>

@@ -7,6 +7,15 @@ function applyVacuumStaOpacity(){
     const root = document.documentElement
     root.style.setProperty('--vacuum-sta-opacity', val.toString())
 }
+function fixStringNumbers(){
+    const store = usePlayOptionsStore()
+    if(typeof store.bgOpacity == 'string')
+        store.bgOpacity = parseFloat(store.bgOpacity)
+    if(typeof store.staSizeRatio == 'string')
+        store.staSizeRatio = parseFloat(store.staSizeRatio)
+    if(typeof store.vacuumStaOpacity == 'string')
+        store.vacuumStaOpacity = parseFloat(store.vacuumStaOpacity)
+}
 
 const storeName = 'playOptionsStore'
 export const usePlayOptionsStore = defineStore(storeName, ()=>{
@@ -29,6 +38,7 @@ export const usePlayOptionsStore = defineStore(storeName, ()=>{
     persist:{
         key: persistKey(storeName),
         afterHydrate: ()=>{
+            fixStringNumbers()
             applyVacuumStaOpacity()
         }
     }
