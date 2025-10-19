@@ -129,6 +129,9 @@ onMounted(async()=>{
 </template>
 
 <style scoped>
+*{
+    user-select: none;
+}
 .seek{
     position: fixed;
     right: 10px;

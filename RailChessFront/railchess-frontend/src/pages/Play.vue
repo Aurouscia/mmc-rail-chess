@@ -146,6 +146,11 @@ function renderStaList(){
                 zIndex = 13;
             }
         }
+        else{
+            //未被占领的空站
+            classes.push('vacuum')
+        }
+        // isNewOcp不能套在上面的if-else里，因为不管玩家是否在那个位置，都可能是新占的
         if(isNewOcp){
             zIndex = 14;
             classes.push('isNewOcp')
@@ -440,7 +445,7 @@ const sidebarOptions = ref<InstanceType<typeof SideBar>>();
 const msgs = ref<TextMsg[]>([]);
 const frame = ref<HTMLDivElement>();
 const arena = ref<HTMLDivElement>();
-const { bgOpacity, staSizeRatio, connDisplayMode } = storeToRefs(usePlayOptionsStore())
+const { bgOpacity, staSizeRatio, vacuumStaOpacity, connDisplayMode } = storeToRefs(usePlayOptionsStore())
 const staSize = ref<number>(0.8)
 function autoStaSize(){
     if(!frame.value || !arena.value){return;}
@@ -681,12 +686,16 @@ watch(props,()=>{
 <SideBar ref="sidebarOptions">
     <div class="sideBarOption">
         <b>背景不透明度：{{ bgOpacity }}</b>
-        <input type="range" v-model="bgOpacity" min="0" max="1" step="0.1">
+        <input type="range" v-model="bgOpacity" min="0" max="1" step="0.05">
     </div>
     <div class="sideBarOption">
         <b>站点标记尺寸倍率：{{ staSizeRatio }}</b>
-        <input type="range" v-model="staSizeRatio" min="0.3" max="1.0" step="0.1">
+        <input type="range" v-model="staSizeRatio" min="0.3" max="1.0" step="0.05">
         <div style="font-size: 12px;">站点有最小尺寸限制<br/>视角近时调整才看得到效果</div>
+    </div>
+    <div class="sideBarOption">
+        <b>未占站点不透明度：{{ vacuumStaOpacity }}</b>
+        <input type="range" v-model="vacuumStaOpacity" min="0.1" max="1.0" step="0.05">
     </div>
     <div class="sideBarOption">
         <b>查看车站连接关系</b>
@@ -839,6 +848,9 @@ canvas{
 }
 .station.isNewOcp{
     box-shadow: 0px 0px 5px 5px orange;
+}
+.station.vacuum{
+    opacity: var(--vacuum-sta-opacity, 1);
 }
 @keyframes stationSpark {
   from {box-shadow:0px 0px 5px 5px cadetblue}
