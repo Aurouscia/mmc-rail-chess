@@ -224,4 +224,30 @@ export class Api{
             }
         }
     }
+    aarcConvert = {
+        uploadSave: async(f:File)=>{
+            const resp = await this.httpClient.request(
+                "/api/AarcConvert/UploadSave",
+                "postForm",
+                {save: f}
+            )
+            return resp
+        },
+        createTask: async(md5:string, configJson:string)=>{
+            const resp = await this.httpClient.request(
+                "/api/AarcConvert/CreateTask",
+                "postForm",
+                {md5, configJson}
+            )
+            return resp
+        },
+        getSvcUrl: async()=>{
+            const resp = await this.httpClient.request(
+                "/api/AarcConvert/GetSvcUrl",
+                "get"
+            )
+            if(resp.success)
+                return resp.data.svcUrl as string|null|undefined
+        }
+    }
 }

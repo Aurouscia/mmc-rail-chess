@@ -10,6 +10,7 @@ import GameResultsOfGame from './pages/GameResultsOfGame.vue'
 import RankingList from './pages/RankingList.vue'
 import Guide from './pages/Guide.vue'
 import { RouteLocation } from 'vue-router'
+import AarcConverter from './pages/AarcConverter.vue'
 
 export const routes = [
     {
@@ -60,5 +61,9 @@ export const routes = [
         path: '/guide',
         component: Guide,
         name: 'guide'
+    },{
+        path: '/aarcConverter',
+        component: AarcConverter,
+        name: 'aarcConverter'
     }
 ]
