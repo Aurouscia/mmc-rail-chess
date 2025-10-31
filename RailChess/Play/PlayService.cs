@@ -77,8 +77,9 @@ namespace RailChess.Play
             var dirDict = _coreGraphProvider.StationDirections();
             players.ForEach(p =>
             {
-                int atSta = locEvents.OfUser(p.Id).Select(x=>x.StationId).FirstOrDefault();
-                if (atSta <= 0) throw new Exception($"玩家[{p.Name}]定位失败");
+                var atStaEvent = locEvents.OfUser(p.Id).FirstOrDefault();
+                if (atStaEvent is null) throw new Exception($"玩家[{p.Name}]定位失败");
+                int atSta = atStaEvent.StationId;
                 int stuckTimes = stuckEvents.OfUser(p.Id).Count;
                 List<int> hisStations = captureEvents.OfUser(p.Id).ConvertAll(x=>x.StationId);
                 playerStatus.Add(new()
