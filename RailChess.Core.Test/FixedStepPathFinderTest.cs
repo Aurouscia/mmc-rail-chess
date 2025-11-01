@@ -164,7 +164,52 @@ namespace RailChess.Core.Test
             var paths3 = _finder.FindAllPaths(g, 1, 4, 2).ToList().ConvertAll(x => x.Last());
             CollectionAssert.AreEquivalent(new List<int> { 8, 12, 3, 10, 11 }, paths3);
         }
+        
+        [TestMethod]
+        public void TransferRestriction2()
+        {
+            //     3
+            //    /|
+            //   2-4-8
+            //   | |
+            //   1 5
+            //     |
+            //     6
+            //     |
+            //     7
 
+            #region buildGraph
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            Sta sta4 = new(4, 1);
+            Sta sta5 = new(5, 1);
+            Sta sta6 = new(6, 1);
+            Sta sta7 = new(7, 1);
+            Sta sta8 = new(8, 1);
+            List<Sta> stas = [sta1, sta2, sta3, sta4, sta5, sta6, sta7, sta8];
+            Dictionary<int, List<int>> lines = new()
+            {
+                { 1, [1, 2, 3] },
+                { 2, [2, 4, 8] },
+                { 3, [3, 4, 5, 6, 7] }
+            };
+            Graph g = new(stas, lines);
+            g.UserPosition.Add(1, 2);
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            sta2.TwowayConnect(sta4, 2);
+            sta4.TwowayConnect(sta8, 2);
+            sta3.TwowayConnect(sta4, 3);
+            sta4.TwowayConnect(sta5, 3);
+            sta5.TwowayConnect(sta6, 3);
+            sta6.TwowayConnect(sta7, 3);
+            #endregion
+
+            var paths1 = _finder.FindAllPaths(g, 1, 4, 1).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 6, 7 }, paths1);
+        }
+        
         [TestMethod]
         public void TransferOnRingTail()
         {
