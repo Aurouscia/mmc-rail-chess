@@ -148,11 +148,13 @@ namespace RailChess.Core
                         if (graph.Lines.Count > 0)
                         {
                             // （半路上）避免添加多余线路
-                            // 如果“新路线”与“已有路线”的第n、n-1站一致（站id、线路id、线中索引都一致）
+                            // 如果“新路线”与“已有路线”长度一致，且第n、n-1站一致（站id、线路id、线中索引都一致）
                             // 那么认为“新路线”与“已有路线”冲突，抛弃已换乘次数更多的那个
                             bool newPathRedundant = false;
                             foreach (var ep in paths)
                             {
+                                if(ep.Count != p.Count + 1)
+                                    continue;
                                 bool conflict = false;
                                 if (ep.Tail?.IsEquivAs(ncr) ?? false)
                                 {
