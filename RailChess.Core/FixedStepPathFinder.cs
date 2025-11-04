@@ -96,13 +96,14 @@ namespace RailChess.Core
                     continue;
                 // 元素数=已走步数+1，所以元素数=步数上限时，说明还差最后一个元素
                 bool pNearFull = p.Count == stepsAB; 
+                bool pJustStared = p.Count == 1;
                 foreach (var n in pTail.Station.Neighbors)
                 {
                     if (pNearFull && confirmedDest.Contains(n.Station.Id))
                         continue; // 接近终点，但该终点已有其他路线作为终点，无需再进来
-                    if (p.TransferredTimes == maxiumTransfer)
+                    if (p.TransferredTimes == maxiumTransfer || pJustStared)
                         if (p.Tail?.LineId != n.LineId)
-                            continue; // 已经到了换乘上限，不能还往别的线跑
+                            continue; // 已经到了换乘上限，不能往别的线跑；走出的第一步，也不能往别的线跑
                     if (n.Station.Owner != 0 && n.Station.Owner != userId)
                         continue; // 不是自己的/空的就不能往这走
                     if (p.Stations.Count >= 2)
