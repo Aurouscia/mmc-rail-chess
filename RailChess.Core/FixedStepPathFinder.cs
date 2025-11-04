@@ -97,7 +97,12 @@ namespace RailChess.Core
                 // 元素数=已走步数+1，所以元素数=步数上限时，说明还差最后一个元素
                 bool pNearFull = p.Count == stepsAB; 
                 bool pJustStared = p.Count == 1;
-                foreach (var n in pTail.Station.Neighbors)
+                // 邻点优先选择同线路的
+                var neighbors = pTail.Station.Neighbors.GroupBy(x => x.Station.Id) // 按id分组
+                    .Select(g => g.OrderByDescending(x => x.LineId == pTail.LineId)  // 同线路排在前面
+                        .First()) // 每组只取第一项
+                    .ToList();
+                foreach (var n in neighbors)
                 {
                     if (pNearFull && confirmedDest.Contains(n.Station.Id))
                         continue; // 接近终点，但该终点已有其他路线作为终点，无需再进来
