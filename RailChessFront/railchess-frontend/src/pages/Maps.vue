@@ -131,7 +131,13 @@ onMounted(async()=>{
 
 <template>
 <div class="maps">
-    <h1>棋盘列表</h1>
+    <h1 class="h1WithBtns">
+        棋盘列表
+        <div>
+            <button @click="router.push({name:'aarcConverter'})" class="minor">转换器</button>
+            <button @click="create" class="confirm">新建棋盘</button>
+        </div>
+    </h1>
     <div class="aboveTable">
         <div>
             <input v-model="search" style="width: 150px;" placeholder="搜索棋盘或作者" @blur="load"/>
@@ -147,13 +153,16 @@ onMounted(async()=>{
             </div>
             <button v-if="isSearching" @click="clearSearch" class="lite">清空筛选</button>
         </div>
-        <div style="flex-wrap: nowrap;flex-shrink: 0;">
-            <select v-model="orderBy" @change="load">
-                <option :value="undefined">最新</option>
-                <option :value="'score'">分数</option>
-            </select>
-            <button @click="create" class="confirm">新建</button>
-            <button class="gray" @click="searchMine">我的</button>
+        <div>
+            <div>
+                <button @click="searchMine" class="minor mine-filter">我的棋盘</button>
+            </div>
+            <div>
+                <select v-model="orderBy" @change="load">
+                    <option :value="undefined">最新</option>
+                    <option :value="'score'">分数</option>
+                </select>
+            </div>
         </div>
     </div>
     <div style="overflow-x: auto;">
@@ -209,7 +218,7 @@ onMounted(async()=>{
             <td><input v-model="editing.Title"></td>
         </tr>
         <tr>
-            <td>文件</td>
+            <td>背景<br/>图片</td>
             <td>
                 <button @click="file?.showPicker" class="minor">点击选择</button>
                 <div v-if="fileSelected">已选择文件</div>
@@ -313,5 +322,19 @@ input[type=file]{
 .aboveTable>div{
     display: flex;
     flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+.aboveTable>div:last-child{
+    justify-content: flex-end;
+}
+
+.mine-filter{
+    font-size: unset;
+    border: 1px solid #ccc;
+    margin: 5px;
+    padding: 3px;
+    height: 28px;
+    line-height: 22px;
 }
 </style>

@@ -71,10 +71,12 @@ div p{
 }
 .converter-entry{
     display: block;
+    width: calc(100% - 40px);
+    max-width: 360px;
     height: 30px;
     line-height: 30px;
     border-radius: 10px;
-    margin: 10px auto 10px auto;
+    margin: 10px auto 16px auto;
     color: white;
     background: linear-gradient(to right, #31bcb5, #8F98FA);
     text-align: center;
@@ -82,6 +84,7 @@ div p{
     transition: 0.3s;
 }
 .converter-entry:hover{
-    transform: scale(1.05);
+    transform: scale(1.03);
+    box-shadow: 0px 4px 6px 0px rgba(0, 0, 0, 0.6);
 }
 </style>
