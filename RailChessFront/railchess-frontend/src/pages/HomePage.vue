@@ -21,9 +21,9 @@ checkAndPop()
         <div v-if="contact" class="contact">
             {{ contact }}
         </div>
-        <!-- <router-link :to="{name:'aarcConverter'}" class="converter-entry">
-            AARC &rarr; 轨交棋 转换器（实验版）
-        </router-link> -->
+        <router-link :to="{name:'aarcConverter'}" class="converter-entry">
+            AARC &rarr; 轨交棋 转换器
+        </router-link>
     </div>
     <div class="gitInfo">
         <iframe src="/gitInfo.html"></iframe>
@@ -71,13 +71,12 @@ div p{
 }
 .converter-entry{
     display: block;
-    width: 360px;
     height: 30px;
     line-height: 30px;
     border-radius: 10px;
     margin: 10px auto 10px auto;
     color: white;
-    background: linear-gradient(to right, #319EBC, #8F98FA);
+    background: linear-gradient(to right, #31bcb5, #8F98FA);
     text-align: center;
     text-decoration: none;
     transition: 0.3s;
