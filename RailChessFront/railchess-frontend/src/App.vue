@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import Pop from './components/Pop.vue';
 import Topbar from './components/Topbar.vue';
 import { useProvidesSetup } from './provides';
+import { preventAllGestures } from './utils/preventAllGestures';
 
-const{pop, displayTopbar} = useProvidesSetup();
-
+const { pop, displayTopbar } = useProvidesSetup();
+onMounted(()=>preventAllGestures())
 </script>
 
 <template>
