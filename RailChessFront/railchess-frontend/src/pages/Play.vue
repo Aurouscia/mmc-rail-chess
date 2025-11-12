@@ -381,6 +381,7 @@ async function sync(data:SyncData|null){
     await nextTick()
 
     playerList.value = data.playerStatus;
+    await nextTick()
     const meInList = playerList.value.find(x=>x.id==me);
     meJoined.value = !!meInList;
     meOut.value = meInList?.out||false;
