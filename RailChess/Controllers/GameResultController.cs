@@ -76,20 +76,20 @@ namespace RailChess.Controllers
         [Route("/rgr")]
         public IActionResult RecalculateResults()
         {
-            _context.GameResults.Where(x => x.Id > 0).ExecuteDelete();
-            _context.Users.ExecuteUpdate(x => x.SetProperty(u => u.Elo, 0));
-            var userIds = _context.Users.Select(x => x.Id).ToList();
-
-            userIds.ForEach(i => PlayPlayerService.ClearCache(_cache, i));
-
-            List<int> endedGames = _context.Games.Where(x => x.Ended == true).Select(x => x.Id).ToList();
-            endedGames.ForEach(id =>
-            {
-                _playService.GameId = id;
-                _playService.GetSyncData(true);
-            });
-
-            userIds.ForEach(i => PlayPlayerService.ClearCache(_cache, i));
+            // _context.GameResults.Where(x => x.Id > 0).ExecuteDelete();
+            // _context.Users.ExecuteUpdate(x => x.SetProperty(u => u.Elo, 0));
+            // var userIds = _context.Users.Select(x => x.Id).ToList();
+            //
+            // userIds.ForEach(i => PlayPlayerService.ClearCache(_cache, i));
+            //
+            // List<int> endedGames = _context.Games.Where(x => x.Ended == true).Select(x => x.Id).ToList();
+            // endedGames.ForEach(id =>
+            // {
+            //     _playService.GameId = id;
+            //     _playService.GetSyncData(true);
+            // });
+            //
+            // userIds.ForEach(i => PlayPlayerService.ClearCache(_cache, i));
             return this.ApiResp();
         }
 
@@ -110,7 +110,7 @@ namespace RailChess.Controllers
                     PlayerCount = playerCount;
                     GameId = gameId;
                     StartTime = startTime.ToString("yy/MM/dd HH:mm");
-                    EloDelta = eloDelta;
+                    EloDelta = 0;//eloDelta;
                     MapName = mapName;
                     UserName = userName;
                     UserId = userId;

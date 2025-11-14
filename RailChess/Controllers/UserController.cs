@@ -152,13 +152,13 @@ namespace RailChess.Controllers
 
         public IActionResult RecalculateElo()
         {
-            var rs = _context.GameResults.ToList();
-            var users = _context.Users.ToList();
-            foreach(var u in users)
-            {
-                var ur = rs.FindAll(x => x.UserId == u.Id);
-                u.Elo = ur.Select(x => x.EloDelta).Sum();
-            }
+            // var rs = _context.GameResults.ToList();
+            // var users = _context.Users.ToList();
+            // foreach (var u in users)
+            // {
+            //     var ur = rs.FindAll(x => x.UserId == u.Id);
+            //     u.Elo = ur.Select(x => x.EloDelta).Sum();
+            // }
             return this.ApiResp();
         }
 
