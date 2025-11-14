@@ -23,14 +23,14 @@ onMounted(async()=>{
 </script>
 
 <template>
-<h1>排行榜</h1>
+<h1>战绩</h1>
 <!--<div class="note">注：双人局分别记[100, 0]，四人局分别记[100, 66, 33, 0]，以此类推</div>-->
 <div>
     <table><tbody>
         <tr>
             <th class="avtTd"></th>
             <th>用户</th>
-            <th>参加局数</th>
+            <th>近30天局数</th>
             <!--<th>平均胜率</th>-->
         </tr>
         <tr v-for="u in data" @click="jumpToPlayerLog(u.UId)" :key="u.UId">

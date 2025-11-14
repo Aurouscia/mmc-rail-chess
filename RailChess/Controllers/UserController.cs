@@ -165,7 +165,15 @@ namespace RailChess.Controllers
         public IActionResult RankingList()
         {
             var allUsers = _context.Users.ToList();
-            var allGameRess = _context.GameResults.Select(x => new {x.UserId}).ToList();
+            var now = DateTime.Now;
+            var oneMonthAgo = now.AddDays(-30);
+            var allGameRess = (
+                from res in _context.GameResults
+                join game in _context.Games on res.GameId equals game.Id
+                where game.StartTime > oneMonthAgo
+                group res by res.UserId into g
+                select new {UserId = g.Key, Count = g.Count()}
+            ).ToList();
             var list = allUsers.ConvertAll(x => new UserRankingListItem()
             {
                 UId = x.Id,
@@ -174,7 +182,7 @@ namespace RailChess.Controllers
             });
             foreach(var u in list)
             {
-                u.Plays = allGameRess.Count(x => x.UserId == u.UId);
+                u.Plays = allGameRess.Find(x => x.UserId == u.UId)?.Count ?? 0;
             }
             list.RemoveAll(x => x.Plays == 0 && x.UId != _userId);
             list.Sort((x, y) => {
