@@ -37,6 +37,7 @@ try
     app.UseFileServer();
 
     app.UseRouting();
+    app.UseIpRateLimit();
 
     app.UseAuthentication();
     app.UseAuthorization();

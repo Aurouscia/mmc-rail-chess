@@ -82,7 +82,8 @@ defineExpose({ show })
 .box div{
     max-width: 180px;
     color:white;
-    word-break: break-all;;
+    word-break: break-all;
+    white-space: pre-wrap;
 }
 .success{
     background-color: #339933;
@@ -94,7 +95,7 @@ defineExpose({ show })
     background-color: #666666;
 }
 .warning{
-    background-color: rgb(255, 132, 0);
+    background-color: rgb(223, 115, 0);
     color:black;
 }
 </style>

@@ -104,8 +104,12 @@ export class HttpClient{
                 console.log(`[${type}]${resource}失败`,resp.errmsg||res.statusText);
                 if(res.status==401){
                     this.httpCallBack('err','请登录');
-                }else{
-                    this.httpCallBack('err',resp.errmsg)
+                }
+                else if(res.status==429){
+                    this.httpCallBack('warn',resp.errmsg||'操作过于频繁\n请稍后再试')
+                }
+                else{
+                    this.httpCallBack('err',resp.errmsg||'未知错误\n请联系管理员')
                 }
             }
             return resp;
