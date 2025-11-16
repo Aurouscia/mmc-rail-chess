@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace RailChess.Utils.Startup;
@@ -17,17 +18,23 @@ public class RateLimitMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // 该中间件必然在静态文件中间件之后调用，如果对静态文件的请求进入了这里，说明肯定404了，直接短路，不计入
-        var path = context.Request.Path.Value ?? "";
-        var ext  = Path.GetExtension(path).ToLowerInvariant();
-        if (!string.IsNullOrEmpty(ext))
-            return; 
+        // 必须是有endpoint才限流
+        var endpoint = context.GetEndpoint();
+        if (endpoint is null) { await _next(context); return; }
+
+        // 如果是对于 SignalR 的请求：直接放行
+        var hubMetadata = endpoint.Metadata.GetMetadata<HubMetadata>();
+        if(hubMetadata is not null) {
+            await _next(context);
+            return;
+        }
         
         var ip = GetClientIp(context);
         var span = TimeSpan.FromSeconds(spanSec);
 
-        // 原子操作：拿到或创建该 IP 的时间戳队列
-        var queue = _cache.GetOrCreate<Queue<DateTime>>(ip, entry =>
+        // 原子操作：拿到或创建该IP+该endpoint的时间戳队列
+        var key = $"ratelimit-{ip}-{endpoint.DisplayName}";
+        var queue = _cache.GetOrCreate<Queue<DateTime>>(key, entry =>
         {
             entry.SlidingExpiration = span;   // 10 秒无访问就自动回收
             return new Queue<DateTime>(maxReq);
