@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { injectApi } from '../provides';
 import { Api } from '../utils/api';
 import { RailChessMapIndexResult, RailChessMapIndexResultItem } from '../models/map';
@@ -14,17 +14,22 @@ const scoreMin = ref<number>(0)
 const scoreMax = ref<number>(0)
 const scoreMinOptions = [1, 200, 500, 1000, 2000]
 const scoreMaxOptions = [200, 500, 1000, 2000]
+const pageIdx = ref<number>(0)
+const pageSize = ref<number>(18)
 async function clearSearch(){
     search.value = undefined
     scoreMin.value = 0
     scoreMax.value = 0
+    pageIdx.value = 0;
     await load()
 }
 const isSearching = computed<boolean>(()=> !!search.value || !!scoreMin.value || !!scoreMax.value)
 
 const data = ref<RailChessMapIndexResult>();
 async function load(){
-    const res = await api.map.index(search.value, orderBy.value, scoreMin.value, scoreMax.value)
+    const skip = pageIdx.value * pageSize.value;
+    const take = pageSize.value;
+    const res = await api.map.index(search.value, orderBy.value, scoreMin.value, scoreMax.value, skip, take)
     if(res){
         data.value = res;
     }
@@ -34,12 +39,44 @@ const authorSearchPrefix = "作者："
 const mineSearch = "作者：我自己"
 async function searchAuthorName(authorName:string) {
     search.value = `${authorSearchPrefix}${authorName}`
+    pageIdx.value = 0;
     await load()
 }
 async function searchMine() {
     search.value = mineSearch;
+    pageIdx.value = 0;
     await load()
 }
+async function switchPage(to:'prev'|'next') {
+    let switched = false
+    if(to=='prev' && pageCanPrev.value){
+        pageIdx.value--;
+        switched = true;
+    }else if(to=='next' && pageCanNext.value){
+        pageIdx.value++;
+        switched = true;
+    }
+    if(switched){
+        await load();
+        await nextTick();
+        const mainOuter = document.querySelector('.mainOuter')
+        if(mainOuter)
+            mainOuter.scrollTo(0,0);
+        const mapTableOuter = document.querySelector('#mapTableOuter')
+        if(mapTableOuter)
+            mapTableOuter.scrollTo(0,0);
+    }
+}
+async function handleBlur() {
+    pageIdx.value = 0;
+    await load();
+}
+const totalPageCount = computed<number>(()=>{
+    if(!data.value) return 0; 
+    return Math.ceil(data.value.TotalCount/pageSize.value);
+})
+const pageCanPrev = computed<boolean>(()=>pageIdx.value>0)
+const pageCanNext = computed<boolean>(()=>pageIdx.value<totalPageCount.value-1)
 
 const sidebar = ref<InstanceType<typeof SideBar>>();
 const editing = ref<RailChessMapIndexResultItem>();
@@ -81,6 +118,8 @@ async function confirm(){
     if(!editing.value){return;}
     const res = await api.map.createOrEdit(editing.value.Id, editing.value.Title, fileSelected.value)
     if(res){
+        clearSearch();
+        orderBy.value = undefined;
         await load();
         sidebar.value?.fold();
     }
@@ -90,7 +129,8 @@ function bgFilePath(fileName:string){
 }
 
 function toTopo(id:number){
-    router.push({name:'topo',params:{id}});
+    let url = router.resolve({name:'topo',params:{id}}).href;
+    window.open(url, "_blank")
 }
 
 const ipt = ref<HTMLInputElement>();
@@ -140,13 +180,13 @@ onMounted(async()=>{
     </h1>
     <div class="aboveTable">
         <div>
-            <input v-model="search" style="width: 150px;" placeholder="搜索棋盘或作者" @blur="load"/>
+            <input v-model="search" style="width: 150px;" placeholder="搜索棋盘或作者" @blur="handleBlur"/>
             <div>
-                <select v-model="scoreMin" @change="load">
+                <select v-model="scoreMin" @change="handleBlur">
                     <option :value="0">分下限</option>
                     <option v-for="s in scoreMinOptions" :value="s">{{ s }}</option>
                 </select>
-                <select v-model="scoreMax" @change="load">
+                <select v-model="scoreMax" @change="handleBlur">
                     <option :value="0">分上限</option>
                     <option v-for="s in scoreMaxOptions" :value="s">{{ s }}</option>
                 </select>
@@ -158,14 +198,14 @@ onMounted(async()=>{
                 <button @click="searchMine" class="minor mine-filter">我的棋盘</button>
             </div>
             <div>
-                <select v-model="orderBy" @change="load">
+                <select v-model="orderBy" @change="handleBlur">
                     <option :value="undefined">最新</option>
                     <option :value="'score'">分数</option>
                 </select>
             </div>
         </div>
     </div>
-    <div style="overflow-x: auto;">
+    <div id="mapTableOuter" style="overflow-x: auto;">
     <table class="list" v-if="data"><tbody>
         <tr>
             <th class="titleTh" style="min-width: 200px;">名称</th>
@@ -199,8 +239,22 @@ onMounted(async()=>{
                 </div>
             </td>
         </tr>
-        <tr v-if="data.Items.length==20">
-            <td style="color:#999;">仅显示前20个结果</td><td></td><td></td>
+        <tr>
+            <td v-if="totalPageCount">
+                <div class="pager">
+                    <button class="lite" @click="switchPage('prev')" :class="{canClick:pageCanPrev}">上页</button>
+                    <span>第 {{ pageIdx+1 }}/{{ totalPageCount }} 页</span>
+                    <button class="lite" @click="switchPage('next')" :class="{canClick:pageCanNext}">下页</button>
+                </div>
+            </td>
+            <td v-else>
+                <div class="pager">
+                    <span>{{ isSearching ? '搜索结果为空':'暂无数据' }}</span>
+                </div>
+            </td>
+            <td colspan="2" style="color: #666">
+                共 {{ data.TotalCount }} 条数据
+            </td>
         </tr>
     </tbody></table>
     <Loading v-else>
@@ -237,7 +291,7 @@ onMounted(async()=>{
         注意：如果地图后续会扩大，提前预留好位置，确保替换背景图片时新图片和旧图片中车站的相对位置一致
     </Notice>
     <Notice :type="'warn'">
-        注意：使用复杂的svg格式图片可能导致客户端视角缩放卡顿，建议使用png/jpg格式图片
+        注意：使用复杂的svg格式图片可能导致客户端视角缩放卡顿，建议使用png/webp格式图片
     </Notice>
     <div class="iptOuter">
         <button v-if="editing && editing.Id>0" class="minor" @click="clickIpt">导入数据</button>
@@ -255,6 +309,19 @@ onMounted(async()=>{
 </template>
 
 <style scoped>
+table{
+    margin-bottom: 50px;
+}
+.pager{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+.pager .canClick{
+    color: cornflowerblue
+}
+
 .iptOuter{
     margin-top: 20px;
     display: flex;
@@ -331,7 +398,8 @@ input[type=file]{
 
 .mine-filter{
     font-size: unset;
-    border: 1px solid #ccc;
+    border: 1px solid #aaa;
+    color: black;
     margin: 5px;
     padding: 3px;
     height: 28px;

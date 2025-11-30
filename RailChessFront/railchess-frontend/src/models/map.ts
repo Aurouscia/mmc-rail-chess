@@ -1,4 +1,5 @@
 export interface RailChessMapIndexResult{
+    TotalCount:number,
     Items:RailChessMapIndexResultItem[]
 }
 

@@ -86,11 +86,11 @@ export class Api{
         }
     }
     map = {
-        index: async (search?: string, orderBy?:'score', scoreMin?:number, scoreMax?:number) => {
+        index: async (search?: string, orderBy?:'score', scoreMin?:number, scoreMax?:number, skip?:number, take?:number) => {
             const resp = await this.httpClient.request(
                 "/api/Map/Index",
                 "get",
-                { search, orderBy, scoreMin, scoreMax }
+                { search, orderBy, scoreMin, scoreMax, skip, take }
             );
             if (resp.success) {
                 return resp.data as RailChessMapIndexResult

@@ -32,8 +32,10 @@ namespace RailChess.Controllers
             _userId = httpUserIdProvider.Get();
         }
         [AllowAnonymous]
-        public IActionResult Index(string? search, string? orderBy, int scoreMin, int scoreMax)
+        public IActionResult Index(string? search, string? orderBy, int scoreMin, int scoreMax, int skip, int take)
         {
+            skip = Math.Clamp(skip, 0, int.MaxValue);
+            take = Math.Clamp(take, 0, 30);
             search ??= "";
             var q = _context.Maps.Where(x => x.Deleted == false);
             if (search.Trim() == myMaps)
@@ -62,17 +64,22 @@ namespace RailChess.Controllers
                 q = q.Where(x => x.TotalDirections >= scoreMin);
             if (scoreMax > 0)
                 q = q.Where(x => x.TotalDirections <= scoreMax);
+            var total = q.Count();
             var list = q.Select(x => 
                 new {x.Id, x.Title, x.Author, x.ImgFileName, x.LineCount,x.StationCount,x.ExcStationCount, x.UpdateTime, x.TotalDirections})
-                .Take(30).ToList();
+                .Skip(skip)
+                .Take(take).ToList();
             var authorIds = list.Select(x=>x.Author).ToList();
             var us = _context.Users.Where(x => authorIds.Contains(x.Id)).Select(x => new {x.Id,x.Name}).ToList();
 
-            var res = new RailChessMapIndexResult();
+            var res = new RailChessMapIndexResult()
+            {
+                TotalCount = total
+            };
             foreach (var map in list) 
             {
                 string authorName = us.FirstOrDefault(x => x.Id == map.Author)?.Name ?? "???";
-                res.Items.Add(new()
+                res.Items.Add(new RailChessMapIndexResult.Item
                 {
                     Id = map.Id,
                     Title = map.Title,
@@ -178,7 +185,7 @@ namespace RailChess.Controllers
             _context.SaveChanges();
             return this.ApiResp();
         }
-        public IActionResult ImportTopo(int id, IFormFile file)
+        public IActionResult ImportTopo(int id, IFormFile? file)
         {
             if(file is null || file.Length > 500*1000)
             {
@@ -255,11 +262,8 @@ namespace RailChess.Controllers
         }
         public class RailChessMapIndexResult
         {
-            public RailChessMapIndexResult()
-            {
-                Items = new();
-            }
-            public List<Item> Items { get; set; }
+            public List<Item> Items { get; set; } = [];
+            public int TotalCount { get; set; }
             public class Item
             {
                 public int Id { get; set; }
