@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
-import { injectApi } from '../provides';
+import { injectApi, injectPop } from '../provides';
 import { Api } from '../utils/api';
 import { RailChessMapIndexResult, RailChessMapIndexResultItem } from '../models/map';
 import Loading from '../components/Loading.vue';
 import SideBar from '../components/SideBar.vue';
 import Notice from '../components/Notice.vue';
 import { router } from '../main';
+import copy from 'copy-to-clipboard';
+
+const pop = injectPop()
 
 const search = ref<string>();
 const orderBy = ref<'score'|undefined>()
@@ -161,6 +164,11 @@ async function deleteMap(id:number) {
     }
 }
 
+function copyMapName(name:string){
+    copy(name);
+    pop.value.show('已复制棋盘名称', 'success')
+}
+
 const baseUrl = import.meta.env.VITE_BASEURL;
 var api:Api;
 onMounted(async()=>{
@@ -216,7 +224,9 @@ onMounted(async()=>{
             <td>
                 <div class="title">
                     <div class="titleLeft">
-                        <div>{{ m.Title }}</div>
+                        <div class="titleText" @click="copyMapName(m.Title)">
+                            {{ m.Title }}
+                        </div>
                         <div class="mapInfo">
                             {{ m.LineCount }}线&nbsp;
                             {{ m.StationCount }}站&nbsp;
@@ -309,9 +319,6 @@ onMounted(async()=>{
 </template>
 
 <style scoped>
-table{
-    margin-bottom: 50px;
-}
 .pager{
     display: flex;
     justify-content: center;
@@ -366,6 +373,12 @@ input[type=file]{
     font-size: 14px;
     color:#777;
     font-weight: normal;
+}
+.titleText{
+    cursor: pointer;
+}
+.titleText:hover{
+    text-decoration: underline;
 }
 .titleLeft{
     text-align: left;

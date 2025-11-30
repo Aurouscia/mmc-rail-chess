@@ -27,6 +27,7 @@ table tr.noneBackground td{
 table.list{
     table-layout: fixed;
     min-width: 100%;
+    margin-bottom: 20px;
 }
 table.list tr:hover td{
     background-color: #e2e2e2;

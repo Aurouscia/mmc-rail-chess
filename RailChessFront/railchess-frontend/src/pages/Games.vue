@@ -228,6 +228,11 @@ onMounted(async ()=>{
         </tr>
         <tr>
             <td colspan="2" class="notice">
+                提示：可在棋盘列表中，点击棋盘名称，复制到剪切板，然后粘贴到此处，即可快速创建房间。
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="notice">
                 注意：本游戏玩家较少，请<b>务必</b>在约好其他玩家后，再创建房间，不要创建房间后离开。
                 如果找不到一起玩的人，请考虑：{{ contact }}
             </td>
