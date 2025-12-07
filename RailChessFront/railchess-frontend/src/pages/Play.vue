@@ -256,7 +256,7 @@ function renderConnectionAnims(id:number){
 function clickStation(id:number){
     if(connDisplayMode.value==='anim')
         window.setTimeout(()=>renderConnectionAnims(id), 1)
-    if(props.playback){
+    if(props.playback || !nowMe){
         return;
     }
     if(!clickableStations.value.includes(id)){
@@ -268,7 +268,7 @@ function clickStation(id:number){
 }
 async function select(){
     stopConnectionsAnim()
-    if(props.playback){
+    if(props.playback || !nowMe){
         return;
     }
     if(!currentSelections.value || currentSelections.value.length==0){
@@ -635,15 +635,15 @@ watch(props,()=>{
     <div v-show="!gameStarted && !ended" class="status">等待房主开始中</div>
     <div v-show="ended" class="status">本对局已经结束</div>
 </div>
-<div class="frame" ref="frame" :class="{playbackFrame:playback, tooManySelections}"
+<div class="frame" ref="frame" :class="{playbackFrame:playback, tooManySelections, nowMe:nowMe, nowNotMe:!nowMe}"
     @mousedown="frameDownHandlerForAnim" @touchstart="frameDownHandlerForAnim"
     @mouseup="frameUpHandlerForAnim" @touchend="frameUpHandlerForAnim">
     <div class="arena" ref="arena">
         <img v-if="bgFileName" ref="bg" :src="bgSrc(bgFileName||'')" :style="{opacity:bgOpacity}"/>
         <div v-for="s in staRenderedRecord" :style="s.styles" 
             :class="[{
-                clickable:clickableStations.includes(s.sId)&&nowMe&&!playback,
-                selected:selectedDist==s.sId&&nowMe&&!playback,  
+                clickable:clickableStations.includes(s.sId) && !playback,
+                selected:selectedDist==s.sId && !playback,  
             }, ...s.classes]" 
             :key="s.sId" class="station" @click="clickStation(s.sId)"></div>
         <div v-if="animatorRendered" :style="animatorRendered.style" class="pathAnim">{{ animatorRendered.step }}</div>
@@ -663,8 +663,8 @@ watch(props,()=>{
     <button @click="scaler?.autoMutiple(1,true)">总览</button>
 </div>
 <!--选中站id可能为0，所以不能直接作为布尔值用-->
-<button v-show="selectedDist!=undefined && !ended && !playback" class="decideBtn" @click="select">确认选择</button>
-<button v-show="gameStarted && !ended && !playback && playerList[0]?.id==me && !currentSelections?.length" class="cancel decideBtn" @click="select">无路可走</button>
+<button v-show="selectedDist!==undefined && gameStarted && nowMe && !ended && !playback" class="decideBtn" @click="select">确认选择</button>
+<button v-show="!currentSelections?.length && gameStarted && nowMe && !ended && !playback" class="cancel decideBtn" @click="select">无路可走</button>
 <SideBar ref="sidebar">
     <TextMsgDisplay :msgs="msgs" ref="msgDisp"></TextMsgDisplay>
     <div>
@@ -822,6 +822,14 @@ canvas{
     transition-timing-function: linear;
     font-size: 14px;
 }
+@keyframes stationSpark {
+  from {box-shadow:0px 0px 5px 5px cadetblue}
+  to {box-shadow:0px 0px 10px 10px cadetblue}
+}
+@keyframes stationSparkPink {
+  from {box-shadow:0px 0px 5px 5px palevioletred}
+  to {box-shadow:0px 0px 10px 10px palevioletred}
+}
 .station.clickable{
     border-color: rgb(71, 171, 174);
     background-color: rgb(51, 118, 120);
@@ -834,10 +842,16 @@ canvas{
     cursor: pointer;
     z-index: 10;
 }
+.nowNotMe .station.clickable{
+    border-color: rgb(212, 92, 132);
+    background-color: rgb(175, 61, 99);
+    box-shadow:0px 0px 10px 10px palevioletred;
+    animation-name: stationSparkPink
+}
 .tooManySelections .station.clickable{
     animation: none !important;
 }
-.station.selected{
+.nowMe .station.selected{
     border-color: rgb(0, 201, 0);
     background-color: green;
     box-shadow: 0px 0px 15px 10px green;
@@ -852,10 +866,6 @@ canvas{
 }
 .station.vacuum{
     opacity: var(--vacuum-sta-opacity, 1);
-}
-@keyframes stationSpark {
-  from {box-shadow:0px 0px 5px 5px cadetblue}
-  to {box-shadow:0px 0px 10px 10px cadetblue}
 }
 .station{
     position: absolute;
