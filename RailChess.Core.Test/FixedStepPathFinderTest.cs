@@ -4,6 +4,7 @@ using RailChess.GraphDefinition;
 namespace RailChess.Core.Test
 {
     [TestClass]
+    [DoNotParallelize]
     public class FixedStepPathFinderTest
     {
         private readonly IFixedStepPathFinder _finder;
@@ -43,7 +44,7 @@ namespace RailChess.Core.Test
             sta4.TwowayConnect(sta6);
 
             var paths0 = _finder.FindAllPaths(graph, 1, 0).ToList();
-            Assert.AreEqual(paths0.Count, 0);
+            Assert.IsEmpty(paths0);
 
             var paths1 = _finder.FindAllPaths(graph, 1, 1).ToList().ConvertAll(x=>x.Last());
             CollectionAssert.AreEquivalent(new List<int>(){ 2 }, paths1);
