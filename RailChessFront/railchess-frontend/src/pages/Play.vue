@@ -11,7 +11,7 @@ import { Scaler } from '../models/scale';
 import { SignalRClient } from '../utils/signalRClient';
 import TextMsgDisplay from '../components/TextMsgDisplay.vue';
 import { useAnimator, AnimNode, useConnectionAnimator, AnimConn } from '../utils/pathAnim';
-import _, { truncate } from 'lodash'
+import { truncate } from 'lodash-es'
 import { boxTypes } from '../components/Pop.vue';
 import Timeline from '../components/Timeline.vue';
 import { useRouter } from 'vue-router';

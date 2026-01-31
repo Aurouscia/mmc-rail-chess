@@ -9,7 +9,7 @@ import { router } from '../main';
 import { AurStateStore } from '@aurouscia/au-undo-redo'
 import { bgSrc } from '../utils/fileSrc';
 import { posBase } from '../models/map';
-import { clone, pullAt } from 'lodash';
+import { clone, pullAt } from 'lodash-es';
 import TopoRepairTool from './TopoRepairTool.vue';
 
 const props = defineProps<{
