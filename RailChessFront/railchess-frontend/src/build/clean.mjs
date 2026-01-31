@@ -6,10 +6,10 @@ export function clean(){
     try {
         if (existsSync(folderPath)) {
             rmSync(folderPath, { recursive: true });
-            console.log('成功删除assets目录');
+            console.log('assets folder removed');
         }
         mkdirSync(folderPath, { recursive: true });
     } catch (err) {
-        console.error('assets目录删除失败：', err);
+        console.error('assets folder removal failed', err);
     }
 }

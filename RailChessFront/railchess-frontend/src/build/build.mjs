@@ -6,7 +6,8 @@ clean()
 const firstParam = process.argv[2]
 const buildHere = firstParam?.toLowerCase() === '--here'
 const viteBuildArgs = buildHere ? ['--outDir', './dist'] : []
+const execaArgs = { stdout: 'inherit', stderr: 'inherit', reject: false }
 
-const viteBuild = execa("npx", ["vite", "build", ...viteBuildArgs], {stdout:'inherit', reject:true});
-const vueTsc = execa("npx", ["vue-tsc"], {stdout:'inherit', reject:true})
+const viteBuild = execa("npx", ["vite", "build", ...viteBuildArgs], execaArgs);
+const vueTsc = execa("npx", ["vue-tsc"], execaArgs)
 await Promise.all([vueTsc, viteBuild])
