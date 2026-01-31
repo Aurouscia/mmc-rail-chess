@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue';
+import { purify } from '../utils/purify';
 
 const rightDefault = -200;
 const height = 70;
@@ -8,7 +9,7 @@ export type popDelegate = (msg:string,type:boxTypes)=>void;
 
 interface msgBox {
     right: number,
-    msg: string,
+    msgPurified: string,
     created:number,
     type:boxTypes
 }
@@ -17,7 +18,7 @@ const boxes = ref<msgBox[]>([])
 function show(msg: string,type: boxTypes) {
     const newBox:msgBox = {
         right: rightDefault,
-        msg: msg,
+        msgPurified: purify(msg),
         created:Number(new Date()),
         type
     };
@@ -60,7 +61,7 @@ defineExpose({ show })
         width: (-rightDefault) + 'px',
         top: height*index + 100 + 'px'
          }" :class="box.type">
-        <div v-html="box.msg">
+        <div v-html="box.msgPurified">
         </div>
     </div>
 </template>

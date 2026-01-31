@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { TextMsg, TextMsgType } from '../models/play';
+import { purify } from '../utils/purify';
 
 const props = defineProps<{
     msgs:TextMsg[]
 }>();
+
+const msgsPurified = computed(()=>{
+    return props.msgs.map(x=>({
+        ...x,
+        content: purify(x.content)
+    }))
+})
 
 function msgTypeClassName(t:TextMsgType){
     if(t==0)return "plain";
@@ -32,7 +40,7 @@ defineExpose({moveDown})
 
 <template>
 <div class="msgs" ref="msgs">
-    <div v-for="m in props.msgs" :key="m.time" class="msg" >
+    <div v-for="m in msgsPurified" :key="m.time" class="msg" >
         <div class="meta">
             <div class="sender">{{ m.sender }}</div>
             <div class="time">{{ m.time }}</div>
