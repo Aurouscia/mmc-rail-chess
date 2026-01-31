@@ -11,8 +11,7 @@ const apiKey = 'api';
 const userInfoKey = 'userInfo';
 const hideTopbarKey = 'hideTopbar';
 
-export function useProvidesSetup() {
-    const pop = ref<InstanceType<typeof Pop> | null>(null);
+export function useProvidesSetup(pop: Ref<InstanceType<typeof Pop>|null>){
     provide(popKey, pop)
     const httpCallBack: HttpCallBack = (result, msg) => {
         if (result == 'ok') { pop.value?.show(msg, 'success') }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref, useTemplateRef } from 'vue';
 import { GameTimeline } from '../models/game';
 import { injectApi, injectPop } from '../provides';
 import { avtSrc } from '../utils/fileSrc';
@@ -101,7 +101,7 @@ function itemElementId(eid:number){
     return `te_${eid}`
 }
 
-const timelineDiv = ref<HTMLDivElement>()
+const timelineDiv = useTemplateRef('timelineDiv')
 onMounted(async()=>{
     await load()
     if(data.value?.Warning){

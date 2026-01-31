@@ -6,8 +6,8 @@ export class Scaler{
     private callBack:()=>void;
     private moveLocked:Ref<boolean>
     private mouseDown:boolean = false;
-    private heightWidthRatioBase:Ref<HTMLElement|undefined>
-    constructor(frame:HTMLDivElement,arena:HTMLDivElement,callBack:()=>void,moveLocked:Ref<boolean>,heightWidthRatioBase:Ref<HTMLElement|undefined>){
+    private heightWidthRatioBase:Ref<HTMLElement|undefined|null>
+    constructor(frame:HTMLDivElement,arena:HTMLDivElement,callBack:()=>void,moveLocked:Ref<boolean>,heightWidthRatioBase:Ref<HTMLElement|undefined|null>){
         this.frame = frame;
         this.arena = arena;
         this.callBack = callBack;

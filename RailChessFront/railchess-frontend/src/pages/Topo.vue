@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { Line, RailChessTopo, Sta, StaParsed, toSta, toStaParsed } from '../models/map';
 import { Api } from '../utils/api';
 import { injectApi, injectHideTopbar, injectPop } from '../provides';
@@ -30,8 +30,8 @@ const closeDefKey = 'closeDef'
 const closeDefRead = Number(localStorage.getItem(closeDefKey)) || 0.007
 const closeDef = ref<number>(closeDefRead)
 
-const cvs = ref<HTMLCanvasElement>();
-const bg = ref<HTMLDivElement>();
+const cvs = useTemplateRef('cvs')
+const bg = useTemplateRef('bg')
 var ctx:CanvasRenderingContext2D;
 
 const canUndo = ref<boolean>(false);
@@ -320,7 +320,7 @@ function repairDone(changed:boolean){
 var api:Api;
 var disposeListeners:()=>void;
 let movingSta:number = -1;
-const sb = ref<InstanceType<typeof SideBar>>();
+const sb = useTemplateRef('sb')
 const pop = injectPop()
 onMounted(async()=>{
   injectHideTopbar()();

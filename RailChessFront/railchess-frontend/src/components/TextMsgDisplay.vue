@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, useTemplateRef } from 'vue';
 import { TextMsg, TextMsgType } from '../models/play';
 import { purify } from '../utils/purify';
 
@@ -20,7 +20,7 @@ function msgTypeClassName(t:TextMsgType){
     if(t==2)return "err";
 }
 
-const msgs = ref<HTMLDivElement>();
+const msgs = useTemplateRef('msgs')
 async function moveDown(){
     if(msgs.value){
         const atBottom = msgs.value.clientHeight + msgs.value.scrollTop - msgs.value.scrollHeight > -30

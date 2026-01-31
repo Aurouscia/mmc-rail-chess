@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, onMounted, ref,Ref } from 'vue';
+import { inject, onMounted, ref, Ref } from 'vue';
 import { HttpClient} from '../utils/httpClient';
 import { IdentityInfo,IdentityInfoProvider } from '../utils/userInfo';
 import Pop from '../components/Pop.vue';
@@ -19,7 +19,6 @@ const identityInfo = ref<IdentityInfo|undefined>()
 var httpClient:HttpClient;
 var api:Api;
 var pop:Ref<InstanceType<typeof Pop>>
-var tabs = ref<InstanceType<typeof SwitchingTabs>>();
 const contact = import.meta.env.VITE_CONTACT
 async function Login(){
     const token = await api.identites.authen.login({
@@ -82,7 +81,7 @@ onMounted(async()=>{
 </script>
 
 <template>
-    <SwitchingTabs ref="tabs"  @switch="tabSwitched"
+    <SwitchingTabs @switch="tabSwitched"
         :texts="identityInfo&&identityInfo.Id>0 ? ['登录','注册','个人中心'] : ['登录','注册']">
         <div>
         <div>

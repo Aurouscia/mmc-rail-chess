@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { injectApi } from '../provides';
 
 const api = injectApi()
@@ -14,7 +14,7 @@ const result = ref<{
     result?: object
 }>()
 
-const fileInput = ref<HTMLInputElement>()
+const fileInput = useTemplateRef('fileInput')
 async function onFileChange(e: Event) {
     errmsg.value = undefined
     md5.value = undefined

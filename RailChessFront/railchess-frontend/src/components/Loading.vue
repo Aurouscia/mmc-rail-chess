@@ -26,10 +26,10 @@ onUnmounted(()=>{
 
 <template>
     <div class="loading">
-        <div :style="contentStyle" class="loadingContent" ref="content"></div>
+        <div :style="contentStyle" class="loadingContent"></div>
     </div>
     <div class="loading">
-        <div :style="contentStyle" class="loadingContent" ref="content"></div>
+        <div :style="contentStyle" class="loadingContent"></div>
     </div>
 </template>
 

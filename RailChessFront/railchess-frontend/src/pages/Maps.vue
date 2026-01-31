@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue';
 import { injectApi, injectPop } from '../provides';
 import { Api } from '../utils/api';
 import { RailChessMapIndexResult, RailChessMapIndexResultItem } from '../models/map';
@@ -81,9 +81,9 @@ const totalPageCount = computed<number>(()=>{
 const pageCanPrev = computed<boolean>(()=>pageIdx.value>0)
 const pageCanNext = computed<boolean>(()=>pageIdx.value<totalPageCount.value-1)
 
-const sidebar = ref<InstanceType<typeof SideBar>>();
+const sidebar = useTemplateRef('sidebar')
 const editing = ref<RailChessMapIndexResultItem>();
-const file = ref<InstanceType<typeof HTMLInputElement>>();
+const file = useTemplateRef('file')
 const fileSelected = ref<File|undefined>();
 function create(){
     editing.value = {
@@ -136,7 +136,7 @@ function toTopo(id:number){
     window.open(url, "_blank")
 }
 
-const ipt = ref<HTMLInputElement>();
+const ipt = useTemplateRef('ipt')
 async function clickIpt() {
     if(window.confirm("将会覆盖已有数据，请核对名称")){
         ipt.value?.showPicker();

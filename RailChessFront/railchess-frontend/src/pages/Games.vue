@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, useTemplateRef } from 'vue';
 import SideBar from '../components/SideBar.vue';
 import { AiPlayerType, GameActiveResult, RailChessGame, RandAlgType, SpawnRuleType } from '../models/game';
 import { injectApi, injectPop, injectUserInfo } from '../provides';
@@ -24,7 +24,7 @@ async function loadActive(){
 }
 
 const creating = ref<RailChessGame>();
-const sidebar = ref<InstanceType<typeof SideBar>>();
+const sidebar = useTemplateRef('sidebar')
 async function create(){
     if(creating.value){
         creating.value.AllowUserIdCsv = getAllowUserCsv();

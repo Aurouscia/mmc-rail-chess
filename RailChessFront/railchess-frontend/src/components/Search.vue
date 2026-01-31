@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { QuickSearchResult, QuickSearchResultItem } from '../models/quickSearch';
 
 const props = defineProps<{
@@ -19,7 +19,7 @@ const selectedDesc = ref<string>();
 const cands = ref<QuickSearchResult>();
 const isSearching = ref<boolean>(false);
 const inputing = ref<boolean>(false);
-const input = ref<HTMLInputElement>()
+const input = useTemplateRef('input')
 var timer:number = 0;
 const delay:number = 500;
 function refreshCand(){

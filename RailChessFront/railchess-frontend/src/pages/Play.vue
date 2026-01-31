@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, CSSProperties, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, CSSProperties, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { injectApi, injectHideTopbar, injectPop, injectUserInfo } from '../provides';
 import { OcpStatus, Player, SyncData, TextMsg } from '../models/play';
 import SideBar from '../components/SideBar.vue';
@@ -430,7 +430,7 @@ async function init(){
         })
     }
 }
-const bg = ref<HTMLImageElement>()
+const bg = useTemplateRef('bg')
 let loadingBgTimer = 0;
 
 const sending = ref<string>("");
@@ -441,11 +441,11 @@ function send(){
     }
 }
 
-const sidebar = ref<InstanceType<typeof SideBar>>();
-const sidebarOptions = ref<InstanceType<typeof SideBar>>();
+const sidebar = useTemplateRef('sidebar')
+const sidebarOptions = useTemplateRef('sidebarOptions')
 const msgs = ref<TextMsg[]>([]);
-const frame = ref<HTMLDivElement>();
-const arena = ref<HTMLDivElement>();
+const frame = useTemplateRef('frame')
+const arena = useTemplateRef('arena')
 const { bgOpacity, staSizeRatio, vacuumStaOpacity, connDisplayMode } = storeToRefs(usePlayOptionsStore())
 const staSize = ref<number>(0.8)
 function autoStaSize(){
@@ -491,7 +491,7 @@ var me:number;
 var sgrc:SignalRClient
 const moveLocked = ref(false)
 const timeline = ref<GameTimeline>()
-const msgDisp = ref<InstanceType<typeof TextMsgDisplay>>()
+const msgDisp = useTemplateRef('msgDisp')
 onMounted(async()=>{
     injectHideTopbar()();
     api = injectApi();

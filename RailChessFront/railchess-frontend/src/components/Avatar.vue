@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, useTemplateRef, watch } from 'vue';
 import SideBar from './SideBar.vue';
 import { Api } from '../utils/api';
 import { injectApi } from '../provides';
@@ -14,8 +14,8 @@ onMounted(()=>{
     setSrc()
 })
 
-const sidebar = ref<InstanceType<typeof SideBar>>();
-const file = ref<HTMLInputElement>();
+const sidebar = useTemplateRef('sidebar')
+const file = useTemplateRef('file')
 async function pick() {
     if(!file.value){
         return false;
@@ -48,7 +48,7 @@ watch(props,()=>{
 })
 
 const colorList = ref<string[]>(["#000000"]);
-const cvs = ref<HTMLCanvasElement>();
+const cvs = useTemplateRef('cvs')
 const cvsSide = 256;
 const startAngle = ref<number>(0);
 const xOffset = ref<number>(0);
