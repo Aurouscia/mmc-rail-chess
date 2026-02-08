@@ -41,7 +41,7 @@ function capColor(capCount:number){
 function seekLeft(){
     if(autoSeeking.value)
         return
-    if(data.value && selectedIdx.value>0){
+    if(data.value && selectedIdx.value>-1){
         selectedIdx.value -= 1
         selectedItem(true)
     }
@@ -107,7 +107,7 @@ function seekEnd(dir:'left'|'right'){
     if(autoSeeking.value || !data.value)
         return
     if(dir == 'left'){
-        selectedIdx.value = 0
+        selectedIdx.value = -1
         selectedItem(true)
     }
     else{
@@ -122,17 +122,26 @@ function selectedItem(needAutoScroll?:boolean){
     const len = data.value.Items.length
     const idx = selectedIdx.value
     let nextEventId:number
-    if(idx < len-1)
-        nextEventId = data.value.Items[idx+1].EId
-    else
-        nextEventId = 0
+    if(idx==-1){
+        nextEventId = data.value.Items[0].EId
+    }
+    else{
+        if(idx < len-1)
+            nextEventId = data.value.Items[idx+1].EId
+        else
+            nextEventId = 0
+    }
     emit('viewTime', nextEventId)
     if(needAutoScroll){
         autoScroll()
     }
 }
 function autoScroll() {
-    const thisEid = data.value?.Items[selectedIdx.value]?.EId
+    let thisEid = 0
+    if(selectedIdx.value >= 0)
+        thisEid = data.value?.Items[selectedIdx.value]?.EId ?? 0
+    else if(selectedIdx.value == -1)
+        thisEid = -1
     if (thisEid) {
         const element = document.getElementById(itemElementId(thisEid))
         if (element && timelineDiv.value) {
@@ -178,6 +187,12 @@ onMounted(async()=>{
         <button @click="thSeekEndRight">=></button>
     </div>
     <div class="timeline" v-if="data" ref="timelineDiv">
+        <div :key="-1" @click="selectedIdx=-1; selectedItem()"
+            :class="{selected: selectedIdx===-1}" :id="itemElementId(-1)">
+            <img :src="avtSrc('')"/>
+            <div class="cap" style="background-color: cornflowerblue;">开局</div>
+            <div class="rand">>>></div>
+        </div>
         <div v-for="i,idx in data.Items" :key="i.EId" @click="selectedIdx=idx; selectedItem()"
             :class="{selected: idx===selectedIdx}" :id="itemElementId(i.EId)">
             <img :src="avtSrc(data.Avts[i.UId])"/>
@@ -240,6 +255,7 @@ onMounted(async()=>{
     border-radius: 2px;
     min-width: 10px;
     text-align: center;
+    white-space: nowrap;
 }
 .rand{
     background-color: #eee;
