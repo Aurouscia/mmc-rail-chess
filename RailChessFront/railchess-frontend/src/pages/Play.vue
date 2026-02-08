@@ -159,8 +159,7 @@ function renderStaList(){
             sId: id,
             classes,
             styles:{
-                left:x-side/2+'px',
-                top:y-side/2+'px',
+                transform:`translate(${x-side/2}px, ${y-side/2}px)`,
                 width:side-4+'px',
                 height:side-4+'px',
                 backgroundImage,
@@ -869,6 +868,8 @@ canvas{
 }
 .station{
     position: absolute;
+    left: 0;
+    top: 0;
     border:2px solid black;
     background-color: #ccc;
     background-position: center;
