@@ -47,7 +47,7 @@ function seekLeft(){
 function seekRight(auto?:'auto'){
     if(autoSeeking.value && !auto)
         return false
-    if(data.value && selectedIdx.value<data.value.Items.length-1){
+    if(data.value && selectedIdx.value < data.value.Items.length - 1){
         selectedIdx.value += 1
         selectedItem(true)
         return true
@@ -101,6 +101,19 @@ function seekSame(dir:'left'|'right'){
         }
     }
 }
+function seekEnd(dir:'left'|'right'){
+    if(autoSeeking.value || !data.value)
+        return
+    if(dir == 'left'){
+        selectedIdx.value = 0
+        selectedItem(true)
+    }
+    else{
+        selectedIdx.value = data.value.Items.length - 1
+        selectedItem(true)
+    }
+}
+
 function selectedItem(needAutoScroll?:boolean){
     if(!data.value?.Items)
         return
@@ -143,11 +156,13 @@ onMounted(async()=>{
 
 <template>
     <div class="seek" :class="{autoSeeking}">
-        <button @click="seekSame('left')"><<</button>
+        <button @click="seekEnd('left')"><=</button>
+        <button @click="seekSame('left')"><-</button>
         <button @click="seekLeft()"><</button>
         <button @click="toggleAuto()" class="autoSeekBtn">></button>
         <button @click="seekRight()">></button>
-        <button @click="seekSame('right')">>></button>
+        <button @click="seekSame('right')">-></button>
+        <button @click="seekEnd('right')">=></button>
     </div>
     <div class="timeline" v-if="data" ref="timelineDiv">
         <div v-for="i,idx in data.Items" :key="i.EId" @click="selectedIdx=idx; selectedItem()"
@@ -176,6 +191,7 @@ onMounted(async()=>{
 .seek button{
     width: 28px;
     text-align: center;
+    font-family: monospace;
 }
 .seek .autoSeekBtn{
     background-color: #ccc;
