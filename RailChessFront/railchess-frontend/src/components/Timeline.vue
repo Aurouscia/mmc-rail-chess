@@ -14,7 +14,7 @@ const emit = defineEmits<{
     (e:'viewTime', eid?:number):void
 }>()
 const playOptions = usePlayOptionsStore()
-const THROTTLE_MS = 1000
+const THROTTLE_MS = 500
 
 const data = ref<GameTimeline>();
 const api = injectApi()
@@ -157,7 +157,7 @@ function itemElementId(eid:number){
 }
 
 function createBtnThrottle(func:()=>void){
-    return throttle(func, THROTTLE_MS, { leading: true, trailing: false })
+    return throttle(func, THROTTLE_MS, { leading: true, trailing: true })
 }
 const thSeekEndLeft = createBtnThrottle(()=>seekEnd('left'))
 const thSeekSameLeft = createBtnThrottle(()=>seekSame('left'))
@@ -230,7 +230,7 @@ onMounted(async()=>{
 }
 .autoSeeking .autoSeekBtn{
     background-color: green;
-    animation: blinkGreen 1s infinite alternate;
+    animation: blinkGreen 700ms infinite alternate;
 }
 @keyframes blinkGreen {
     0%, 49% { background-color: rgb(0, 187, 0); }
