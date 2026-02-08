@@ -39,20 +39,21 @@ onMounted(async()=>{
 <template>
     <div v-if="data">
         <div v-if="data.Logs.length>0">
-            <h1>{{ data.Logs[0].UserName }} 的记录</h1>
-            <table><tbody>
+            <h1>{{ data.OwnerName}} 的记录</h1>
+            <table class="list"><tbody>
                 <tr>
-                    <th>时间</th>
+                    <th class="time-col">时间</th>
                     <th>棋盘</th>
-                    <th>排名</th>
-                    <th></th>
+                    <th style="width: 45px;">排名</th>
+                    <th class="op-col"></th>
                 </tr>
                 <tr v-for="log in data.Logs">
                     <td class="time">
                         {{ log.StartTime }}
                     </td>
                     <td>
-                        {{ log.MapName }}
+                        <div>{{ log.GameName || log.MapName }}</div>
+                        <div v-if="log.GameName" class="map-name">{{ log.MapName }}</div>
                     </td>
                     <td>
                         {{ log.Rank }}/{{ log.PlayerCount }}
@@ -73,10 +74,33 @@ onMounted(async()=>{
 
 <style scoped>
 table{
-    table-layout: fixed;
     width: 100%;
 }
 .time{
     font-size: small;
+}
+.map-name{
+    border-top: 1px solid #aaa;
+    margin-top: 6px;
+    padding-top: 3px;
+    font-size: 14px;
+    color: #666;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+.op-col{
+    width: 110px;
+}
+.time-col{
+    width: 120px;
+}
+@media screen and (max-width: 800px) {
+    .op-col{
+        width: 60px;
+    }
+    .time-col{
+        width: 60px;
+    }
 }
 </style>

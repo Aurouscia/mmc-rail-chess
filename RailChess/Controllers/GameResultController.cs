@@ -29,7 +29,7 @@ namespace RailChess.Controllers
                 where r.UserId == userId
                 where r.GameId == g.Id
                 where g.UseMapId == m.Id
-                select new { r.Rank, r.GameId, g.StartTime, r.EloDelta, MapName = m.Title }).ToList();
+                select new { r.Rank, r.GameId, g.GameName, g.StartTime, r.EloDelta, MapName = m.Title }).ToList();
             data.Sort((x, y) => DateTime.Compare(y.StartTime, x.StartTime));
             var userName = _context.Users.Where(x => x.Id == userId).Select(x => x.Name).FirstOrDefault();
 
@@ -44,11 +44,15 @@ namespace RailChess.Controllers
                     Count = g.Count()
                 }).ToList();
 
-            var res = new GameResultListResponse();
+            var res = new GameResultListResponse()
+            {
+                OwnerName = userName,
+            };
             data.ForEach(d =>
             {
                 var playerCount = relatedRes.Find(rs => rs.GameId == d.GameId)?.Count ?? 0;
-                res.Logs.Add(new(d.Rank, playerCount, d.GameId, d.StartTime, d.EloDelta, d.MapName, userName??"??", userId));
+                res.Logs.Add(new(
+                    d.Rank, playerCount, d.GameId, d.StartTime, d.EloDelta, d.GameName, d.MapName, "", 0));
             });
             return this.ApiResp(res);
         }
@@ -60,7 +64,9 @@ namespace RailChess.Controllers
                 where r.GameId == gameId
                 where r.UserId == u.Id
                 select new { r.Rank, r.GameId, r.EloDelta, UserName = u.Name, UserId = u.Id}).ToList();
-            var game = _context.Games.Where(x => x.Id == gameId).Select(x => new { x.StartTime, x.UseMapId }).FirstOrDefault();
+            var game = _context.Games
+                .Where(x => x.Id == gameId)
+                .Select(x => new { x.StartTime, x.UseMapId, x.GameName }).FirstOrDefault();
             if (game is null)
                 return this.ApiFailedResp("找不到指定棋局");
             var mapName = _context.Maps.Where(x=>x.Id == game.UseMapId).Select(x=>x.Title).FirstOrDefault();
@@ -68,7 +74,9 @@ namespace RailChess.Controllers
             data.Sort((x, y) => x.Rank - y.Rank);
             data.ForEach(d =>
             {
-                res.Logs.Add(new(d.Rank, data.Count, d.GameId, game.StartTime, d.EloDelta, mapName ?? "??", d.UserName, d.UserId));
+                res.Logs.Add(new(
+                    d.Rank, data.Count, d.GameId, game.StartTime, d.EloDelta,
+                    game.GameName ?? "", mapName ?? "??", d.UserName, d.UserId));
             });
             return this.ApiResp(res);
         }
@@ -95,22 +103,20 @@ namespace RailChess.Controllers
 
         public class GameResultListResponse
         {
-            public List<GameResultListItem> Logs { get; set; }
-            public GameResultListResponse()
-            {
-                Logs = new();
-            }
+            public string? OwnerName { get; set; }
+            public List<GameResultListItem> Logs { get; set; } = [];
             public class GameResultListItem
             {
                 public GameResultListItem(
                     int rank, int playerCount, int gameId, DateTime startTime, int eloDelta,
-                    string mapName, string userName, int userId)
+                    string gameName, string mapName, string userName, int userId)
                 {
                     Rank = rank;
                     PlayerCount = playerCount;
                     GameId = gameId;
                     StartTime = startTime.ToString("yy/MM/dd HH:mm");
                     EloDelta = 0;//eloDelta;
+                    GameName = gameName;
                     MapName = mapName;
                     UserName = userName;
                     UserId = userId;
@@ -120,6 +126,7 @@ namespace RailChess.Controllers
                 public int GameId { get; set; }
                 public string StartTime { get; set; }
                 public int EloDelta { get; set; }
+                public string GameName { get; set; }
                 public string MapName { get; set; }
                 public string UserName { get; set; }
                 public int UserId { get; set; }

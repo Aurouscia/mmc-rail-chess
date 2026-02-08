@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Api } from '../utils/api';
 import { injectApi } from '../provides';
 import Loading from '../components/Loading.vue';
@@ -23,6 +23,15 @@ function jumpToPlayerLog(playerId:number){
     router.push(`/results/ofPlayer/${playerId}`);
 }
 
+const mapName = computed(()=>{
+    if(data.value?.Logs.length)
+        return data.value?.Logs[0]?.MapName
+})
+const gameName = computed(()=>{
+    if(data.value?.Logs.length)
+        return data.value?.Logs[0]?.GameName
+})
+
 let api:Api;
 onMounted(async()=>{
     api = injectApi();
@@ -33,8 +42,14 @@ onMounted(async()=>{
 <template>
     <div v-if="data">
         <div v-if="data.Logs.length>0">
-            <h1>{{ data.Logs[0].StartTime }} <br/> {{ data.Logs[0].MapName }} 的记录</h1>
-            <button @click="router.push('/playback/'+gameId)">查看棋局回放</button>
+            <h1>
+                {{ data.Logs[0].StartTime }} 对局记录<br/> 
+            </h1>
+            <div class="info-and-ops">
+                <button @click="router.push('/playback/'+gameId)">查看棋局回放</button>
+                <button v-if="gameName" class="off">对局名称：{{ gameName }}</button>
+                <button class="off">使用棋盘：{{ mapName }}</button>
+            </div>
             <table><tbody>
                 <tr>
                     <th>排名</th>
@@ -58,6 +73,21 @@ onMounted(async()=>{
 </template>
 
 <style scoped>
+.info-and-ops{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+.info-and-ops .off{
+    cursor: default;
+}
+@media screen and (max-width: 1000px) {
+    .info-and-ops{
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
 tr{
     cursor: pointer;
 }

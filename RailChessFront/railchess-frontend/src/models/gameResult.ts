@@ -4,6 +4,7 @@ interface GameResultListItem {
     GameId: number;
     StartTime: string;
     EloDelta: number;
+    GameName: string;
     MapName: string;
     UserName: string;
     UserId: number;
@@ -11,4 +12,5 @@ interface GameResultListItem {
 
 interface GameResultListResponse {
     Logs: GameResultListItem[];
+    OwnerName: string
 }
