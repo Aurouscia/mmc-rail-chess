@@ -3,6 +3,8 @@ import { nextTick, onMounted, ref, useTemplateRef } from 'vue';
 import { GameTimeline } from '../models/game';
 import { injectApi, injectPop } from '../provides';
 import { avtSrc } from '../utils/fileSrc';
+import { usePlayOptionsStore } from '../utils/stores/playOptionsStore';
+import { clamp } from 'lodash-es';
 
 const props = defineProps<{
     gameId:number
@@ -10,6 +12,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e:'viewTime', eid?:number):void
 }>()
+const playOptions = usePlayOptionsStore()
 
 const data = ref<GameTimeline>();
 const api = injectApi()
@@ -34,18 +37,46 @@ function capColor(capCount:number){
     return 'green'
 }
 function seekLeft(){
+    if(autoSeeking.value)
+        return
     if(data.value && selectedIdx.value>0){
         selectedIdx.value -= 1
         selectedItem(true)
     }
 }
-function seekRight(){
+function seekRight(auto?:'auto'){
+    if(autoSeeking.value && !auto)
+        return false
     if(data.value && selectedIdx.value<data.value.Items.length-1){
         selectedIdx.value += 1
         selectedItem(true)
+        return true
+    }
+    return false
+}
+
+const autoSeeking = ref(false)
+let autoSeekTimer = 0
+function toggleAuto(){
+    if(!autoSeeking.value){
+        autoSeeking.value = true
+        const itv = clamp(playOptions.autoSeekInterval, 500, 10000)
+        autoSeekTimer = window.setInterval(()=>{
+            const success = seekRight('auto')
+            if(!success){
+                autoSeeking.value = false
+                window.clearTimeout(autoSeekTimer)
+            }
+        }, itv)
+    } else {
+        autoSeeking.value = false
+        window.clearTimeout(autoSeekTimer)
     }
 }
+
 function seekSame(dir:'left'|'right'){
+    if(autoSeeking.value)
+        return
     const sidx = selectedIdx.value
     const item = data.value?.Items[sidx]
     if(!data.value || !item){
@@ -111,10 +142,11 @@ onMounted(async()=>{
 </script>
 
 <template>
-    <div class="seek">
+    <div class="seek" :class="{autoSeeking}">
         <button @click="seekSame('left')"><<</button>
-        <button @click="seekLeft"><</button>
-        <button @click="seekRight">></button>
+        <button @click="seekLeft()"><</button>
+        <button @click="toggleAuto()" class="autoSeekBtn">></button>
+        <button @click="seekRight()">></button>
         <button @click="seekSame('right')">>></button>
     </div>
     <div class="timeline" v-if="data" ref="timelineDiv">
@@ -145,6 +177,22 @@ onMounted(async()=>{
     width: 28px;
     text-align: center;
 }
+.seek .autoSeekBtn{
+    background-color: #ccc;
+}
+
+.autoSeeking button{
+    background-color: #ccc;
+}
+.autoSeeking .autoSeekBtn{
+    background-color: green;
+    animation: blinkGreen 1s infinite alternate;
+}
+@keyframes blinkGreen {
+    0%, 49% { background-color: rgb(0, 187, 0); }
+    50%, 100% { background-color: green; }
+}
+
 .timeline{
     height: 80px;
     position: fixed;

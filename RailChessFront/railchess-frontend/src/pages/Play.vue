@@ -445,7 +445,7 @@ const sidebarOptions = useTemplateRef('sidebarOptions')
 const msgs = ref<TextMsg[]>([]);
 const frame = useTemplateRef('frame')
 const arena = useTemplateRef('arena')
-const { bgOpacity, staSizeRatio, vacuumStaOpacity, connDisplayMode } = storeToRefs(usePlayOptionsStore())
+const { bgOpacity, staSizeRatio, vacuumStaOpacity, autoSeekInterval, connDisplayMode } = storeToRefs(usePlayOptionsStore())
 const staSize = ref<number>(0.8)
 function autoStaSize(){
     if(!frame.value || !arena.value){return;}
@@ -696,6 +696,10 @@ watch(props,()=>{
     <div class="sideBarOption">
         <b>未占站点不透明度：{{ vacuumStaOpacity?.toFixed(2) }}</b>
         <input type="range" v-model.number="vacuumStaOpacity" min="0.1" max="1.0" step="0.05">
+    </div>
+    <div v-if="playback" class="sideBarOption">
+        <b>自动播放间隔(ms)：{{ autoSeekInterval?.toFixed(0) }}</b>
+        <input type="range" v-model.number="autoSeekInterval" min="1000" max="10000" step="500">
     </div>
     <div class="sideBarOption">
         <b>查看车站连接关系</b>
