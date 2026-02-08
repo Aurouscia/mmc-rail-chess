@@ -4,7 +4,7 @@ import { GameTimeline } from '../models/game';
 import { injectApi, injectPop } from '../provides';
 import { avtSrc } from '../utils/fileSrc';
 import { usePlayOptionsStore } from '../utils/stores/playOptionsStore';
-import { clamp } from 'lodash-es';
+import { clamp, throttle } from 'lodash-es';
 
 const props = defineProps<{
     gameId:number
@@ -13,6 +13,7 @@ const emit = defineEmits<{
     (e:'viewTime', eid?:number):void
 }>()
 const playOptions = usePlayOptionsStore()
+const THROTTLE_MS = 1000
 
 const data = ref<GameTimeline>();
 const api = injectApi()
@@ -60,7 +61,7 @@ let autoSeekTimer = 0
 function toggleAuto(){
     if(!autoSeeking.value){
         autoSeeking.value = true
-        const itv = clamp(playOptions.autoSeekInterval, 500, 10000)
+        const itv = clamp(playOptions.autoSeekInterval, 1000, 10000)
         autoSeekTimer = window.setInterval(()=>{
             const success = seekRight('auto')
             if(!success){
@@ -145,6 +146,17 @@ function itemElementId(eid:number){
     return `te_${eid}`
 }
 
+function createBtnThrottle(func:()=>void){
+    return throttle(func, THROTTLE_MS, { leading: true, trailing: false })
+}
+const thSeekEndLeft = createBtnThrottle(()=>seekEnd('left'))
+const thSeekSameLeft = createBtnThrottle(()=>seekSame('left'))
+const thSeekLeft = createBtnThrottle(seekLeft)
+const thToggleAuto = createBtnThrottle(toggleAuto)
+const thSeekRight = createBtnThrottle(()=>seekRight())
+const thSeekSameRight = createBtnThrottle(()=>seekSame('right'))
+const thSeekEndRight = createBtnThrottle(()=>seekEnd('right'))
+
 const timelineDiv = useTemplateRef('timelineDiv')
 onMounted(async()=>{
     await load()
@@ -156,13 +168,13 @@ onMounted(async()=>{
 
 <template>
     <div class="seek" :class="{autoSeeking}">
-        <button @click="seekEnd('left')"><=</button>
-        <button @click="seekSame('left')"><-</button>
-        <button @click="seekLeft()"><</button>
-        <button @click="toggleAuto()" class="autoSeekBtn">></button>
-        <button @click="seekRight()">></button>
-        <button @click="seekSame('right')">-></button>
-        <button @click="seekEnd('right')">=></button>
+        <button @click="thSeekEndLeft"><=</button>
+        <button @click="thSeekSameLeft"><-</button>
+        <button @click="thSeekLeft"><</button>
+        <button @click="thToggleAuto" class="autoSeekBtn">></button>
+        <button @click="thSeekRight">></button>
+        <button @click="thSeekSameRight">-></button>
+        <button @click="thSeekEndRight">=></button>
     </div>
     <div class="timeline" v-if="data" ref="timelineDiv">
         <div v-for="i,idx in data.Items" :key="i.EId" @click="selectedIdx=idx; selectedItem()"
