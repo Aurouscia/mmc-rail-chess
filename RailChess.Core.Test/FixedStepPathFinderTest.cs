@@ -596,6 +596,32 @@ namespace RailChess.Core.Test
         }
 
         [TestMethod]
+        public void TransferThenSplit()
+        {
+            //  1      4
+            //  |     /
+            //  2----3
+            //  2----3----5
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            Sta sta4 = new(4, 1);
+            Sta sta5 = new(5, 1);
+            List<Sta> stas = [sta1, sta2, sta3, sta4, sta5];
+            Dictionary<int, int> userPosition = new() { { 1, 1 } };
+            Graph g = new(stas, userPosition);
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 2);
+            sta3.TwowayConnect(sta4, 2);
+            sta2.TwowayConnect(sta3, 3);
+            sta3.TwowayConnect(sta5, 3);
+            var paths_2_1 = _finder.FindAllPaths(g, 1, 2, 1).ToList().ConvertAll(x=>x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 3 }, paths_2_1);
+            var paths_3_1 = _finder.FindAllPaths(g, 1, 3, 1).ToList().ConvertAll(x=>x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 4, 5 }, paths_3_1);
+        }
+        
+        [TestMethod]
         public void Chicago()
         {
             //     7

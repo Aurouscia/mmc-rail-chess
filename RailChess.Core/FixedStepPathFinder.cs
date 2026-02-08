@@ -97,11 +97,9 @@ namespace RailChess.Core
                 // 元素数=已走步数+1，所以元素数=步数上限时，说明还差最后一个元素
                 bool pNearFull = p.Count == stepsAB; 
                 bool pJustStared = p.Count == 1;
-                // 邻点优先选择同线路的
-                var neighbors = pTail.Station.Neighbors.GroupBy(x => x.Station.Id) // 按id分组
-                    .Select(g => g.OrderByDescending(x => x.LineId == pTail.LineId)  // 同线路排在前面
-                        .First()) // 每组只取第一项
-                    .ToList();
+                // 零点必须全部考虑，否则会漏掉“换乘到并行线后再分叉”的情况
+                // 见测试 TransferThenSplit 方法
+                var neighbors = pTail.Station.Neighbors;
                 foreach (var n in neighbors)
                 {
                     if (pNearFull && confirmedDest.Contains(n.Station.Id))
