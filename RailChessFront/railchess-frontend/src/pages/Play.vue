@@ -19,6 +19,7 @@ import { storeToRefs } from 'pinia';
 import { usePlayOptionsStore } from '../utils/stores/playOptionsStore';
 import { useJwtTokenStore } from '../utils/stores/jwtTokenStore';
 import PlayOptions from '../components/PlayOptions.vue';
+import { useRandNumDisplay } from '../utils/randNumDisplay';
 
 const router = useRouter()
 const props = defineProps<{
@@ -313,19 +314,6 @@ function changeRandNum(to:number){
         randNumStyle.value.opacity = 1;
     },500)
 }
-//AB型随机数：三或四位数，个位十位、百位千位分别是A、B两个十位数，A和A+B都是可选项
-const randNumIsAB = computed<boolean>(()=>{
-    return randNum.value > 100
-})
-const randNumDisplay = computed<string>(()=>{
-    if(randNumIsAB.value){
-        const A = randNum.value % 100
-        const B = Math.floor(randNum.value / 100)
-        return `${A}/${A+B}`;
-    }else{
-        return randNum.value.toString();
-    }
-})
 
 const sec = ref(0)
 const secDisplay = computed<string|undefined>(()=>{
@@ -359,6 +347,7 @@ const ocpStatus = ref<OcpStatus[]>([])
 const newOcps = ref<OcpStatus|undefined>();
 const randNum = ref<number>(0);
 const ended = ref<boolean>(false);
+const { randNumIsAB, randNumDisplay } = useRandNumDisplay(randNum)
 let myLastSyncTimeMs = 0
 let lastSyncTFilterId = 0
 async function sync(data:SyncData|null){

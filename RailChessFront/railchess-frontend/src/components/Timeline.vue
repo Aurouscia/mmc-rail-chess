@@ -5,6 +5,7 @@ import { injectApi, injectPop } from '../provides';
 import { avtSrc } from '../utils/fileSrc';
 import { usePlayOptionsStore } from '../utils/stores/playOptionsStore';
 import { clamp, throttle } from 'lodash-es';
+import { displayForRandNum } from '../utils/randNumDisplay';
 
 const props = defineProps<{
     gameId:number
@@ -182,7 +183,7 @@ onMounted(async()=>{
             <img :src="avtSrc(data.Avts[i.UId])"/>
             <div class="cap" :style="{backgroundColor:capColor(i.Cap)}">{{ i.Cap < 0 ? '卡' : '+'+i.Cap }}</div>
             <!--卡住记作-1-->
-            <div class="rand">{{ i.Rand }}</div>
+            <div class="rand">{{ displayForRandNum(i.Rand) }}</div>
         </div>
     </div>
 </template>
