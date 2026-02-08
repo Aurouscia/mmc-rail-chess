@@ -48,6 +48,7 @@ select {
   font-size: unset;
   border: 1px solid #ccc;
   margin: 5px;
+  cursor: pointer;
 }
 
 button {

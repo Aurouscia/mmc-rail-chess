@@ -29,7 +29,7 @@ namespace RailChess.Controllers
                 where r.UserId == userId
                 where r.GameId == g.Id
                 where g.UseMapId == m.Id
-                select new { r.Rank, r.GameId, g.GameName, g.StartTime, r.EloDelta, MapName = m.Title }).ToList();
+                select new { r.Rank, r.GameId, g.GameName, g.StartTime, r.EloDelta, MapName = m.Title, MapId = m.Id }).ToList();
             data.Sort((x, y) => DateTime.Compare(y.StartTime, x.StartTime));
             var userName = _context.Users.Where(x => x.Id == userId).Select(x => x.Name).FirstOrDefault();
 
@@ -52,7 +52,7 @@ namespace RailChess.Controllers
             {
                 var playerCount = relatedRes.Find(rs => rs.GameId == d.GameId)?.Count ?? 0;
                 res.Logs.Add(new(
-                    d.Rank, playerCount, d.GameId, d.StartTime, d.EloDelta, d.GameName, d.MapName, "", 0));
+                    d.Rank, playerCount, d.GameId, d.StartTime, d.EloDelta, d.GameName, d.MapName, d.MapId, "", 0));
             });
             return this.ApiResp(res);
         }
@@ -76,7 +76,7 @@ namespace RailChess.Controllers
             {
                 res.Logs.Add(new(
                     d.Rank, data.Count, d.GameId, game.StartTime, d.EloDelta,
-                    game.GameName ?? "", mapName ?? "??", d.UserName, d.UserId));
+                    game.GameName ?? "", mapName ?? "??", game.UseMapId, d.UserName, d.UserId));
             });
             return this.ApiResp(res);
         }
@@ -109,7 +109,7 @@ namespace RailChess.Controllers
             {
                 public GameResultListItem(
                     int rank, int playerCount, int gameId, DateTime startTime, int eloDelta,
-                    string gameName, string mapName, string userName, int userId)
+                    string gameName, string mapName, int mapId, string userName, int userId)
                 {
                     Rank = rank;
                     PlayerCount = playerCount;
@@ -118,6 +118,7 @@ namespace RailChess.Controllers
                     EloDelta = 0;//eloDelta;
                     GameName = gameName;
                     MapName = mapName;
+                    MapId = mapId;
                     UserName = userName;
                     UserId = userId;
                 }
@@ -128,6 +129,7 @@ namespace RailChess.Controllers
                 public int EloDelta { get; set; }
                 public string GameName { get; set; }
                 public string MapName { get; set; }
+                public int MapId { get; set; }
                 public string UserName { get; set; }
                 public int UserId { get; set; }
             }

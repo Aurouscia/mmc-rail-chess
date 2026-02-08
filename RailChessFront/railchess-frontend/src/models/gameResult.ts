@@ -6,6 +6,7 @@ interface GameResultListItem {
     EloDelta: number;
     GameName: string;
     MapName: string;
+    MapId: number;
     UserName: string;
     UserId: number;
 }

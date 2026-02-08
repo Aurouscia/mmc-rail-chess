@@ -6,11 +6,12 @@ import { RailChessMapIndexResult, RailChessMapIndexResultItem } from '../models/
 import Loading from '../components/Loading.vue';
 import SideBar from '../components/SideBar.vue';
 import Notice from '../components/Notice.vue';
-import { router } from '../main';
 import copy from 'copy-to-clipboard';
+import { useRoute, useRouter } from 'vue-router';
 
 const pop = injectPop()
-
+const router = useRouter()
+const route = useRoute()
 const search = ref<string>();
 const orderBy = ref<'score'|undefined>()
 const scoreMin = ref<number>(0)
@@ -40,6 +41,7 @@ async function load(){
 
 const authorSearchPrefix = "作者："
 const mineSearch = "作者：我自己"
+const idSearchPrefix = "ID："
 async function searchAuthorName(authorName:string) {
     search.value = `${authorSearchPrefix}${authorName}`
     pageIdx.value = 0;
@@ -50,6 +52,12 @@ async function searchMine() {
     pageIdx.value = 0;
     await load()
 }
+async function searchId(id:number) {
+    search.value = `${idSearchPrefix}${id}`
+    pageIdx.value = 0
+    await load()
+}
+
 async function switchPage(to:'prev'|'next') {
     let switched = false
     if(to=='prev' && pageCanPrev.value){
@@ -173,7 +181,11 @@ const baseUrl = import.meta.env.VITE_BASEURL;
 var api:Api;
 onMounted(async()=>{
     api = injectApi()
-    await load();
+    let id = Number(route.query.id)
+    if(id > 0)           
+        await searchId(id)
+    else
+        await load();
 })
 </script>
 
@@ -203,7 +215,7 @@ onMounted(async()=>{
         </div>
         <div>
             <div>
-                <button @click="searchMine" class="minor mine-filter">我的棋盘</button>
+                <button @click="searchMine" class="minor mine-filter">我创建的</button>
             </div>
             <div>
                 <select v-model="orderBy" @change="handleBlur">
@@ -411,7 +423,7 @@ input[type=file]{
 
 .mine-filter{
     font-size: unset;
-    border: 1px solid #aaa;
+    border: 1px solid #ccc;
     color: black;
     margin: 5px;
     padding: 3px;

@@ -23,9 +23,14 @@ function jumpToPlayerLog(playerId:number){
     router.push(`/results/ofPlayer/${playerId}`);
 }
 
-const mapName = computed(()=>{
-    if(data.value?.Logs.length)
-        return data.value?.Logs[0]?.MapName
+const mapNameAndId = computed(()=>{
+    if(data.value?.Logs.length){
+        const first = data.value.Logs[0]
+        return {
+            id: first.MapId,
+            name: first.MapName
+        }
+    }
 })
 const gameName = computed(()=>{
     if(data.value?.Logs.length)
@@ -46,9 +51,15 @@ onMounted(async()=>{
                 {{ data.Logs[0].StartTime }} 对局记录<br/> 
             </h1>
             <div class="info-and-ops">
-                <button @click="router.push('/playback/'+gameId)">查看棋局回放</button>
-                <button v-if="gameName" class="off">对局名称：{{ gameName }}</button>
-                <button class="off">使用棋盘：{{ mapName }}</button>
+                <button v-if="gameName" class="off">
+                    对局名称：{{ gameName }}
+                </button>
+                <button v-if="mapNameAndId" @click="router.push('/maps?id='+mapNameAndId?.id)">
+                    使用棋盘：{{ mapNameAndId?.name }}
+                </button>
+                <button @click="router.push('/playback/'+gameId)">
+                    查看棋局回放
+                </button>
             </div>
             <table><tbody>
                 <tr>

@@ -20,6 +20,7 @@ namespace RailChess.Controllers
         private readonly CoreGraphEvaluator _graphEvaluator;
         private const string myMaps = "作者：我自己";
         private const string authorSearchPrefix = "作者：";
+        private const string idSearchPrefix = "ID：";
         private const string orderByScore = "score";
 
         public MapController(
@@ -50,6 +51,14 @@ namespace RailChess.Controllers
                         .Select(x => x.Id)
                         .FirstOrDefault();
                     q = q.Where(x => x.Author == uid);
+                }
+                else if (search.StartsWith(idSearchPrefix))
+                {
+                    search = search[idSearchPrefix.Length..];
+                    if (int.TryParse(search, out int id))
+                        q = q.Where(x => x.Id == id);
+                    else
+                        q = new EnumerableQuery<RailChessMap>([]);
                 }
                 else
                 {
