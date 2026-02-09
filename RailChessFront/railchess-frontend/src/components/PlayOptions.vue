@@ -3,7 +3,7 @@ import { storeToRefs } from 'pinia';
 import { usePlayOptionsStore } from '../utils/stores/playOptionsStore';
 
 defineProps<{
-    playback?:boolean
+    playback?:boolean|string
 }>()
 
 const { bgOpacity, staSizeRatio, vacuumStaOpacity, autoSeekInterval, connDisplayMode } = storeToRefs(usePlayOptionsStore())

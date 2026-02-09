@@ -674,7 +674,7 @@ watch(props,()=>{
     </div>
 </SideBar>
 <SideBar ref="sidebarOptions">
-    <PlayOptions></PlayOptions>
+    <PlayOptions :playback="playback"></PlayOptions>
 </SideBar>
 <Timeline v-if="playback" :game-id="gameId" @view-time="t=>sgrc.syncMe(t)"></Timeline>
 </template>
