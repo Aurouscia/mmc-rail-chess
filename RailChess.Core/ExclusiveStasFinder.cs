@@ -1,6 +1,5 @@
 ﻿using RailChess.Core.Abstractions;
 using RailChess.GraphDefinition;
-using System;
 
 namespace RailChess.Core
 {
@@ -36,9 +35,8 @@ namespace RailChess.Core
                     {
                         if (capturedByOthers.Contains(n.Station.Id))
                             continue;//不能往其他人占了的点走
-                        if (hisReachable.Contains(n.Station.Id))
+                        if (!hisReachable.Add(n.Station.Id))
                             continue;//不能往回走
-                        hisReachable.Add(n.Station.Id);
                         active.Enqueue(n.Station);
                     }
                     if (active.Count == 0) break;

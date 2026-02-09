@@ -24,9 +24,10 @@ namespace RailChess.Core
         /// 特别感谢Momochai(SlinkierApple13)对算法优化的指导
         /// </summary>
         private static IEnumerable<IEnumerable<int>> FindAllPaths(
-            Graph graph, int userId, int stepsA, int stepsB, int maxiumTransfer = int.MaxValue)
+            Graph graph, int userId, int stepsA, int stepsB, int maxiumTransfer)
         {
             var limit = DateTime.Now.AddSeconds(3);
+            // ReSharper disable once InconsistentNaming
             int stepsAB = stepsA + stepsB;
             if (stepsA == 0 && stepsB == 0)
                 return new List<List<int>>();
@@ -52,12 +53,10 @@ namespace RailChess.Core
             var startPoint = graph.Stations.Find(x => x.Id == from) ?? throw new Exception("算路异常:找不到指定起始点");
             //出发：可从该站的任何线路的任何索引出发，全部作为初始路径
             List<LinedStaCollapsed> startStas = [];
-            if(graph.LineStaIndexes is { })
+            if(graph.LineStaIndexes is not null)
             {
-                foreach(var lineKv in graph.LineStaIndexes)
+                foreach(var (lineId, dict) in graph.LineStaIndexes)
                 {
-                    var lineId = lineKv.Key;
-                    var dict = lineKv.Value;
                     if (dict.TryGetValue(startPoint.Id, out var indexes))
                     {
                         var ress = indexes.ConvertAll(x => new LinedStaCollapsed(lineId, startPoint, x));
@@ -97,7 +96,7 @@ namespace RailChess.Core
                 // 元素数=已走步数+1，所以元素数=步数上限时，说明还差最后一个元素
                 bool pNearFull = p.Count == stepsAB; 
                 bool pJustStared = p.Count == 1;
-                // 零点必须全部考虑，否则会漏掉“换乘到并行线后再分叉”的情况
+                // 邻点必须全部考虑，否则会漏掉“换乘到并行线后再分叉”的情况
                 // 见测试 TransferThenSplit 方法
                 var neighbors = pTail.Station.Neighbors;
                 foreach (var n in neighbors)
@@ -215,7 +214,7 @@ namespace RailChess.Core
             return paths.Any(x => x.LastOrDefault() == to);
         }
 
-        public static bool DisableTimeoutTestOnly { get; set; } = false;
+        public static bool DisableTimeoutTestOnly { get; set; }
 
         private class LinedPath
         {
@@ -250,7 +249,7 @@ namespace RailChess.Core
         /// </summary>
         private class LinedStaCollapsed : LinedSta
         {
-            public LinedStaCollapsed(
+            private LinedStaCollapsed(
                 LinedSta sta, int indexChosen
                 ) : base(sta.LineId, sta.Station)
             {
@@ -273,9 +272,9 @@ namespace RailChess.Core
             /// <returns>坍缩结果</returns>
             public static List<LinedStaCollapsed> Collapse(LinedSta sta)
             {
-                return sta.Indexes is { }
-                    ? sta.Indexes.ConvertAll(x => new LinedStaCollapsed(sta, x)) ?? []
-                    : [new(sta, 0)]; // 无线路信息（单元测试环境）
+                return sta.Indexes is not null
+                    ? sta.Indexes.ConvertAll(x => new LinedStaCollapsed(sta, x))
+                    : [new LinedStaCollapsed(sta, 0)]; // 无线路信息（单元测试环境）
             }
             public bool IsEquivAs(LinedStaCollapsed other)
             {
