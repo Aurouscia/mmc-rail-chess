@@ -10,19 +10,21 @@
   "dependencies": {
     "@aurouscia/au-undo-redo": "^0.3.0",
     "@microsoft/signalr": "^9.0.6",
-    "axios": "^1.13.4",
+    "axios": "^1.13.5",
+    "chart.js": "^4.5.1",
     "copy-to-clipboard": "^3.3.3",
     "dompurify": "^3.3.1",
     "lodash-es": "^4.17.23",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
-    "vue": "^3.5.27",
-    "vue-router": "^5.0.1"
+    "vue": "^3.5.28",
+    "vue-chartjs": "^5.3.3",
+    "vue-router": "^5.0.2"
   },
   "devDependencies": {
     "@aurouscia/vite-app-version": "^0.2.0",
     "@types/lodash-es": "^4.17.12",
-    "@vitejs/plugin-vue": "^6.0.3",
+    "@vitejs/plugin-vue": "^6.0.4",
     "execa": "^9.6.1",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
