@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { GameInitData, Player, SyncData } from '../models/play';
 import { avtSrc } from '../utils/fileSrc';
+import ScoreDonutChart from './ScoreDonutChart.vue';
 
 const props = defineProps<{
     init: GameInitData,
@@ -59,6 +60,7 @@ const rankLocked = computed<boolean[]>(()=>{
             <b>分数：</b>{{ totalScored }}/{{ init.TotalScore }}
         </div>
     </div>
+    <ScoreDonutChart :total-score="init.TotalScore" :players="playerScoreboard"></ScoreDonutChart>
     <div class="playerList">
         <div v-for="p, idx in playerScoreboard" class="playerItem"
             :class="{playerOut: p.out}">
@@ -83,10 +85,10 @@ const rankLocked = computed<boolean[]>(()=>{
     border-radius: 8px;
 
     .gameInfo {
-        margin-bottom: 16px;
+        margin-bottom: 10px;
         border-bottom: 1px solid #ddd;
         .infoItem {
-            margin: 10px 0px;
+            margin-bottom: 10px;
             color: #666;
             b {
                 color: #333;
@@ -97,7 +99,8 @@ const rankLocked = computed<boolean[]>(()=>{
     .playerList {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
+        padding-top: 10px;
 
         .playerItem {
             display: flex;
@@ -107,6 +110,7 @@ const rankLocked = computed<boolean[]>(()=>{
             background-color: #fff;
             border-radius: 6px;
             transition: background-color 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
             .rank {
                 font-weight: bold;

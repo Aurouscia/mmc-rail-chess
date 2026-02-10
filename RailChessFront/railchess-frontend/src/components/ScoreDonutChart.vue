@@ -15,7 +15,7 @@ const props = defineProps<{
 const chartData = computed(() => {
     const labels = props.players.map(p => p.name)
     const data = props.players.map(p => p.score)
-    const backgroundColors = [
+    const baseColors = [
         '#5470c6',
         '#91cc75',
         '#fac858',
@@ -36,11 +36,16 @@ const chartData = computed(() => {
         data.push(remainingScore)
     }
     
+    // 循环使用颜色，确保玩家数量超出颜色列表时仍有颜色
+    const backgroundColors = data.map((_, index) => 
+        baseColors[index % baseColors.length]
+    )
+    
     return {
         labels,
         datasets: [{
             data,
-            backgroundColor: backgroundColors.slice(0, data.length),
+            backgroundColor: backgroundColors,
             borderWidth: 2,
             borderColor: '#fff',
             hoverOffset: 4
@@ -57,7 +62,7 @@ const chartOptions = {
             position: 'bottom' as const,
             labels: {
                 boxWidth: 12,
-                padding: 10,
+                padding: 4,
                 font: {
                     size: 11
                 }
@@ -66,10 +71,9 @@ const chartOptions = {
         tooltip: {
             callbacks: {
                 label: (context: any) => {
-                    const label = context.label || ''
                     const value = context.parsed || 0
                     const percentage = ((value / props.totalScore) * 100).toFixed(1)
-                    return `${label}: ${value}分 (${percentage}%)`
+                    return ` ${value}分 (${percentage}%)`
                 }
             }
         },
@@ -77,11 +81,11 @@ const chartOptions = {
             display: true,
             text: '分数分布',
             font: {
-                size: 14
+                size: 12
             },
             padding: {
-                top: 10,
-                bottom: 10
+                top: 4,
+                bottom: 4
             }
         }
     }
@@ -98,6 +102,7 @@ const chartOptions = {
 .scoreDonutChart {
     width: 100%;
     padding: 12px;
+    box-sizing: border-box;
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
