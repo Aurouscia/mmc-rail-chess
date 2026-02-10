@@ -1,15 +1,17 @@
 import { existsSync, rmSync, mkdirSync } from 'fs';
 
-const folderPath = '../../RailChess/wwwroot/assets';
+const folderPaths = ['../../RailChess/wwwroot/assets', 'dist'];
 
 export function clean(){
-    try {
-        if (existsSync(folderPath)) {
-            rmSync(folderPath, { recursive: true });
-            console.log('assets folder removed');
+    for(const folderPath of folderPaths){
+        try {
+            if (existsSync(folderPath)) {
+                rmSync(folderPath, { recursive: true });
+                console.log('assets folder removed：', folderPath);
+            }
+            mkdirSync(folderPath, { recursive: true });
+        } catch (err) {
+            console.error('assets folder removal failed', err);
         }
-        mkdirSync(folderPath, { recursive: true });
-    } catch (err) {
-        console.error('assets folder removal failed', err);
     }
 }

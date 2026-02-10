@@ -13,6 +13,16 @@ export default defineConfig({
     rollupOptions: {
       output:{
         manualChunks: (id) => {
+          if (id.includes('lodash-es'))
+            return 'lodash'
+          if (id.includes('/node_modules/vue/') || id.includes('/node_modules/@vue/'))
+            return 'vue'
+          if (id.includes('signalr'))
+            return 'signalr'
+          if (id.includes('axios'))
+            return 'axios'
+          if (id.includes('chart.js'))
+            return 'chart'
           if (id.includes('node_modules'))
             return 'libs'
         }

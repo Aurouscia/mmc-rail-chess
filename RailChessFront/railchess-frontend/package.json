@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node src/build/build.mjs"
+    "build": "node src/build/build.mjs",
+    "build-here": "node src/build/build.mjs --here"
   },
   "dependencies": {
     "@aurouscia/au-undo-redo": "^0.3.0",
