@@ -13,6 +13,34 @@ const playerScoreboard = computed<Player[]>(()=>{
     res.sort((a, b) => b.score - a.score)
     return res
 })
+
+const rankLocked = computed<boolean[]>(()=>{
+    const list = playerScoreboard.value
+    if (list.length === 0) return []
+    
+    // 计算剩余分数
+    const totalScored = list.reduce((sum, p) => sum + p.score, 0)
+    const remainingScore = props.init.TotalScore - totalScored
+    
+    // 计算相邻玩家之间能否互换（能否超过对方）
+    // canSwap[i] 表示玩家 i 和玩家 i+1 能否互换排名（即 i+1 能否超过 i）
+    const canSwap: boolean[] = []
+    for (let i = 0; i < list.length - 1; i++) {
+        // 后一名玩家(i+1)能否超过前一名玩家(i)
+        canSwap[i] = list[i+1].score + remainingScore >= list[i].score
+    }
+    
+    // 计算每个玩家的排名是否锁定
+    // 玩家 i 的排名锁定 = 不能上升（不能与前一名互换）且 不能下降（不能与后一名互换）
+    const locked: boolean[] = []
+    for (let i = 0; i < list.length; i++) {
+        const canRise = i > 0 && canSwap[i-1]      // 能与前一名互换（上升）
+        const canFall = i < list.length - 1 && canSwap[i]  // 能与后一名互换（下降）
+        locked[i] = !canRise && !canFall
+    }
+    
+    return locked
+})
 </script>
 
 <template>
@@ -29,8 +57,14 @@ const playerScoreboard = computed<Player[]>(()=>{
         </span>
     </div>
     <div class="playerList">
-        <div v-for="p, idx in playerScoreboard" class="playerItem" :class="{playerOut: p.out}">
-            <span class="rank">{{ idx+1 }}.</span>
+        <div v-for="p, idx in playerScoreboard" class="playerItem"
+            :class="{playerOut: p.out}">
+            <span v-if="rankLocked[idx]" class="rank">
+                [{{ idx+1 }}]
+            </span>
+            <span v-else class="rank">
+                {{ idx+1 }}
+            </span>
             <span class="score">{{ p.score }}</span>
             <img class="avatar" :src="avtSrc(p.avtFileName)"/>
             <span class="playerName">{{ p.name }}</span>
@@ -70,7 +104,7 @@ const playerScoreboard = computed<Player[]>(()=>{
         .playerItem {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             padding: 8px;
             background-color: #fff;
             border-radius: 6px;
@@ -83,8 +117,9 @@ const playerScoreboard = computed<Player[]>(()=>{
             .rank {
                 font-weight: bold;
                 color: #666;
-                min-width: 24px;
+                min-width: 30px;
                 text-align: center;
+                font-family: monospace;
             }
 
             .score {
