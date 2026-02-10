@@ -62,7 +62,7 @@ const chartOptions = {
             position: 'bottom' as const,
             labels: {
                 boxWidth: 12,
-                padding: 4,
+                padding: 5,
                 font: {
                     size: 11
                 }
@@ -81,10 +81,10 @@ const chartOptions = {
             display: true,
             text: '分数分布',
             font: {
-                size: 12
+                size: 13
             },
             padding: {
-                top: 4,
+                top: 5,
                 bottom: 4
             }
         }
@@ -101,7 +101,6 @@ const chartOptions = {
 <style scoped lang="scss">
 .scoreDonutChart {
     width: 100%;
-    padding: 12px;
     box-sizing: border-box;
     background-color: #fff;
     border-radius: 8px;

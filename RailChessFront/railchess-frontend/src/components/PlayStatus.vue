@@ -108,6 +108,7 @@ const rankLocked = computed<boolean[]>(()=>{
             gap: 4px;
             padding: 4px;
             background-color: #fff;
+            border: 1px solid #fff;
             border-radius: 6px;
             transition: background-color 0.2s ease;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -146,8 +147,26 @@ const rankLocked = computed<boolean[]>(()=>{
             }
 
             &.playerOut {
-                * {
-                    opacity: 0.5;
+                background-color: #f5f5f5;
+                border: 1px solid #e0e0e0;
+
+                &::after {
+                    content: "出局";
+                    font-size: 10px;
+                    color: #fff;
+                    background: #999;
+                    padding: 2px 8px;
+                    border-radius: 10px;
+                    margin-left: auto;
+                }
+
+                .rank, .score, .playerName {
+                    opacity: 0.4;
+                }
+
+                .avatar {
+                    opacity: 0.3;
+                    filter: grayscale(100%);
                 }
             }
         }
