@@ -9,10 +9,16 @@ const props = defineProps<{
     sync: SyncData
 }>()
 
+const allOut = computed<boolean>(()=>{
+    return props.sync.playerStatus.every(x=>x.out)
+})
+
 const playerScoreboard = computed<Player[]>(()=>{
     const res = [...props.sync.playerStatus]
     res.sort((a, b) => b.score - a.score)
-    return res
+    if(!allOut.value)
+        return res
+    return res.map(x=>({...x, out: false}))
 })
 
 const totalScored = computed(()=>{
