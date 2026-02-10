@@ -30,16 +30,21 @@ const chartData = computed(() => {
     // 如果还有剩余分数，添加一个"未分配"区块
     const totalScored = data.reduce((sum, score) => sum + score, 0)
     const remainingScore = props.totalScore - totalScored
+    const hasRemaining = remainingScore > 0
     
-    if (remainingScore > 0) {
-        labels.push('未分配')
+    if (hasRemaining) {
+        labels.push('未占领')
         data.push(remainingScore)
     }
     
     // 循环使用颜色，确保玩家数量超出颜色列表时仍有颜色
-    const backgroundColors = data.map((_, index) => 
-        baseColors[index % baseColors.length]
-    )
+    // "未分配"固定使用灰色
+    const backgroundColors = data.map((_, index) => {
+        if (hasRemaining && index === data.length - 1) {
+            return '#dddddd'
+        }
+        return baseColors[index % baseColors.length]
+    })
     
     return {
         labels,
