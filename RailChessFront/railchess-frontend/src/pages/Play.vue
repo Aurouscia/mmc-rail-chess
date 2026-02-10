@@ -436,6 +436,7 @@ function send(){
 }
 
 const sidebar = useTemplateRef('sidebar')
+const sidebarStatus = useTemplateRef('sidebarStatus')
 const sidebarOptions = useTemplateRef('sidebarOptions')
 const msgs = ref<TextMsg[]>([]);
 const frame = useTemplateRef('frame')
@@ -645,7 +646,7 @@ watch(props,()=>{
     </div>
 </div>
 <div class="menuEntries">
-    <button class="minor" @click="sidebarOptions?.extend">战况</button>
+    <button class="minor" @click="sidebarStatus?.extend">战况</button>
     <button class="confirm" @click="sidebar?.extend">菜单</button>
 </div>
 <div class="scaleBtn" :style="{right:scalerPosRight+'px'}">
@@ -675,17 +676,22 @@ watch(props,()=>{
         <button v-show="meHost && !ended && !gameStarted" class="cancel" @click="sgrc.gameReset">下令重置房间</button>
         <button v-show="gameStarted && !ended" class="cancel" @click="sgrc.kickAfk">移除挂机玩家</button>
         <button v-show="ended && !playback" @click="router.replace('/playback/'+props.id)">查看本局回放</button>
-        <button class="off" @click="router.push('/')">返回主菜单</button>
+        <div class="twinBtns">
+            <button class="minor" @click="sidebarOptions?.extend">设置栏</button>
+            <button class="off" @click="router.push('/')">主菜单</button>
+        </div>
     </div>
 </SideBar>
-<SideBar ref="sidebarOptions">
+<SideBar ref="sidebarStatus">
     <PlayStatus v-if="initData && syncData" :init="initData" :sync="syncData"></PlayStatus>
+</SideBar>
+<SideBar ref="sidebarOptions">
     <PlayOptions :playback="playback"></PlayOptions>
 </SideBar>
 <Timeline v-if="playback" :game-id="gameId" @view-time="t=>sgrc.syncMe(t)"></Timeline>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 canvas{
     position: absolute;
 }
@@ -736,10 +742,17 @@ canvas{
 }
 .sidebarBtns{
     width: 200px;
-    margin: 0px auto 10px auto;
+    margin: 6px auto 10px auto;
     display: flex;
     flex-direction: column;
-    gap:5px;
+    align-items: stretch;
+    gap: 5px;
+    .twinBtns{
+        display: flex;
+        button{
+            flex: 1;
+        }
+    }
 }
 .decideBtn{
     position: fixed;
