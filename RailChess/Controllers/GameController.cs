@@ -221,11 +221,15 @@ namespace RailChess.Controllers
         {
             public string? BgFileName { get; set; }
             public string? TopoData { get; set; }
+            public int TotalScore { get; set; }
+            public string? MapName { get; set; }
             public RailChessGame GameInfo { get; set; }
             public GameInitData(RailChessMap map, RailChessGame game)
             {
                 BgFileName = map.ImgFileName;
                 TopoData = map.TopoData;
+                TotalScore = map.TotalDirections;
+                MapName = map.Title;
                 GameInfo = game;
             }
         }

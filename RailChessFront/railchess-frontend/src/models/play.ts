@@ -1,10 +1,12 @@
 import { getTimeStr } from "../utils/timeStamp"
 import { RailChessGame } from "./game"
 
-export interface InitData{
+export interface GameInitData{
     BgFileName:string,
     TopoData:string,
     GameInfo:RailChessGame
+    TotalScore:number
+    MapName:string
 }
 
 export interface OcpStatus{

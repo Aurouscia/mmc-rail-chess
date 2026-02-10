@@ -9,7 +9,7 @@ namespace RailChess.Play.Services.Core
             Dictionary<int, int> dict = [];
             graph.Stations.ForEach(x =>
             {
-                var count = x.Neighbors.Select(x => x.Station).Distinct().Count();
+                var count = x.Neighbors.Select(s => s.Station).Distinct().Count();
                 dict.Add(x.Id, count);
             });
             return dict;

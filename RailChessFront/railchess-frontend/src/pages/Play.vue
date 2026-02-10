@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, CSSProperties, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { injectApi, injectHideTopbar, injectPop, injectUserInfo } from '../provides';
-import { OcpStatus, Player, SyncData, TextMsg } from '../models/play';
+import { GameInitData, OcpStatus, Player, SyncData, TextMsg } from '../models/play';
 import SideBar from '../components/SideBar.vue';
 import { RailChessTopo,Sta,posBase } from '../models/map';
 import { Api } from '../utils/api';
@@ -14,11 +14,12 @@ import { useAnimator, AnimNode, useConnectionAnimator, AnimConn } from '../utils
 import { truncate } from 'lodash-es'
 import { boxTypes } from '../components/Pop.vue';
 import Timeline from '../components/Timeline.vue';
+import PlayOptions from '../components/PlayOptions.vue';
+import PlayStatus from '../components/PlayStatus.vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { usePlayOptionsStore } from '../utils/stores/playOptionsStore';
 import { useJwtTokenStore } from '../utils/stores/jwtTokenStore';
-import PlayOptions from '../components/PlayOptions.vue';
 import { useRandNumDisplay } from '../utils/randNumDisplay';
 
 const router = useRouter()
@@ -335,6 +336,8 @@ window.setInterval(()=>{
 }, 1000)
 
 const bgFileName = ref<string>();
+const initData = ref<GameInitData>();
+const syncData = ref<SyncData>();
 const topoData = ref<RailChessTopo>();
 const gameInfo = ref<RailChessGame>();
 const meJoined = ref<boolean>(false);
@@ -356,6 +359,7 @@ async function sync(data:SyncData|null){
         console.log("无需同步数据")
         return
     }
+    syncData.value = data
     myLastSyncTimeMs = Date.now()
     resetPollTimer()
     //当前currentSelections未更新，还是上个玩家的可选选项
@@ -409,6 +413,7 @@ async function init(){
         bgFileName.value = resp.BgFileName;
         topoData.value = JSON.parse(resp.TopoData);
         gameInfo.value = resp.GameInfo;
+        initData.value = resp;
     }
     await nextTick();
     renderStaList()
@@ -640,7 +645,7 @@ watch(props,()=>{
     </div>
 </div>
 <div class="menuEntries">
-    <button class="minor" @click="sidebarOptions?.extend">设置</button>
+    <button class="minor" @click="sidebarOptions?.extend">战况</button>
     <button class="confirm" @click="sidebar?.extend">菜单</button>
 </div>
 <div class="scaleBtn" :style="{right:scalerPosRight+'px'}">
@@ -674,6 +679,7 @@ watch(props,()=>{
     </div>
 </SideBar>
 <SideBar ref="sidebarOptions">
+    <PlayStatus v-if="initData && syncData" :init="initData" :sync="syncData"></PlayStatus>
     <PlayOptions :playback="playback"></PlayOptions>
 </SideBar>
 <Timeline v-if="playback" :game-id="gameId" @view-time="t=>sgrc.syncMe(t)"></Timeline>

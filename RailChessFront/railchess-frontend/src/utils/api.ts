@@ -1,6 +1,6 @@
 import { GameActiveResult, GameTimeline, RailChessGame } from "../models/game";
 import { RailChessMapIndexResult, RailChessTopo, TopoEditorLoadResult } from "../models/map";
-import { InitData } from "../models/play";
+import { GameInitData } from "../models/play";
 import { QuickSearchResult } from "../models/quickSearch";
 import { User, UserRankingListItem } from "../models/user";
 import { HttpClient } from "./httpClient";
@@ -179,7 +179,7 @@ export class Api{
                 {id}
             );
             if(resp.success){
-                return resp.data as InitData
+                return resp.data as GameInitData
             }
         },
         delete:async(id:number)=>{
