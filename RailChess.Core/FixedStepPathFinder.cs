@@ -99,12 +99,21 @@ namespace RailChess.Core
                 // 邻点必须全部考虑，否则会漏掉“换乘到并行线后再分叉”的情况
                 // 见测试 TransferThenSplit 方法
                 var neighbors = pTail.Station.Neighbors;
+                HashSet<int> reachableBySameLine = [];
                 foreach (var n in neighbors)
                 {
+                    if (n.LineId == pTail.LineId)
+                        reachableBySameLine.Add(n.Station.Id);
+                }
+                foreach (var n in neighbors)
+                {
+                    bool isTransfer = pTail.LineId != n.LineId;
+                    if (isTransfer && reachableBySameLine.Contains(n.Station.Id))
+                        continue; // 本来可以同线路到达一样的站，就不要换乘了（确保共线段仅在进入之初或离开时换乘）
                     if (pNearFull && confirmedDest.Contains(n.Station.Id))
                         continue; // 接近终点，但该终点已有其他路线作为终点，无需再进来
                     if (p.TransferredTimes == maxiumTransfer || pJustStared)
-                        if (p.Tail?.LineId != n.LineId)
+                        if (isTransfer)
                             continue; // 已经到了换乘上限，不能往别的线跑；走出的第一步，也不能往别的线跑
                     if (n.Station.Owner != 0 && n.Station.Owner != userId)
                         continue; // 不是自己的/空的就不能往这走
@@ -132,7 +141,7 @@ namespace RailChess.Core
                             // 线路不一样：必然是换乘（但不一定能这么走）
                             needTransfer = true;
                             // 线路不一样：确保新点和其线上的tail点相邻，否则continue
-                            if (graph.Lines.Count > 0 && graph.LineStaIndexes is { })
+                            if (graph.Lines.Count > 0 && graph.LineStaIndexes is not null)
                             {
                                 // 仅在有线路信息时进入判断
                                 var line = graph.Lines[pTail.LineId];

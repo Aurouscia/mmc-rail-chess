@@ -1,5 +1,6 @@
 using RailChess.Core.Abstractions;
 using RailChess.GraphDefinition;
+// ReSharper disable InconsistentNaming
 
 namespace RailChess.Core.Test
 {
@@ -619,6 +620,56 @@ namespace RailChess.Core.Test
             CollectionAssert.AreEquivalent(new List<int> { 3 }, paths_2_1);
             var paths_3_1 = _finder.FindAllPaths(g, 1, 3, 1).ToList().ConvertAll(x=>x.Last());
             CollectionAssert.AreEquivalent(new List<int> { 4, 5 }, paths_3_1);
+            
+            userPosition[1] = 2;
+            var paths_1_0_at2 = _finder.FindAllPaths(g, 1, 1, 0).ToList().ConvertAll(x=>x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 1, 3 }, paths_1_0_at2);
+            var paths_2_0_at2 = _finder.FindAllPaths(g, 1, 2, 0).ToList().ConvertAll(x=>x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 4, 5 }, paths_2_0_at2);
+
+            userPosition[1] = 5;
+            var paths_2_0_at5 = _finder.FindAllPaths(g, 1, 2, 0).ToList().ConvertAll(x=>x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 2 }, paths_2_0_at5);
+            var paths_2_1_at5 = _finder.FindAllPaths(g, 1, 2, 1).ToList().ConvertAll(x=>x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 2, 4 }, paths_2_1_at5);
+            var paths_3_0_at5 = _finder.FindAllPaths(g, 1, 3, 0).ToList().ConvertAll(x=>x.Last());
+            CollectionAssert.AreEquivalent(new List<int>(), paths_3_0_at5);
+            var paths_3_1_at5 = _finder.FindAllPaths(g, 1, 3, 1).ToList().ConvertAll(x=>x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 1 }, paths_3_1_at5);
+        }
+
+        [TestMethod]
+        public void Corridor()
+        {
+            //           4
+            //          /
+            // 1---2---3
+            // 1---2---3---5
+            // 1---2---3
+            //          \
+            //           6
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            Sta sta4 = new(4, 1);
+            Sta sta5 = new(5, 1);
+            Sta sta6 = new(6, 1);
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            sta3.TwowayConnect(sta4, 1);
+            sta1.TwowayConnect(sta2, 2);
+            sta2.TwowayConnect(sta3, 2);
+            sta3.TwowayConnect(sta5, 2);
+            sta1.TwowayConnect(sta2, 3);
+            sta2.TwowayConnect(sta3, 3);
+            sta3.TwowayConnect(sta6, 3);
+            List<Sta> stas = [sta1, sta2, sta3, sta4, sta5, sta6];
+            Dictionary<int, int> userPosition = new() { { 1, 1 } };
+            Graph g = new(stas, userPosition);
+            var path_2_0 = _finder.FindAllPaths(g, 1, 2, 0).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 3 }, path_2_0);
+            var path_3_0 = _finder.FindAllPaths(g, 1, 3, 0).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 4, 5, 6 }, path_3_0);
         }
         
         [TestMethod]
