@@ -33,8 +33,11 @@ function capColor(capCount:number){
         //卡住记作-1
         return 'red'
     }
+    if(capCount === 0){
+        return '#aaa'
+    }
     if(capCount <= 9){
-        return 'black'
+        return '#666'
     }
     return 'green'
 }
