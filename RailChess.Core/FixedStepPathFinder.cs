@@ -96,6 +96,7 @@ namespace RailChess.Core
                 // 元素数=已走步数+1，所以元素数=步数上限时，说明还差最后一个元素
                 bool pNearFull = p.Count == stepsAB; 
                 bool pJustStared = p.Count == 1;
+                bool transferUsedUp = p.TransferredTimes == maxiumTransfer;
                 // 邻点必须全部考虑，否则会漏掉“换乘到并行线后再分叉”的情况
                 // 见测试 TransferThenSplit 方法
                 var neighbors = pTail.Station.Neighbors;
@@ -112,7 +113,7 @@ namespace RailChess.Core
                         continue; // 本来可以同线路到达一样的站，就不要换乘了（确保共线段仅在进入之初或离开时换乘）
                     if (pNearFull && confirmedDest.Contains(n.Station.Id))
                         continue; // 接近终点，但该终点已有其他路线作为终点，无需再进来
-                    if (p.TransferredTimes == maxiumTransfer || pJustStared)
+                    if (transferUsedUp || pJustStared)
                         if (isTransfer)
                             continue; // 已经到了换乘上限，不能往别的线跑；走出的第一步，也不能往别的线跑
                     if (n.Station.Owner != 0 && n.Station.Owner != userId)
@@ -140,6 +141,8 @@ namespace RailChess.Core
                         {
                             // 线路不一样：必然是换乘（但不一定能这么走）
                             needTransfer = true;
+                            if(transferUsedUp)
+                                continue;
                             // 线路不一样：确保新点和其线上的tail点相邻，否则continue
                             if (graph.Lines.Count > 0 && graph.LineStaIndexes is not null)
                             {
