@@ -51,12 +51,7 @@ defineExpose({moveDown})
 </div>
 </template>
 
-<style>
-.msg b{
-    text-decoration: underline;
-}
-</style>
-<style scoped>
+<style scoped lang="scss">
 .err{
     color:white;
     background-color: red;
@@ -78,18 +73,22 @@ defineExpose({moveDown})
     justify-content: space-between;
 }
 .msg{
-    width: 235px;
-    margin: 5px;
+    width: calc(100% - 20px);
+    margin: 5px auto;
     padding: 5px;
     background-color: white;
     border-radius: 5px;
+    &:deep(b){
+        text-decoration: underline;
+    }
 }
 .msgs{
     height: calc(100vh - 380px);
-    width: 270px;
+    width: calc(100% - 4px);
     overflow-x: hidden;
     overflow-y: scroll;
     border: 2px solid black;
     background-color: #aaa;
+    border-radius: 6px;
 }
 </style>

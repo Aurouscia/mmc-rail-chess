@@ -662,7 +662,7 @@ watch(props,()=>{
 <button v-show="!currentSelections?.length && gameStarted && nowMe && !ended && !playback" class="cancel decideBtn" @click="select">无路可走</button>
 <SideBar ref="sidebar">
     <TextMsgDisplay :msgs="msgs" ref="msgDisp"></TextMsgDisplay>
-    <div>
+    <div class="msgInput">
         <input v-model="sending" placeholder="说点什么"/>
         <button @click="send">发送</button>
     </div>
@@ -945,5 +945,24 @@ canvas{
 }
 img{
     user-select: none;
+}
+.msgInput{
+    padding: 6px 0px;
+    display: flex;
+    input, button{
+        font-size: 16px;
+        margin: 0px;
+        padding: 6px;
+        line-height: 20px;
+    }
+    input {
+        border: none;
+        background-color: #eee;
+        flex-grow: 1;
+        border-radius: 6px 0px 0px 6px;
+    }
+    button{
+        border-radius: 0px 6px 6px 0px;
+    }
 }
 </style>
