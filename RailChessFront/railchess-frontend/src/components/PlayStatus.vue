@@ -14,13 +14,16 @@ const playerScoreboard = computed<Player[]>(()=>{
     return res
 })
 
+const totalScored = computed(()=>{
+    return playerScoreboard.value.reduce((sum, p) => sum + p.score, 0)
+})
+
 const rankLocked = computed<boolean[]>(()=>{
     const list = playerScoreboard.value
     if (list.length === 0) return []
     
     // 计算剩余分数
-    const totalScored = list.reduce((sum, p) => sum + p.score, 0)
-    const remainingScore = props.init.TotalScore - totalScored
+    const remainingScore = props.init.TotalScore - totalScored.value
     
     // 计算相邻玩家之间能否互换（能否超过对方）
     // canSwap[i] 表示玩家 i 和玩家 i+1 能否互换排名（即 i+1 能否超过 i）
@@ -46,15 +49,15 @@ const rankLocked = computed<boolean[]>(()=>{
 <template>
 <div class="playStatus">
     <div class="gameInfo">
-        <span class="infoItem">
+        <div class="infoItem">
             <b>棋盘：</b>{{ init.MapName }}
-        </span>
-        <span v-if="init.GameInfo.GameName" class="infoItem">
+        </div>
+        <div v-if="init.GameInfo.GameName" class="infoItem">
             <b>对局：</b>{{ init.GameInfo.GameName }}
-        </span>
-        <span class="infoItem">
-            <b>总分：</b>{{ init.TotalScore }}
-        </span>
+        </div>
+        <div class="infoItem">
+            <b>分数：</b>{{ totalScored }}/{{ init.TotalScore }}
+        </div>
     </div>
     <div class="playerList">
         <div v-for="p, idx in playerScoreboard" class="playerItem"
@@ -75,21 +78,16 @@ const rankLocked = computed<boolean[]>(()=>{
 
 <style scoped lang="scss">
 .playStatus {
-    width: 280px;
-    padding: 16px;
+    padding: 10px;
     background-color: #f5f5f5;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     .gameInfo {
         margin-bottom: 16px;
-        padding-bottom: 12px;
         border-bottom: 1px solid #ddd;
-
         .infoItem {
-            display: inline-block;
-            margin-right: 12px;
-
+            margin: 10px 0px;
+            color: #666;
             b {
                 color: #333;
             }
@@ -104,37 +102,34 @@ const rankLocked = computed<boolean[]>(()=>{
         .playerItem {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px;
+            gap: 4px;
+            padding: 4px;
             background-color: #fff;
             border-radius: 6px;
             transition: background-color 0.2s ease;
 
-            &:hover {
-                background-color: #e8f4f8;
-            }
-
             .rank {
                 font-weight: bold;
                 color: #666;
-                min-width: 30px;
+                min-width: 26px;
                 text-align: center;
                 font-family: monospace;
             }
 
             .score {
                 font-weight: bold;
-                color: #1890ff;
-                min-width: 40px;
+                color: cornflowerblue;
+                min-width: 32px;
                 text-align: right;
+                font-family: monospace;
             }
 
             .avatar {
-                width: 40px;
-                height: 40px;
+                width: 28px;
+                height: 28px;
                 border-radius: 50%;
                 object-fit: cover;
-                border: 2px solid #e0e0e0;
+                border: 1px solid #e0e0e0;
             }
 
             .playerName {
@@ -147,8 +142,9 @@ const rankLocked = computed<boolean[]>(()=>{
             }
 
             &.playerOut {
-                filter: saturate(0.4) brightness(1.2);
-                opacity: 0.7;
+                * {
+                    opacity: 0.5;
+                }
             }
         }
     }
