@@ -9,12 +9,15 @@ namespace RailChess.Core.Test
     public class FixedStepPathFinderTest
     {
         private readonly IFixedStepPathFinder _finder;
+        private Func<int> GetNeighborsTriedTimes;
         public FixedStepPathFinderTest()
         {
-            _finder = new FixedStepPathFinder();
+            var finder = new FixedStepPathFinder();
+            _finder = finder;
 
             //测试中关掉超时机制，以便断点调试
             FixedStepPathFinder.DisableTimeoutTestOnly = true;
+            GetNeighborsTriedTimes = () => finder.NeighborsTriedTimesTestOnly;
         }
         [TestMethod]
         public void Simple()
@@ -618,8 +621,10 @@ namespace RailChess.Core.Test
             sta3.TwowayConnect(sta5, 3);
             var paths_2_1 = _finder.FindAllPaths(g, 1, 2, 1).ToList().ConvertAll(x=>x.Last());
             CollectionAssert.AreEquivalent(new List<int> { 3 }, paths_2_1);
+            Assert.AreEqual(2, GetNeighborsTriedTimes());
             var paths_3_1 = _finder.FindAllPaths(g, 1, 3, 1).ToList().ConvertAll(x=>x.Last());
             CollectionAssert.AreEquivalent(new List<int> { 4, 5 }, paths_3_1);
+            Assert.AreEqual(5, GetNeighborsTriedTimes());
             
             userPosition[1] = 2;
             var paths_1_0_at2 = _finder.FindAllPaths(g, 1, 1, 0).ToList().ConvertAll(x=>x.Last());
@@ -666,10 +671,54 @@ namespace RailChess.Core.Test
             List<Sta> stas = [sta1, sta2, sta3, sta4, sta5, sta6];
             Dictionary<int, int> userPosition = new() { { 1, 1 } };
             Graph g = new(stas, userPosition);
-            var path_2_0 = _finder.FindAllPaths(g, 1, 2, 0).ToList().ConvertAll(x => x.Last());
-            CollectionAssert.AreEquivalent(new List<int> { 3 }, path_2_0);
-            var path_3_0 = _finder.FindAllPaths(g, 1, 3, 0).ToList().ConvertAll(x => x.Last());
-            CollectionAssert.AreEquivalent(new List<int> { 4, 5, 6 }, path_3_0);
+            var path_2_5 = _finder.FindAllPaths(g, 1, 2, 5).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 3 }, path_2_5);
+            Assert.AreEqual(4, GetNeighborsTriedTimes());
+            var path_3_5 = _finder.FindAllPaths(g, 1, 3, 5).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 4, 5, 6 }, path_3_5);
+            Assert.AreEqual(9, GetNeighborsTriedTimes());
+        }
+
+        private static IEnumerable<object[]> SuperCorridorTestData()
+        {
+            yield return [8, 8, 49];
+            yield return [9, 9, 64];
+            yield return [10, 10, 81];
+            yield return [10, 16, 129];
+            yield return [16, 10, 141];
+            yield return [16, 16, 225];
+            yield return [20, 20, 361];
+        }
+        
+        /// <summary>
+        /// 使用超长超多并线的“走廊”测试极限情况<br/>
+        /// “NeighborsTriedTimes”是“剪枝”后自增的一个计数器，其前面的运算开销很小，后面的运算开销较大，用来衡量剪枝的优化程度
+        /// 如果不进行“reachableBySameLine”判断，疑似为O(x^y)，判断后优化为O(x*y)
+        /// </summary>
+        /// <param name="length">走廊长度（站数）</param>
+        /// <param name="width">走廊宽度（线路数）</param>
+        /// <param name="expectTry">期望的“NeighborsTriedTimes值”</param>
+        [TestMethod]
+        [DynamicData(nameof(SuperCorridorTestData))]
+        public void SuperCorridor(int length, int width, int expectTry)
+        {
+            List<Sta> stas = [];
+            for (int staId = 1; staId <= length; staId++) 
+                stas.Add(new Sta(staId, 1));
+            for (int lineId = 1; lineId <= width; lineId++)
+            {
+                for (int j = 0; j < stas.Count - 1; j++)
+                {
+                    var sx = stas[j];
+                    var sy = stas[j + 1];
+                    sx.TwowayConnect(sy, lineId);
+                }
+            }
+            Dictionary<int, int> userPosition = new() { { 1, 1 } };
+            Graph g = new(stas, userPosition);
+            var path_extreme = _finder.FindAllPaths(g, 1, length - 1, length * 2).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { length }, path_extreme);
+            Assert.AreEqual(expectTry, GetNeighborsTriedTimes());
         }
         
         [TestMethod]

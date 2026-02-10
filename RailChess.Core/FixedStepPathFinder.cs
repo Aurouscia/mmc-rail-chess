@@ -1,4 +1,5 @@
-﻿using RailChess.Core.Abstractions;
+﻿using System.Diagnostics;
+using RailChess.Core.Abstractions;
 using RailChess.GraphDefinition;
 
 namespace RailChess.Core
@@ -23,10 +24,11 @@ namespace RailChess.Core
         /// <summary>
         /// 特别感谢Momochai(SlinkierApple13)对算法优化的指导
         /// </summary>
-        private static IEnumerable<IEnumerable<int>> FindAllPaths(
+        private IEnumerable<IEnumerable<int>> FindAllPaths(
             Graph graph, int userId, int stepsA, int stepsB, int maxiumTransfer)
         {
             var limit = DateTime.Now.AddSeconds(3);
+            ResetNeighborsTriedTimesTestOnly();
             // ReSharper disable once InconsistentNaming
             int stepsAB = stepsA + stepsB;
             if (stepsA == 0 && stepsB == 0)
@@ -123,6 +125,9 @@ namespace RailChess.Core
                         var lastButOne = p.Stations[^2];
                         if (lastButOne.Station.Id == n.Station.Id) continue; //不能掉头往回跑
                     }
+
+                    IncrementNeighborsTriedTimesTestOnly();
+                    
                     var nCollapseRes = LinedStaCollapsed.Collapse(n);
                     foreach (var ncr in nCollapseRes)
                     {
@@ -227,6 +232,11 @@ namespace RailChess.Core
         }
 
         public static bool DisableTimeoutTestOnly { get; set; }
+        [Conditional("DEBUG")]
+        private void ResetNeighborsTriedTimesTestOnly() => NeighborsTriedTimesTestOnly = 0;
+        [Conditional("DEBUG")]
+        private void IncrementNeighborsTriedTimesTestOnly() => NeighborsTriedTimesTestOnly++;
+        public int NeighborsTriedTimesTestOnly { get; private set; }
 
         private class LinedPath
         {
