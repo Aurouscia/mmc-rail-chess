@@ -2,10 +2,11 @@
 {
     public static class ListRandSelectExtension
     {
-        private readonly static Random r = new();
-        public static T RandomSelect<T>(this List<T> list)
+        public static T? RandomSelect<T>(this List<T> list)
         {
-            return list[r.Next(0, list.Count)];
+            if(list.Count == 0)
+                return default;
+            return list[Random.Shared.Next(0, list.Count)];
         }
     }
 }
