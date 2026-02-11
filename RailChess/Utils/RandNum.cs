@@ -34,10 +34,7 @@ namespace RailChess.Utils
             };
         }
 
-        /// <summary>
-        /// 类全局共用的随机数生成器
-        /// </summary>
-        private readonly static Random rand = new();
+
         /// <summary>
         /// 均匀分布
         /// </summary>
@@ -48,7 +45,7 @@ namespace RailChess.Utils
         {
             if (min >= max)
                 return min;
-            return rand.Next(min, max+1);
+            return Random.Shared.Next(min, max+1);
         }
         /// <summary>
         /// 高斯分布（正态分布）
@@ -63,7 +60,7 @@ namespace RailChess.Utils
                 return min;
             double mean = (min + max) / 2.0;
             double stddev = ((max - min) / 2.0) / edge;
-            Normal n = new(mean, stddev, rand);
+            Normal n = new(mean, stddev, Random.Shared);
             return LoopUntilGotInRange(min, max, n.Sample);
         }
 
