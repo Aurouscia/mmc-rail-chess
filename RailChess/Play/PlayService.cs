@@ -187,39 +187,45 @@ namespace RailChess.Play
                 return GetSyncData();
             return null;
         }
+
+        private static readonly Lock JoinLock = new();
         public string? Join()
         {
-            if(UserId<=0)
-                return "无身份信息";
-            if (_eventsService.GameStarted())
-                return "对局已开始，不能加入";
-            if (_eventsService.MeJoined())
-                return "已在对局中";
-            var ourGame = _gameService.OurGame();
-            var allowUserIdCsv = ourGame.AllowUserIdCsv;
-            if (UserId != ourGame.HostUserId)
+            lock (JoinLock)
             {
-                //如果不是房主，那么判断是否允许加入
-                if (!string.IsNullOrWhiteSpace(allowUserIdCsv))
+                if (UserId <= 0)
+                    return "无身份信息";
+                if (_eventsService.GameStarted())
+                    return "对局已开始，不能加入";
+                if (_eventsService.MeJoined())
+                    return "已在对局中";
+                var ourGame = _gameService.OurGame();
+                var allowUserIdCsv = ourGame.AllowUserIdCsv;
+                if (UserId != ourGame.HostUserId)
                 {
-                    //如果allowUserIdCsv有值，那么需要检查当前玩家是否在里面
-                    var allowUserIds = allowUserIdCsv.Split(',');
-                    if (!allowUserIds.Contains(UserId.ToString()))
+                    //如果不是房主，那么判断是否允许加入
+                    if (!string.IsNullOrWhiteSpace(allowUserIdCsv))
                     {
-                        return "不在本局玩家名单内";
+                        //如果allowUserIdCsv有值，那么需要检查当前玩家是否在里面
+                        var allowUserIds = allowUserIdCsv.Split(',');
+                        if (!allowUserIds.Contains(UserId.ToString()))
+                        {
+                            return "不在本局玩家名单内";
+                        }
                     }
-                }   
+                }
+
+                var spawnCandidates = SpawnRule.Spawn(_coreGraphProvider, ourGame.SpawnRule);
+                var otherPlayersJoinEvents = _eventsService.PlayersJoinEvents();
+                var occupiedStations = otherPlayersJoinEvents.ConvertAll(x => x.StationId);
+                var spawnAvailable = spawnCandidates.Except(occupiedStations).ToList();
+                if (spawnAvailable.Count == 0)
+                    throw new Exception("房间已满，无法加入");
+                int startAt = spawnAvailable.RandomSelect();
+                _eventsService.Add(RailChessEventType.PlayerJoin, startAt, false);
+                _eventsService.Add(RailChessEventType.PlayerCapture, startAt);
+                return null;
             }
-            List<int> spawnCandidates = SpawnRule.Spawn(_coreGraphProvider, ourGame.SpawnRule);
-            var otherPlayersJoinEvents = _eventsService.PlayersJoinEvents();
-            var occupiedStations = otherPlayersJoinEvents.ConvertAll(x => x.StationId);
-            var spawnAvailable = spawnCandidates.Except(occupiedStations).ToList();
-            if (spawnAvailable.Count == 0)
-                throw new Exception("房间已满，无法加入");
-            int startAt = spawnAvailable.RandomSelect();
-            _eventsService.Add(RailChessEventType.PlayerJoin, startAt,false);
-            _eventsService.Add(RailChessEventType.PlayerCapture, startAt);
-            return null;
         }
 
         public string? StartGame()
