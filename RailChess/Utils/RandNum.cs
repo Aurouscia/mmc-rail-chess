@@ -60,31 +60,16 @@ namespace RailChess.Utils
                 return min;
             double mean = (min + max) / 2.0;
             double stddev = ((max - min) / 2.0) / edge;
-            Normal n = new(mean, stddev, Random.Shared);
-            return LoopUntilGotInRange(min, max, n.Sample);
-        }
-
-        /// <summary>
-        /// 重复尝试生成直到结果在范围内
-        /// </summary>
-        /// <param name="min">下界（含）</param>
-        /// <param name="max">上界（含）</param>
-        /// <param name="generate">生成函数</param>
-        /// <returns>随机结果</returns>
-        /// <exception cref="Exception">死循环</exception>
-        private static int LoopUntilGotInRange(int min, int max, Func<double> generate)
-        {
-            int safety = 10000;
-            int res;
-            do
-            {
-                res = (int)Math.Round(generate());
-                safety--;
-                if (safety <= 0)
-                    throw new Exception("死循环（随机数生成）");
-            }
-            while (res < min || res > max);
-            return res;
+            
+            // 计算边界对应的 CDF 值（使用 0.5 偏移确保包含边界）
+            double pMin = Normal.CDF(mean, stddev, min - 0.5);
+            double pMax = Normal.CDF(mean, stddev, max + 0.5);
+            
+            // 在有效概率范围内均匀采样，然后用 InvCDF 转换
+            double p = pMin + Random.Shared.NextDouble() * (pMax - pMin);
+            double result = Normal.InvCDF(mean, stddev, p);
+            
+            return (int)Math.Round(result);
         }
         /// <summary>
         /// 生成AB两次，返回 B*100+A
