@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef } from 'vue';
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { injectApi } from '../provides';
+import AarcConverterOptions from './AarcConverterOptions.vue';
 
 const api = injectApi()
+const configJson = ref<string>("{}")
+const showOptions = ref<boolean>(false)
 
 const errmsg = ref<string>()
 const md5 = ref<string>()
@@ -13,6 +16,12 @@ const result = ref<{
     status?: 'pending'|'processing'|'completed'|'failed'|'timeout',
     result?: object
 }>()
+
+// 配置变化时重置任务状态
+watch(configJson, () => {
+    taskKey.value = undefined
+    result.value = undefined
+})
 
 const fileInput = useTemplateRef('fileInput')
 async function onFileChange(e: Event) {
@@ -45,6 +54,7 @@ function clearFileInput(){
         fileInput.value.value = ""
         fileInput.value.dispatchEvent(new Event("change"))
     }
+    showOptions.value = false
 }
 async function createTask(){
     if(!md5.value)
@@ -55,7 +65,7 @@ async function createTask(){
     result.value = undefined
     taskCreating.value = true
     errmsg.value = undefined
-    const resp = await api.aarcConvert.createTask(md5.value, "{}")
+    const resp = await api.aarcConvert.createTask(md5.value, configJson.value)
     const key = resp.data?.key
     if(resp.success && key && typeof key === "string"){
         errmsg.value = undefined
@@ -163,12 +173,22 @@ onMounted(async()=>{
             <td>AARC存档json文件</td>
             <td>
                 <input type="file" ref="fileInput" @change="onFileChange" accept=".json" :disabled="taskCreating || resultGetting"/>
-                <button v-if="md5" class="lite" @click="clearFileInput">x</button>
+                <button v-if="md5" class="lite red" @click="clearFileInput">×</button>
             </td>
         </tr>
         <tr v-if="md5">
             <td>存档 md5</td>
             <td class="some-code">{{md5}}</td>
+        </tr>
+        <tr v-if="md5">
+            <td colspan="2">
+                <button @click="showOptions = !showOptions" class="lite blue">{{ showOptions ? '隐藏高级选项' : '显示高级选项' }}</button>
+            </td>
+        </tr>
+        <tr v-if="md5 && showOptions">
+            <td colspan="2">
+                <AarcConverterOptions v-model:config="configJson" />
+            </td>
         </tr>
         <tr v-if="md5">
             <td colspan="2">
@@ -229,6 +249,7 @@ onMounted(async()=>{
 <style scoped>
 table{
     margin: auto;
+    margin-bottom: 200px;
 }
 .explain-big{
     color: #333;
@@ -251,6 +272,13 @@ table{
 }
 button.lite{
     text-decoration: none;
+    font-weight: bold;
+}
+button.lite.blue{
+    color: cornflowerblue;
+}
+button.lite.red{
+    color: palevioletred
 }
 .some-code{
     font-size: 12px;

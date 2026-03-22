@@ -115,7 +115,7 @@ namespace RailChess.Controllers
                         {
                             JsonDocument.Parse(aarcJson);
                         }
-                        catch (JsonException)
+                        catch (System.Text.Json.JsonException)
                         {
                             throw new InvalidOperationException("aarc.json格式异常");
                         }
@@ -135,7 +135,7 @@ namespace RailChess.Controllers
                             {
                                 JsonDocument.Parse(configJson);
                             }
-                            catch (JsonException)
+                            catch (System.Text.Json.JsonException)
                             {
                                 throw new InvalidOperationException("config参数不是合法的JSON");
                             }
