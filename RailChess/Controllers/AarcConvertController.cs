@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Mime;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -108,20 +109,42 @@ namespace RailChess.Controllers
                         return this.ApiFailedResp("超时，请刷新页面并重新上传");
                     try
                     {
-                        using var reader = new JsonTextReader(System.IO.File.OpenText(filePath))
+                        // 验证 aarc.json 是否为合法 JSON
+                        var aarcJson = System.IO.File.ReadAllText(filePath);
+                        try
                         {
-                            CloseInput = true,
-                            SupportMultipleContent = false
-                        };
+                            JsonDocument.Parse(aarcJson);
+                        }
+                        catch (JsonException)
+                        {
+                            throw new InvalidOperationException("aarc.json格式异常");
+                        }
+
                         using var reqFileStream = System.IO.File.Create(reqFilePath);
-                        using var writer = new JsonTextWriter(new StreamWriter(reqFileStream));
-                        writer.Formatting = Formatting.None;
-                        writer.CloseOutput = true;
+                        using var writer = new Utf8JsonWriter(reqFileStream, new JsonWriterOptions { Indented = false });
                         writer.WriteStartObject();
                         writer.WritePropertyName("aarc");
-                        if (!reader.Read() || reader.TokenType != JsonToken.StartObject)
-                            throw new JsonReaderException($"json格式异常");
-                        writer.WriteToken(reader, true);
+                        using (var aarcDoc = JsonDocument.Parse(aarcJson))
+                        {
+                            aarcDoc.RootElement.WriteTo(writer);
+                        }
+                        if (!string.IsNullOrEmpty(configJson))
+                        {
+                            // 验证 configJson 是否为合法 JSON
+                            try
+                            {
+                                JsonDocument.Parse(configJson);
+                            }
+                            catch (JsonException)
+                            {
+                                throw new InvalidOperationException("config参数不是合法的JSON");
+                            }
+                            writer.WritePropertyName("config");
+                            using (var configDoc = JsonDocument.Parse(configJson))
+                            {
+                                configDoc.RootElement.WriteTo(writer);
+                            }
+                        }
                         writer.WriteEndObject();
                         writer.Flush();
                     }
