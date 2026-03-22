@@ -233,11 +233,19 @@ export class Api{
             )
             return resp
         },
-        createTask: async(md5:string, configJson:string)=>{
+        createTask: async(md5:string, configJson:string, sourceDomain?:string, sourceId?:number)=>{
             const resp = await this.httpClient.request(
                 "/api/AarcConvert/CreateTask",
                 "postForm",
-                {md5, configJson}
+                {md5, configJson, sourceDomain, sourceId}
+            )
+            return resp
+        },
+        getConfig: async(sourceDomain:string, sourceId:number)=>{
+            const resp = await this.httpClient.request(
+                "/api/AarcConvert/GetConfig",
+                "get",
+                {sourceDomain, sourceId}
             )
             return resp
         },

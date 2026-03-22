@@ -82,7 +82,7 @@ namespace RailChess.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateTask(string md5, string? configJson, string? domain, int? archiveId)
+        public async Task<IActionResult> CreateTask(string md5, string? configJson, string? sourceDomain, int? sourceId)
         {                
             if (_svcUrl is null)
                 return this.ApiFailedResp("缺少转换器配置");
@@ -92,17 +92,20 @@ namespace RailChess.Controllers
 
             // 如果提供了域名和存档ID，保存配置
             string? configFilePath = null;
-            if (!string.IsNullOrEmpty(configJson) && !string.IsNullOrEmpty(domain) && archiveId.HasValue)
+            if (!string.IsNullOrEmpty(configJson) && !string.IsNullOrEmpty(sourceDomain) && sourceId.HasValue)
             {
                 // 验证域名格式（只允许字母、数字、英文句点和连字符）
-                if (!Regex.IsMatch(domain, @"^[a-zA-Z0-9.-]+$"))
+                if (!Regex.IsMatch(sourceDomain, @"^[a-zA-Z0-9.-]+$"))
                     return this.ApiFailedResp("域名格式不正确");
                 
                 var configsDirPath = Path.Combine(storeDir, configsDir);
                 if (!Directory.Exists(configsDirPath))
                     Directory.CreateDirectory(configsDirPath);
                 
-                configFilePath = Path.Combine(configsDirPath, $"{domain}.{archiveId.Value}.json");
+                var domainDirPath = Path.Combine(configsDirPath, sourceDomain);
+                if (!Directory.Exists(domainDirPath))
+                    Directory.CreateDirectory(domainDirPath);
+                configFilePath = Path.Combine(domainDirPath, $"{sourceId.Value}.json");
                 System.IO.File.WriteAllText(configFilePath, configJson);
             }
 
@@ -155,6 +158,28 @@ namespace RailChess.Controllers
         public IActionResult GetSvcUrl()
         {
             return this.ApiResp(new { svcUrl = _svcUrl });
+        }
+
+        /// <summary>
+        /// 通过域名和ID获取config.json内容
+        /// </summary>
+        /// <param name="sourceDomain">域名</param>
+        /// <param name="sourceId">存档ID</param>
+        /// <returns>config.json内容，找不到返回空对象</returns>
+        [HttpGet]
+        public IActionResult GetConfig(string sourceDomain, int sourceId)
+        {
+            // 验证域名格式
+            if (!Regex.IsMatch(sourceDomain, @"^[a-zA-Z0-9.-]+$"))
+                return this.ApiFailedResp("域名格式不正确");
+
+            var configFilePath = Path.Combine(storeDir, configsDir, sourceDomain, $"{sourceId}.json");
+            if (!System.IO.File.Exists(configFilePath))
+                return this.ApiResp(new object());
+
+            var configContent = System.IO.File.ReadAllText(configFilePath);
+            var configObj = JsonConvert.DeserializeObject(configContent);
+            return this.ApiResp(configObj);
         }
 
         [NonAction]

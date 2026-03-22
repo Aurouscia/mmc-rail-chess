@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { reactive, computed, watch } from 'vue';
+import { reactive, watch } from 'vue';
 
 type LinkModeValue = 'Group' | 'Connect' | 'None';
 type LinkModeKey = 'ThickLine' | 'ThinLine' | 'DottedLine1' | 'DottedLine2' | 'Group';
@@ -24,14 +24,9 @@ interface Config {
   segmented_lines: string;
 }
 
-const props = defineProps<{
-  config: string;
-}>();
+const model = defineModel<Config>({ required: true });
 
-const emit = defineEmits<{
-  (e: 'update:config', value: string): void;
-}>();
-
+// 本地 reactive 配置，用于表单绑定
 const config = reactive<Config>({
   max_length: 128,
   merge_consecutive_duplicates: true,
@@ -64,11 +59,17 @@ const linkModeRows: { key: LinkModeKey; label: string }[] = [
   { key: 'Group', label: '车站团' },
 ];
 
-const configJson = computed(() => JSON.stringify(config));
+// 监听外部 model 变化，合并到本地
+watch(() => model.value, (newVal) => {
+  if (newVal) {
+    Object.assign(config, newVal);
+  }
+}, { immediate: true, deep: true });
 
-watch(configJson, (newVal) => {
-  emit('update:config', newVal);
-}, { immediate: true });
+// 监听本地配置变化，更新 model
+watch(config, (newVal) => {
+  model.value = { ...newVal };
+}, { deep: true });
 </script>
 
 <template>
@@ -133,8 +134,8 @@ watch(configJson, (newVal) => {
         <div class="key">optimize_segmentation</div>
       </div>
       <select v-model="config.optimize_segmentation">
-        <option :value="true">true</option>
-        <option :value="false">false</option>
+        <option :value="true">是</option>
+        <option :value="false">否</option>
       </select>
     </div>
     <div class="item">

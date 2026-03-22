@@ -1,14 +1,53 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { injectApi } from '../provides';
 import AarcConverterOptions from './AarcConverterOptions.vue';
 
 const api = injectApi()
-const configJson = ref<string>("{}")
+const route = useRoute()
+
+interface Config {
+    max_length: number;
+    merge_consecutive_duplicates: boolean;
+    link_modes: {
+        ThickLine: 'Group' | 'Connect' | 'None';
+        ThinLine: 'Group' | 'Connect' | 'None';
+        DottedLine1: 'Group' | 'Connect' | 'None';
+        DottedLine2: 'Group' | 'Connect' | 'None';
+        Group: 'Group' | 'Connect' | 'None';
+    };
+    friend_lines: string;
+    merged_lines: string;
+    max_rc_steps: number;
+    optimize_segmentation: boolean;
+    optimize_iterations: number;
+    segmented_lines: string;
+}
+
+const config = ref<Config>({
+    max_length: 128,
+    merge_consecutive_duplicates: true,
+    link_modes: {
+        ThickLine: 'Connect',
+        ThinLine: 'Connect',
+        DottedLine1: 'None',
+        DottedLine2: 'None',
+        Group: 'Group',
+    },
+    friend_lines: '',
+    merged_lines: '',
+    max_rc_steps: 16,
+    optimize_segmentation: false,
+    optimize_iterations: 5,
+    segmented_lines: '',
+})
 const showOptions = ref<boolean>(false)
 
 const errmsg = ref<string>()
 const md5 = ref<string>()
+const sourceDomain = ref<string>()
+const sourceId = ref<number>()
 const taskCreating = ref<boolean>(false)
 const taskKey = ref<string>()
 const resultGetting = ref<boolean>(false)
@@ -18,10 +57,10 @@ const result = ref<{
 }>()
 
 // 配置变化时重置任务状态
-watch(configJson, () => {
+watch(config, () => {
     taskKey.value = undefined
     result.value = undefined
-})
+}, { deep: true })
 
 const fileInput = useTemplateRef('fileInput')
 async function onFileChange(e: Event) {
@@ -65,7 +104,7 @@ async function createTask(){
     result.value = undefined
     taskCreating.value = true
     errmsg.value = undefined
-    const resp = await api.aarcConvert.createTask(md5.value, configJson.value)
+    const resp = await api.aarcConvert.createTask(md5.value, JSON.stringify(config.value), sourceDomain.value, sourceId.value)
     const key = resp.data?.key
     if(resp.success && key && typeof key === "string"){
         errmsg.value = undefined
@@ -147,6 +186,27 @@ onMounted(async()=>{
     }
     if(!svcUrl.value){
         errmsg.value = "未配置转换器服务地址"
+        return
+    }
+    
+    // 处理 query 参数
+    const queryMd5 = route.query.md5 as string | undefined
+    const querySourceDomain = route.query.sourceDomain as string | undefined
+    const querySourceId = route.query.sourceId ? parseInt(route.query.sourceId as string) : undefined
+    
+    // 如果有 md5，认为文件已上传
+    if(queryMd5 && queryMd5.length === 32){
+        md5.value = queryMd5
+    }
+    
+    // 如果有 sourceDomain 和 sourceId，获取配置并保存到 ref
+    if(querySourceDomain && querySourceId !== undefined && !isNaN(querySourceId)){
+        sourceDomain.value = querySourceDomain
+        sourceId.value = querySourceId
+        const configResp = await api.aarcConvert.getConfig(querySourceDomain, querySourceId)
+        if(configResp.success && configResp.data){
+            config.value = configResp.data as Config
+        }
     }
 })
 </script>
@@ -185,9 +245,14 @@ onMounted(async()=>{
                 <button @click="showOptions = !showOptions" class="lite blue">{{ showOptions ? '隐藏高级选项' : '显示高级选项' }}</button>
             </td>
         </tr>
-        <tr v-if="md5 && showOptions">
+        <tr v-if="md5 && !sourceDomain" v-show="showOptions">
             <td colspan="2">
-                <AarcConverterOptions v-model:config="configJson" />
+                <div class="jump-recommend">建议从 AARC 存档管理页跳转过来<br/>（导出工程文件按钮旁边）<br/>每个存档的配置将自动记忆</div>
+            </td>
+        </tr>
+        <tr v-if="md5" v-show="showOptions">
+            <td colspan="2">
+                <AarcConverterOptions v-model="config" />
             </td>
         </tr>
         <tr v-if="md5">
@@ -288,5 +353,9 @@ button.lite.red{
 .fallback-anchor{
     color: #aaa;
     font-size: 12px;
+}
+.jump-recommend{
+    font-size: 14px;
+    color: palevioletred;
 }
 </style>
