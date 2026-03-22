@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -14,6 +15,8 @@ namespace RailChess.Controllers
         private const int saveMaxBytes = saveMaxMb * 1024 * 1024;
         private static readonly string SaveSizeExceededMsg = $"文件不应超过{saveMaxMb}MB";
         private const string storeDir = "./Data/Convert/AARC";
+        private const string filesDir = "files";
+        private const string configsDir = "configs";
         private const string saveFileName = "aarc.json";
         private const long storeDirMaxBytes = 500 * 1024 * 1024;
 
@@ -55,15 +58,14 @@ namespace RailChess.Controllers
                 return this.ApiFailedResp("服务器存储空间不足，请联系管理员");
 
             using var stream = save.OpenReadStream();
-            // 计算MD5（流会被读取，需要重置位置或复制）
             using var md5Stream = new MemoryStream();
             stream.CopyTo(md5Stream);
             md5Stream.Position = 0;
-            var md5 = MD5Helper.GetMD5Of(md5Stream);
+            var md5 = Convert.ToHexStringLower(System.Security.Cryptography.MD5.HashData(md5Stream));
             if (md5.Length != 32)
                 return this.ApiFailedResp("计算md5失败");
             
-            var finalPath = Path.Combine(storeDir, md5, saveFileName);
+            var finalPath = Path.Combine(storeDir, filesDir, md5, saveFileName);
             var finalInfo = new FileInfo(finalPath);
             if (!finalInfo.Exists)
             {
@@ -80,13 +82,29 @@ namespace RailChess.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateTask(string md5, string? configJson)
+        public async Task<IActionResult> CreateTask(string md5, string? configJson, string? domain, int? archiveId)
         {                
             if (_svcUrl is null)
                 return this.ApiFailedResp("缺少转换器配置");
-            var filePath = Path.Combine(storeDir, md5, saveFileName);
+            var filePath = Path.Combine(storeDir, filesDir, md5, saveFileName);
             if (!System.IO.File.Exists(filePath))
                 return this.ApiFailedResp("超时，请刷新页面并重新上传");
+
+            // 如果提供了域名和存档ID，保存配置
+            string? configFilePath = null;
+            if (!string.IsNullOrEmpty(configJson) && !string.IsNullOrEmpty(domain) && archiveId.HasValue)
+            {
+                // 验证域名格式（只允许字母、数字、英文句点和连字符）
+                if (!Regex.IsMatch(domain, @"^[a-zA-Z0-9.-]+$"))
+                    return this.ApiFailedResp("域名格式不正确");
+                
+                var configsDirPath = Path.Combine(storeDir, configsDir);
+                if (!Directory.Exists(configsDirPath))
+                    Directory.CreateDirectory(configsDirPath);
+                
+                configFilePath = Path.Combine(configsDirPath, $"{domain}.{archiveId.Value}.json");
+                System.IO.File.WriteAllText(configFilePath, configJson);
+            }
 
             using var reqStream = new MemoryStream();
             try
