@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Headers;
+using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +15,6 @@ namespace RailChess.Controllers
         private static readonly string SaveSizeExceededMsg = $"文件不应超过{saveMaxMb}MB";
         private const string storeDir = "./Data/Convert/AARC";
         private const string saveFileName = "aarc.json";
-        private const string reqFileName = "req.json";
         private const long storeDirMaxBytes = 500 * 1024 * 1024;
 
         private static bool _converterConfigRead;
@@ -49,47 +48,35 @@ namespace RailChess.Controllers
             if (save is null)
                 return this.ApiFailedResp("缺少上传文件");
             if (!save.FileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-                return this.ApiFailedResp("文件应为json");
+                return this.ApiFailedResp("请上传json文件");
             if (save.Length > saveMaxBytes)
                 return this.ApiFailedResp(SaveSizeExceededMsg);
-            bool okay;
-            lock (Locker)
-            {
-                okay = CleanAndCheckStoreDir();
-            }
+            if (!CleanAndCheckStoreDir())
+                return this.ApiFailedResp("服务器存储空间不足，请联系管理员");
 
-            if (!okay)
-                return this.ApiFailedResp("存储失败，请联系管理员");
-            var tempPath = Path.Combine(storeDir , "temp_" + Path.GetRandomFileName());
-            var tempInfo = new FileInfo(tempPath);
-            FileStream? tempS = null;
-            try
+            using var stream = save.OpenReadStream();
+            // 计算MD5（流会被读取，需要重置位置或复制）
+            using var md5Stream = new MemoryStream();
+            stream.CopyTo(md5Stream);
+            md5Stream.Position = 0;
+            var md5 = MD5Helper.GetMD5Of(md5Stream);
+            if (md5.Length != 32)
+                return this.ApiFailedResp("计算md5失败");
+            
+            var finalPath = Path.Combine(storeDir, md5, saveFileName);
+            var finalInfo = new FileInfo(finalPath);
+            if (!finalInfo.Exists)
             {
-                tempS = tempInfo.Create();
-                using var saveS = save.OpenReadStream();
-                saveS.CopyTo(tempS);
-                tempS.Flush();
-                saveS.Close();
-                if (tempInfo.Length > saveMaxBytes)
-                    return this.ApiFailedResp(SaveSizeExceededMsg);
-                tempS.Seek(0, SeekOrigin.Begin);
-                var md5 = MD5Helper.GetMD5Of(tempS);
-                tempS.Close();
-                var finalDirPath = Path.Combine(storeDir, md5);
-                if(!Directory.Exists(finalDirPath))
-                    Directory.CreateDirectory(finalDirPath);
-                var finalPath = Path.Combine(storeDir, md5, saveFileName);
-                var finalInfo = new FileInfo(finalPath);
-                if (!finalInfo.Exists)
-                    tempInfo.MoveTo(finalPath);
-                return this.ApiResp(new { md5 });
+                md5Stream.Position = 0;
+                var finalDir = Path.GetDirectoryName(finalPath);
+                if (!string.IsNullOrEmpty(finalDir) && !Directory.Exists(finalDir))
+                    Directory.CreateDirectory(finalDir);
+                using (var finalStream = System.IO.File.Create(finalPath))
+                {
+                    md5Stream.CopyTo(finalStream);
+                }
             }
-            finally
-            {
-                tempS?.Close();
-                if(System.IO.File.Exists(tempPath))
-                    System.IO.File.Delete(tempPath);
-            }
+            return this.ApiResp(new { md5 });
         }
 
         [HttpPost]
@@ -98,91 +85,52 @@ namespace RailChess.Controllers
             if (_svcUrl is null)
                 return this.ApiFailedResp("缺少转换器配置");
             var filePath = Path.Combine(storeDir, md5, saveFileName);
-            var reqFilePath = Path.Combine(storeDir, md5, reqFileName);
-            var reqFileInfo = new FileInfo(reqFilePath);
-            lock (Locker)
-            {
-                if (!reqFileInfo.Exists)
-                {
-                    // 如果req文件不存在则创建
-                    if (!System.IO.File.Exists(filePath))
-                        return this.ApiFailedResp("超时，请刷新页面并重新上传");
-                    try
-                    {
-                        using var reqFileStream = System.IO.File.Create(reqFilePath);
-                        using var writer = new Utf8JsonWriter(reqFileStream, new JsonWriterOptions { Indented = false });
-                        writer.WriteStartObject();
-                        writer.WritePropertyName("aarc");
-                        using (var aarcStream = System.IO.File.OpenRead(filePath))
-                        using (var aarcDoc = JsonDocument.Parse(aarcStream))
-                        {
-                            aarcDoc.RootElement.WriteTo(writer);
-                        }
-                        if (!string.IsNullOrEmpty(configJson))
-                        {
-                            // 验证 configJson 是否为合法 JSON
-                            try
-                            {
-                                JsonDocument.Parse(configJson);
-                            }
-                            catch (System.Text.Json.JsonException)
-                            {
-                                throw new InvalidOperationException("config参数不是合法的JSON");
-                            }
-                            writer.WritePropertyName("config");
-                            using (var configDoc = JsonDocument.Parse(configJson))
-                            {
-                                configDoc.RootElement.WriteTo(writer);
-                            }
-                        }
-                        writer.WriteEndObject();
-                        writer.Flush();
-                    }
-                    catch
-                    {
-                        if (System.IO.File.Exists(reqFilePath))
-                            System.IO.File.Delete(reqFilePath);
-                        return this.ApiFailedResp($"{saveFileName}格式异常");
-                    }
-                }
-                else
-                {
-                    // 如果存在，则设置“上次写”时间，假装新创建了一次（避免被清理）
-                    reqFileInfo.LastWriteTime = DateTime.Now;
-                }
-            }
+            if (!System.IO.File.Exists(filePath))
+                return this.ApiFailedResp("超时，请刷新页面并重新上传");
 
-            await using var reqBodyStream = System.IO.File.OpenRead(reqFilePath);
+            using var reqStream = new MemoryStream();
             try
             {
-                    var content = new StreamContent(reqBodyStream);
-                    content.Headers.ContentType = new MediaTypeHeaderValue(MediaTypeNames.Application.Json);
-                    var url = _svcUrl + createTaskEndpoint;
-                    var resp = await Client.PostAsync(url, content);
-                    resp.EnsureSuccessStatusCode();
-                    var res = resp.Content;
-                    await using var resStream = await res.ReadAsStreamAsync();
-                    await using var reader = new JsonTextReader(new StreamReader(resStream));
-                    var jObj = await JObject.LoadAsync(reader);
-                    var key = jObj["key"];
-                    if (key is not null && key.Type == JTokenType.String)
-                        return this.ApiResp(new { key });
-                    return this.ApiFailedResp("aarc转换器接口返回异常：" + res);
+                using (var writer = new Utf8JsonWriter(reqStream, new JsonWriterOptions { Indented = false }))
+                {
+                    writer.WriteStartObject();
+                    writer.WritePropertyName("aarc");
+                    using (var aarcStream = System.IO.File.OpenRead(filePath))
+                    using (var aarcDoc = JsonDocument.Parse(aarcStream))
+                    {
+                        aarcDoc.RootElement.WriteTo(writer);
+                    }
+                    if (!string.IsNullOrEmpty(configJson))
+                    {
+                        writer.WritePropertyName("config");
+                        using (var configDoc = JsonDocument.Parse(configJson))
+                        {
+                            configDoc.RootElement.WriteTo(writer);
+                        }
+                    }
+                    writer.WriteEndObject();
+                    writer.Flush();
+                }
+
+                reqStream.Position = 0;
+                var content = new StreamContent(reqStream);
+                content.Headers.ContentType = new MediaTypeHeaderValue(MediaTypeNames.Application.Json);
+                var url = _svcUrl + createTaskEndpoint;
+                var resp = await Client.PostAsync(url, content);
+                resp.EnsureSuccessStatusCode();
+                var res = resp.Content;
+                await using var resStream = await res.ReadAsStreamAsync();
+                await using var reader = new JsonTextReader(new StreamReader(resStream));
+                var jObj = await JObject.LoadAsync(reader);
+                var key = jObj["key"];
+                if (key is not null && key.Type == JTokenType.String)
+                    return this.ApiResp(new { key });
+                return this.ApiFailedResp("aarc转换器接口返回异常：" + res);
             }
             catch (Exception e)
             {
-                    _logger.LogError(e, "aarc转换器接口调用出错");
-                    try
-                    {
-                        reqFileInfo.Delete();
-                        _logger.LogWarning("aarc转换器已删除出错req文件");
-                    }
-                    catch (Exception e1)
-                    {
-                        _logger.LogError(e1, "aarc转换器删除出错req文件失败");
-                    }
-
-                    return this.ApiFailedResp("aarc转换器接口返回异常: " + e.Message);
+                _logger.LogError(e, "aarc转换器接口调用出错");
+                return this.ApiFailedResp("aarc转换器接口返回异常: " + e.Message);
             }
         }
 
@@ -198,50 +146,26 @@ namespace RailChess.Controllers
             if (!directoryInfo.Exists)
                 directoryInfo.Create();
             var thrs = DateTime.Now.AddDays(-7);
-            var dirs = directoryInfo.EnumerateDirectories();
-            long sizeSum = 0;
-            foreach (var d in dirs)
+            long totalLength = 0;
+            foreach(var subDir in directoryInfo.EnumerateDirectories())
             {
-                long sizeSumHere = 0;
-                var latest = DateTime.MinValue;
-                var dFiles = d.EnumerateFiles();
-                foreach (var f in dFiles)
+                var subDirInfo = new DirectoryInfo(subDir.FullName);
+                var files = subDirInfo.GetFiles();
+                if (files.Length == 0)
                 {
-                    if (f.LastWriteTime > latest)
-                        latest = f.LastWriteTime;
-                    sizeSumHere += f.Length;
+                    subDir.Delete(true);
+                    continue;
                 }
-
-                if (latest >= thrs) continue; // 如果足够新，那没事
-                // 如果小于thrs（不够新）则删除
-                try
+                var lastWrite = files.Max(f => f.LastWriteTime);
+                if (lastWrite < thrs)
                 {
-                    d.Delete(true);
-                    sizeSumHere = 0; // 如果删除失败，不会变0
+                    subDir.Delete(true);
+                    continue;
                 }
-                catch (Exception e)
-                {
-                    _logger.LogWarning("清理失败：{emsg}, {fname}", e.Message, d.Name);
-                }
-
-                sizeSum += sizeSumHere;
+                totalLength += files.Sum(f => f.Length);
             }
-            var files = directoryInfo.EnumerateFiles();
-            foreach (var f in files)
-            {
-                if(f.LastWriteTime >= thrs) continue;
-                try
-                {
-                    f.Delete();
-                }
-                catch (Exception e)
-                {
-                    _logger.LogWarning("清理失败：{emsg}, {fname}", e.Message, f.Name);
-                }
-            }
-
-            if (sizeSum > storeDirMaxBytes)
-                return false; // 超出上限
+            if (totalLength > storeDirMaxBytes)
+                return false;
             return true;
         }
     }
