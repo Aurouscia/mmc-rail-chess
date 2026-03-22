@@ -109,22 +109,12 @@ namespace RailChess.Controllers
                         return this.ApiFailedResp("超时，请刷新页面并重新上传");
                     try
                     {
-                        // 验证 aarc.json 是否为合法 JSON
-                        var aarcJson = System.IO.File.ReadAllText(filePath);
-                        try
-                        {
-                            JsonDocument.Parse(aarcJson);
-                        }
-                        catch (System.Text.Json.JsonException)
-                        {
-                            throw new InvalidOperationException("aarc.json格式异常");
-                        }
-
                         using var reqFileStream = System.IO.File.Create(reqFilePath);
                         using var writer = new Utf8JsonWriter(reqFileStream, new JsonWriterOptions { Indented = false });
                         writer.WriteStartObject();
                         writer.WritePropertyName("aarc");
-                        using (var aarcDoc = JsonDocument.Parse(aarcJson))
+                        using (var aarcStream = System.IO.File.OpenRead(filePath))
+                        using (var aarcDoc = JsonDocument.Parse(aarcStream))
                         {
                             aarcDoc.RootElement.WriteTo(writer);
                         }
