@@ -94,15 +94,15 @@ namespace RailChess.Controllers
             string? configFilePath = null;
             if (!string.IsNullOrEmpty(configJson) && !string.IsNullOrEmpty(sourceDomain) && sourceId.HasValue)
             {
-                // 验证域名格式（只允许字母、数字、英文句点和连字符）
-                if (!Regex.IsMatch(sourceDomain, @"^[a-zA-Z0-9.-]+$"))
+                // 验证域名格式
+                if (!IsValidDomain(sourceDomain))
                     return this.ApiFailedResp("域名格式不正确");
                 
                 var configsDirPath = Path.Combine(storeDir, configsDir);
                 if (!Directory.Exists(configsDirPath))
                     Directory.CreateDirectory(configsDirPath);
                 
-                var domainDirPath = Path.Combine(configsDirPath, sourceDomain);
+                var domainDirPath = Path.Combine(configsDirPath, DomainToDirName(sourceDomain));
                 if (!Directory.Exists(domainDirPath))
                     Directory.CreateDirectory(domainDirPath);
                 configFilePath = Path.Combine(domainDirPath, $"{sourceId.Value}.json");
@@ -170,16 +170,32 @@ namespace RailChess.Controllers
         public IActionResult GetConfig(string sourceDomain, int sourceId)
         {
             // 验证域名格式
-            if (!Regex.IsMatch(sourceDomain, @"^[a-zA-Z0-9.-]+$"))
+            if (!IsValidDomain(sourceDomain))
                 return this.ApiFailedResp("域名格式不正确");
 
-            var configFilePath = Path.Combine(storeDir, configsDir, sourceDomain, $"{sourceId}.json");
+            var configFilePath = Path.Combine(storeDir, configsDir, DomainToDirName(sourceDomain), $"{sourceId}.json");
             if (!System.IO.File.Exists(configFilePath))
                 return this.ApiResp(new object());
 
             var configContent = System.IO.File.ReadAllText(configFilePath);
             var configObj = JsonConvert.DeserializeObject(configContent);
             return this.ApiResp(configObj);
+        }
+
+        /// <summary>
+        /// 验证域名格式（允许字母、数字、英文句点、连字符和冒号）
+        /// </summary>
+        private static bool IsValidDomain(string domain)
+        {
+            return Regex.IsMatch(domain, @"^[a-zA-Z0-9.:-]+$");
+        }
+
+        /// <summary>
+        /// 将域名转换为安全的目录名（冒号替换为下划线）
+        /// </summary>
+        private static string DomainToDirName(string domain)
+        {
+            return domain.Replace(':', '_');
         }
 
         [NonAction]

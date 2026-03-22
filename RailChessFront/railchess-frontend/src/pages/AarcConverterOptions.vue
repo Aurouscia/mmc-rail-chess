@@ -112,14 +112,16 @@ watch(config, (newVal) => {
         <div class="title">可跨线运行线路</div>
         <div class="key">friend_lines</div>
       </div>
-      <input type="text" v-model="config.friend_lines" placeholder="线路编号或名称，多个用逗号分隔" />
+      <input type="text" v-model="config.friend_lines" placeholder="线路编号或名称" />
+      <div class="hint">多个用逗号分隔</div>
     </div>
     <div class="item">
       <div class="label">
         <div class="title">无视朝向跨线线路</div>
         <div class="key">merged_lines</div>
       </div>
-      <input type="text" v-model="config.merged_lines" placeholder="线路编号或名称，多个用逗号分隔" />
+      <input type="text" v-model="config.merged_lines" placeholder="线路编号或名称" />
+      <div class="hint">多个用逗号分隔</div>
     </div>
     <div class="item">
       <div class="label">
@@ -150,7 +152,8 @@ watch(config, (newVal) => {
         <div class="title">强制分段处理线路</div>
         <div class="key">segmented_lines</div>
       </div>
-      <input type="text" v-model="config.segmented_lines" placeholder="格式: 线路名:长度,多个用逗号分隔" />
+      <input type="text" v-model="config.segmented_lines" placeholder="格式: 线路名:长度" />
+      <div class="hint">多个用逗号分隔</div>
     </div>
   </div>
 </template>
@@ -196,5 +199,10 @@ watch(config, (newVal) => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.hint {
+  font-size: 14px;
+  color: #aaa;
 }
 </style>

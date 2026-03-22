@@ -191,7 +191,7 @@ onMounted(async()=>{
     
     // 处理 query 参数
     const queryMd5 = route.query.md5 as string | undefined
-    const querySourceDomain = route.query.sourceDomain as string | undefined
+    const querySourceDomain = route.query.sourceDomain ? decodeURIComponent(route.query.sourceDomain as string) : undefined
     const querySourceId = route.query.sourceId ? parseInt(route.query.sourceId as string) : undefined
     
     // 如果有 md5，认为文件已上传
@@ -214,7 +214,7 @@ onMounted(async()=>{
 <template>
     <h1>“AARC &rarr; 轨交棋”转换器</h1>
     <table><tbody>
-        <tr>
+        <tr v-if="!sourceDomain">
             <td colspan="2" class="explain-big">
                 请先前往AARC 我的存档-设置-导出工程文件 
             </td>
@@ -229,7 +229,7 @@ onMounted(async()=>{
             <td>错误信息</td>
             <td class="status-bad">{{errmsg}}</td>
         </tr>
-        <tr v-if="svcUrl">
+        <tr v-if="svcUrl && !sourceDomain">
             <td>AARC存档json文件</td>
             <td>
                 <input type="file" ref="fileInput" @change="onFileChange" accept=".json" :disabled="taskCreating || resultGetting"/>
