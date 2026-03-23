@@ -208,6 +208,10 @@ namespace RailChess.Controllers
             long totalLength = 0;
             foreach(var subDir in directoryInfo.EnumerateDirectories())
             {
+                // 跳过 configs 目录，只清理 files 目录
+                if (subDir.Name == configsDir)
+                    continue;
+                
                 var subDirInfo = new DirectoryInfo(subDir.FullName);
                 var files = subDirInfo.GetFiles();
                 if (files.Length == 0)
