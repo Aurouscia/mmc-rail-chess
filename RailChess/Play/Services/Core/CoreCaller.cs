@@ -1,4 +1,4 @@
-﻿using RailChess.Core.Abstractions;
+using RailChess.Core.Abstractions;
 
 namespace RailChess.Play.Services.Core
 {
@@ -32,14 +32,29 @@ namespace RailChess.Play.Services.Core
         /// <returns>可选路线</returns>
         public IEnumerable<IEnumerable<int>> GetSelections()
         {
-            //var players = _playerService.GetOrdered();
-            var randNum = _eventsService.RandedResult();
             var graph = _graphProvider.GetGraph();
             var currentUser = _playerService.CurrentPlayer();
             var game = _gameService.OurGame();
 
-            var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, randNum, game.AllowTransfer);
-            return allPaths;
+            if (game.RandAlg == Models.Game.RandAlgType.FreeRange)
+            {
+                var allPaths = new List<List<int>>();
+                for (int i = game.RandMin; i <= game.RandMax; i++)
+                {
+                    var paths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, i, game.AllowTransfer);
+                    foreach (var path in paths)
+                    {
+                        allPaths.Add(path.ToList());
+                    }
+                }
+                return allPaths;
+            }
+            else
+            {
+                var randNum = _eventsService.RandedResult();
+                var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, randNum, game.AllowTransfer);
+                return allPaths;
+            }
         }
 
         /// <summary>
@@ -56,8 +71,23 @@ namespace RailChess.Play.Services.Core
             var locationEvent = locationEvents.Where(x => x.PlayerId == currentUser).LastOrDefault();
             if (locationEvent is null) throw new Exception("找不到玩家位置(未加入)");
             int location = locationEvent.StationId;
-            var randNum = _eventsService.RandedResult();
-            return _fixedStepPathFinder.IsValidMove(graph, currentUser, selected, randNum, game.AllowTransfer);
+
+            if (game.RandAlg == Models.Game.RandAlgType.FreeRange)
+            {
+                for (int i = game.RandMin; i <= game.RandMax; i++)
+                {
+                    if (_fixedStepPathFinder.IsValidMove(graph, currentUser, selected, i, game.AllowTransfer))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            else
+            {
+                var randNum = _eventsService.RandedResult();
+                return _fixedStepPathFinder.IsValidMove(graph, currentUser, selected, randNum, game.AllowTransfer);
+            }
         }
 
         /// <summary>

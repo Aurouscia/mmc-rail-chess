@@ -49,6 +49,9 @@ iframe{
     display: flex;
     align-items: center;
     justify-content: center;
+}
+.converter-entry {
+    display: block;
     margin: 20px 0px 20px 0px;
 }
 h1{

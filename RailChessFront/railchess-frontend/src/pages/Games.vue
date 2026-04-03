@@ -183,6 +183,7 @@ onMounted(async ()=>{
                     <option :value="RandAlgType.Uniform">均匀分布</option>
                     <option :value="RandAlgType.UniformAB">均匀分布 双步数</option>
                     <option :value="RandAlgType.AlwaysNegativeOne">仅-1（自由移动）</option>
+                    <option :value="RandAlgType.FreeRange">随意区间</option>
                 </select>
             </td>
         </tr>

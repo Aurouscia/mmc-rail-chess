@@ -350,7 +350,7 @@ const ocpStatus = ref<OcpStatus[]>([])
 const newOcps = ref<OcpStatus|undefined>();
 const randNum = ref<number>(0);
 const ended = ref<boolean>(false);
-const { randNumIsAB, randNumDisplay } = useRandNumDisplay(randNum)
+const { randNumIsAB, randNumDisplay } = useRandNumDisplay(randNum, gameInfo)
 let myLastSyncTimeMs = 0
 let lastSyncTFilterId = 0
 async function sync(data:SyncData|null){

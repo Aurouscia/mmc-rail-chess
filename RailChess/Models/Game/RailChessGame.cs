@@ -1,4 +1,4 @@
-﻿namespace RailChess.Models.Game
+namespace RailChess.Models.Game
 {
     public class RailChessGame
     {
@@ -39,7 +39,8 @@
         TriangleMiddle = 20,
         TriangleLeft = 21,
         TriangleRight = 22,
-        AlwaysNegativeOne = 90
+        AlwaysNegativeOne = 90,
+        FreeRange = 100
     }
     public enum AiPlayerType
     {

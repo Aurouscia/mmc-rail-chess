@@ -1,4 +1,4 @@
-﻿using RailChess.Models.DbCtx;
+using RailChess.Models.DbCtx;
 using RailChess.Models.Game;
 using RailChess.Play.PlayHubResponseModel;
 using RailChess.Play.Services;
@@ -154,7 +154,14 @@ namespace RailChess.Play
                     selections.Add(p.ToList());
                 });
 
-                rand = _eventsService.RandedResult();
+                if (game.RandAlg != Models.Game.RandAlgType.FreeRange)
+                {
+                    rand = _eventsService.RandedResult();
+                }
+                else
+                {
+                    rand = 0; // 对于随意区间，不显示随机数
+                }
             }
             if (playback)
             {
