@@ -64,6 +64,84 @@ namespace RailChess.Core.Test
         }
 
         [TestMethod]
+        public void MultiSteps()
+        {
+            //   3
+            //   |\
+            // 1-2-4-5
+            //     |
+            //     6
+            var sta1 = new Sta(1, 1);
+            var sta2 = new Sta(2, 1);
+            var sta3 = new Sta(3, 1);
+            var sta4 = new Sta(4, 1);
+            var sta5 = new Sta(5, 1);
+            var sta6 = new Sta(6, 1);
+            var playerPos = new Dictionary<int, int>()
+            {
+                { 1, 1 }
+            };
+            Graph graph = new(new(){
+                sta1, sta2, sta3, sta4, sta5, sta6
+            }, playerPos);
+            sta1.TwowayConnect(sta2);
+            sta2.TwowayConnect(sta3);
+            sta3.TwowayConnect(sta4);
+            sta2.TwowayConnect(sta4);
+            sta4.TwowayConnect(sta5);
+            sta4.TwowayConnect(sta6);
+
+            // 两个步数：[1,2] -> 合并 1步和2步的结果
+            var paths12 = _finder.FindAllPaths(graph, 1, [1, 2]).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 2, 3, 4 }, paths12);
+
+            // 两个步数：[2,3] -> 合并 2步和3步的结果
+            var paths23 = _finder.FindAllPaths(graph, 1, [2, 3]).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 3, 4, 5, 6 }, paths23);
+
+            // 三个步数：[1,2,3] -> 合并 1步、2步和3步的结果
+            var paths123 = _finder.FindAllPaths(graph, 1, [1, 2, 3]).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 2, 3, 4, 5, 6 }, paths123);
+
+            // 四个步数：[1,2,3,4] -> 合并 1步到4步的所有结果
+            var paths1234 = _finder.FindAllPaths(graph, 1, [1, 2, 3, 4]).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 2, 3, 4, 5, 6 }, paths1234);
+
+            // 不连续的步数：[1,3] -> 合并 1步和3步的结果
+            var paths13 = _finder.FindAllPaths(graph, 1, [1, 3]).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 2, 3, 4, 5, 6 }, paths13);
+
+            // 重复的步数：[2,2,3] -> 去重后合并 2步和3步的结果
+            var paths223 = _finder.FindAllPaths(graph, 1, [2, 2, 3]).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 3, 4, 5, 6 }, paths223);
+
+            // 包含0的步数：[0,1,2] -> 0步无结果，合并 1步和2步
+            var paths012 = _finder.FindAllPaths(graph, 1, [0, 1, 2]).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 2, 3, 4 }, paths012);
+
+            // 空列表 -> 无结果
+            var pathsEmpty = _finder.FindAllPaths(graph, 1, []).ToList();
+            Assert.IsEmpty(pathsEmpty);
+
+            // 单个步数（退化为原有行为）
+            var pathsSingle = _finder.FindAllPaths(graph, 1, 3).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 3, 4, 5, 6 }, pathsSingle);
+
+            // >=100 的步数编码：101 = 1 + (1) -> [1, 2]
+            var paths101 = _finder.FindAllPaths(graph, 1, 101).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 2, 3, 4 }, paths101);
+
+            // 混合：普通步数 + >=100 编码
+            var pathsMixed = _finder.FindAllPaths(graph, 1, [1, 101]).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>() { 2, 3, 4 }, pathsMixed);
+
+            // IsValidMove 多步数
+            Assert.IsTrue(_finder.IsValidMove(graph, 1, 2, [1, 2]));
+            Assert.IsTrue(_finder.IsValidMove(graph, 1, 5, [2, 3]));
+            Assert.IsFalse(_finder.IsValidMove(graph, 1, 1, [1, 2]));
+        }
+
+        [TestMethod]
         public void Looped()
         {
             // 1-2-4
@@ -431,7 +509,7 @@ namespace RailChess.Core.Test
             Assert.IsTrue(_finder.IsValidMove(g, uid, 4, stepCount, 0)); //1-4可以
             Assert.IsFalse(_finder.IsValidMove(g, uid, 6, stepCount, 0)); //1-6不行
             Assert.IsTrue(_finder.IsValidMove(g, uid, 6, stepCount, 1)); //1-6可以（换乘一次的话）
-            Assert.IsTrue(_finder.IsValidMove(g, uid, 6, steps: 7, 0)); //走7步的话，1-6可以无需换乘
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 6, 7, 0)); //走7步的话，1-6可以无需换乘
             g.UserPosition[uid] = 5;
             Assert.IsTrue(_finder.IsValidMove(g, uid, 6, stepCount, 0)); //5-6可以
             Assert.IsFalse(_finder.IsValidMove(g, uid, 4, stepCount, 0)); //5-4不行
@@ -474,7 +552,7 @@ namespace RailChess.Core.Test
             Assert.IsTrue(_finder.IsValidMove(g, uid, 5, stepCount, 0)); //1-5可以
             Assert.IsFalse(_finder.IsValidMove(g, uid, 7, stepCount, 0)); //1-7不行
             Assert.IsTrue(_finder.IsValidMove(g, uid, 7, stepCount, 1)); //1-7可以（换乘一次的话）
-            Assert.IsTrue(_finder.IsValidMove(g, uid, 7, steps: 9, 0)); //走9步的话，1-7可以无需换乘
+            Assert.IsTrue(_finder.IsValidMove(g, uid, 7, 9, 0)); //走9步的话，1-7可以无需换乘
             g.UserPosition[uid] = 6;
             Assert.IsTrue(_finder.IsValidMove(g, uid, 7, stepCount, 0)); //6-7可以
             Assert.IsFalse(_finder.IsValidMove(g, uid, 5, stepCount, 0)); //6-5不行

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using RailChess.Core.Abstractions;
 using RailChess.GraphDefinition;
 
@@ -6,32 +6,53 @@ namespace RailChess.Core
 {
     public class FixedStepPathFinder : IFixedStepPathFinder
     {
-        /// <inheritdoc/>
         public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, int steps, int maxiumTransfer = int.MaxValue)
         {
-            if (steps < 100)
-                return FindAllPaths(graph, userId, steps, 0, maxiumTransfer);
-            else
+            return FindAllPaths(graph, userId, [steps], maxiumTransfer);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, List<int> steps, int maxiumTransfer = int.MaxValue)
+        {
+            if (steps is null || steps.Count == 0)
+                return new List<List<int>>();
+
+            // 先解析每个步数：>=100 的拆分为两个，其他的保持原样
+            List<int> expandedSteps = [];
+            foreach (var s in steps)
             {
-                //十位个位算A
-                int stepsA = steps % 100;
-                //千位百位算B
-                int stepsB = steps / 100;
-                return FindAllPaths(graph, userId, stepsA, stepsB, maxiumTransfer);
+                if (s >= 100)
+                {
+                    int stepsA = s % 100;
+                    int stepsB = s / 100;
+                    expandedSteps.Add(stepsA);
+                    expandedSteps.Add(stepsA + stepsB);
+                }
+                else
+                {
+                    expandedSteps.Add(s);
+                }
             }
+
+            // 去重并排序（从小到大，保证BFS可以复用中间结果）
+            var uniqueSteps = expandedSteps.Distinct().OrderBy(x => x).ToList();
+            if (uniqueSteps.Count == 0)
+                return new List<List<int>>();
+
+            return FindAllPathsCore(graph, userId, uniqueSteps, maxiumTransfer);
         }
 
         /// <summary>
         /// 特别感谢Momochai(SlinkierApple13)对算法优化的指导
         /// </summary>
-        private IEnumerable<IEnumerable<int>> FindAllPaths(
-            Graph graph, int userId, int stepsA, int stepsB, int maxiumTransfer)
+        private IEnumerable<IEnumerable<int>> FindAllPathsCore(
+            Graph graph, int userId, List<int> stepsList, int maxiumTransfer)
         {
             var limit = DateTime.Now.AddSeconds(3);
             ResetNeighborsTriedTimesTestOnly();
-            // ReSharper disable once InconsistentNaming
-            int stepsAB = stepsA + stepsB;
-            if (stepsA == 0 && stepsB == 0)
+
+            int maxSteps = stepsList.Max();
+            if (maxSteps == 0 && !stepsList.Contains(-1))
                 return new List<List<int>>();
 
             if (!graph.BuildingCompleted)
@@ -40,24 +61,34 @@ namespace RailChess.Core
             if (!graph.UserPosition.TryGetValue(userId, out int from))
                 throw new Exception("算路异常:找不到玩家位置");
 
-            if (stepsA == -1 && stepsB == 0)
+            // 处理 -1 的特殊情况
+            var normalSteps = stepsList.Where(s => s != -1).ToList();
+            var hasNegativeOne = stepsList.Contains(-1);
+
+            List<List<int>> negativeOnePaths = [];
+            if (hasNegativeOne)
             {
-                //如果步数为-1，可一步走到任何未被其他玩家占领的地方
                 var mineOrEmpty = graph.Stations.Where(x =>
                     (x.Owner == 0 || x.Owner == userId) && x.Id != from);
-                return mineOrEmpty
+                negativeOnePaths = mineOrEmpty
                     .Select(x => new List<int> { from, x.Id })
                     .ToList();
             }
 
-            Queue<LinedPath> paths = [];
-            HashSet<int> confirmedDest = [];
+            if (normalSteps.Count == 0)
+                return negativeOnePaths;
+
+            // 按步数从小到大排序，用于归档中间结果
+            var sortedSteps = normalSteps.OrderBy(x => x).ToList();
+            var stepArchives = new Dictionary<int, List<LinedPath>>();
+            foreach (var s in sortedSteps)
+                stepArchives[s] = [];
+
             var startPoint = graph.Stations.Find(x => x.Id == from) ?? throw new Exception("算路异常:找不到指定起始点");
-            //出发：可从该站的任何线路的任何索引出发，全部作为初始路径
             List<LinedStaCollapsed> startStas = [];
-            if(graph.LineStaIndexes is not null)
+            if (graph.LineStaIndexes is not null)
             {
-                foreach(var (lineId, dict) in graph.LineStaIndexes)
+                foreach (var (lineId, dict) in graph.LineStaIndexes)
                 {
                     if (dict.TryGetValue(startPoint.Id, out var indexes))
                     {
@@ -71,15 +102,16 @@ namespace RailChess.Core
                 //未提供线路信息（单元测试环境）统一加到第0位置
                 startStas = startPoint.Neighbors.ConvertAll(x => new LinedStaCollapsed(x.LineId, startPoint, 0));
             }
-            // 将出发点转换为路径
+
+            Queue<LinedPath> paths = [];
             var initPaths = startStas.Select(x => new LinedPath(x));
-            foreach(var p in initPaths)
+            foreach (var p in initPaths)
                 paths.Enqueue(p);
 
-            List<LinedPath>? stepsAArchive = null;
-            //如果有两种情况，则存储记录步数为A的路径中间产物
-            if (stepsA != stepsAB)
-                stepsAArchive = [];
+            // 记录每个步数是否已完结的终点（用于剪枝）
+            var confirmedDestByStep = new Dictionary<int, HashSet<int>>();
+            foreach (var s in sortedSteps)
+                confirmedDestByStep[s] = [];
 
             while (true)
             {
@@ -89,16 +121,25 @@ namespace RailChess.Core
                     if (DateTime.Now > limit)
                         throw new Exception("计算超时，请联系管理员");
                 }
+
+                if (paths.Count == 0) break;
+                var currentPeek = paths.Peek();
+                if (currentPeek.Count > maxSteps) break;
+
                 var p = paths.Dequeue();
                 if (p.Redundant)
                     continue; // 跳过被标记为抛弃的路线
                 var pTail = p.Tail;
-                if (pTail is null) 
+                if (pTail is null)
                     continue;
-                // 元素数=已走步数+1，所以元素数=步数上限时，说明还差最后一个元素
-                bool pNearFull = p.Count == stepsAB; 
+
+                int currentStepCount = p.Count - 1; // 已走步数
                 bool pJustStared = p.Count == 1;
                 bool transferUsedUp = p.TransferredTimes == maxiumTransfer;
+
+                // 判断当前路径是否接近某个目标步数（还差一步就达到目标）
+                var nearFullSteps = sortedSteps.Where(s => currentStepCount == s - 1).ToList();
+
                 // 邻点必须全部考虑，否则会漏掉“换乘到并行线后再分叉”的情况
                 // 见测试 TransferThenSplit 方法
                 var neighbors = pTail.Station.Neighbors;
@@ -113,8 +154,20 @@ namespace RailChess.Core
                     bool isTransfer = pTail.LineId != n.LineId;
                     if (isTransfer && reachableBySameLine.Contains(n.Station.Id))
                         continue; // 本来可以同线路到达一样的站，就不要换乘了（确保共线段仅在进入之初或离开时换乘）
-                    if (pNearFull && confirmedDest.Contains(n.Station.Id))
-                        continue; // 接近终点，但该终点已有其他路线作为终点，无需再进来
+
+                    // 接近任何目标步数，且该终点已有其他路线作为终点，无需再进来
+                    bool shouldSkipByConfirmed = false;
+                    foreach (var ns in nearFullSteps)
+                    {
+                        if (confirmedDestByStep[ns].Contains(n.Station.Id))
+                        {
+                            shouldSkipByConfirmed = true;
+                            break;
+                        }
+                    }
+                    if (shouldSkipByConfirmed)
+                        continue;
+
                     if (transferUsedUp || pJustStared)
                         if (isTransfer)
                             continue; // 已经到了换乘上限，不能往别的线跑；走出的第一步，也不能往别的线跑
@@ -127,7 +180,7 @@ namespace RailChess.Core
                     }
 
                     IncrementNeighborsTriedTimesTestOnly();
-                    
+
                     var nCollapseRes = LinedStaCollapsed.Collapse(n);
                     foreach (var ncr in nCollapseRes)
                     {
@@ -146,7 +199,7 @@ namespace RailChess.Core
                         {
                             // 线路不一样：必然是换乘（但不一定能这么走）
                             needTransfer = true;
-                            if(transferUsedUp)
+                            if (transferUsedUp)
                                 continue;
                             // 线路不一样：确保新点和其线上的tail点相邻，否则continue
                             if (graph.Lines.Count > 0 && graph.LineStaIndexes is not null)
@@ -173,7 +226,7 @@ namespace RailChess.Core
                             bool newPathRedundant = false;
                             foreach (var ep in paths)
                             {
-                                if(ep.Count != p.Count + 1)
+                                if (ep.Count != p.Count + 1)
                                     continue;
                                 bool conflict = false;
                                 if (ep.Tail?.IsEquivAs(ncr) ?? false)
@@ -201,31 +254,57 @@ namespace RailChess.Core
                         }
                         LinedPath newPath = new(p, ncr, needTransfer);
                         paths.Enqueue(newPath);
-                        if (stepsAArchive is { } && newPath.Count == stepsA + 1)
-                            stepsAArchive.Add(newPath);
-                        if (newPath.Count == stepsAB + 1) // 元素数量为步数+1：已完结
-                        {  
-                            confirmedDest.Add(ncr.Station.Id); //该线路已完结：添加到确认的终点
-                            break; // 无需再尝试同邻点的其他坍缩情况，直接开始尝试下一个邻点
+
+                        int newPathStepCount = newPath.Count - 1;
+                        // 归档：如果新路径的步数等于某个目标步数
+                        foreach (var targetStep in sortedSteps)
+                        {
+                            if (newPathStepCount == targetStep)
+                            {
+                                stepArchives[targetStep].Add(newPath);
+                                confirmedDestByStep[targetStep].Add(ncr.Station.Id);
+                            }
+                        }
+
+                        // 如果新路径达到最大步数，确认终点并跳出（无需再尝试同邻点的其他坍缩情况）
+                        if (newPathStepCount == maxSteps)
+                        {
+                            break;
                         }
                     }
                 }
-                if (paths.Count == 0) break;
-                if (paths.Peek().Count >= stepsAB + 1) break;
-                //由于paths是队列，所以每个潜在路径都是按顺序逐个延长的，满足上一句的条件，应该长度全都一样
             }
 
-            IEnumerable<LinedPath> pathsFinal = paths.AsEnumerable();
-            if (stepsAArchive is { })
-                pathsFinal = pathsFinal.Concat(stepsAArchive);
-            return pathsFinal
-                .Where(x => (x.Count == stepsA + 1) || (x.Count == stepsAB + 1))
+            // 收集结果：从paths队列和归档中收集所有目标步数的路径
+            var resultPaths = new List<LinedPath>();
+            foreach (var targetStep in sortedSteps)
+            {
+                // 从队列中收集
+                resultPaths.AddRange(paths.Where(x => x.Count == targetStep + 1));
+                // 从归档中收集
+                resultPaths.AddRange(stepArchives[targetStep]);
+            }
+
+            var result = resultPaths
                 .DistinctBy(x => x.Tail?.Station.Id)
                 .Select(x => x.ToIds())
                 .ToList();
+
+            // 合并 -1 的结果
+            if (hasNegativeOne)
+            {
+                result.AddRange(negativeOnePaths);
+            }
+
+            return result;
         }
 
         public bool IsValidMove(Graph graph, int userId, int to, int steps, int maxiumTransfer = int.MaxValue)
+        {
+            return IsValidMove(graph, userId, to, [steps], maxiumTransfer);
+        }
+
+        public bool IsValidMove(Graph graph, int userId, int to, List<int> steps, int maxiumTransfer = int.MaxValue)
         {
             var paths = FindAllPaths(graph, userId, steps, maxiumTransfer);
             return paths.Any(x => x.LastOrDefault() == to);

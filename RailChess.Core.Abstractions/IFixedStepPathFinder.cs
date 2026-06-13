@@ -17,6 +17,7 @@ namespace RailChess.Core.Abstractions
         /// <param name="maxiumTransfer">最多换乘次数</param>
         /// <returns></returns>
         public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, int steps, int maxiumTransfer = int.MaxValue);
+        public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, List<int> steps, int maxiumTransfer = int.MaxValue);
         /// <summary>
         /// 是否是有效的移动
         /// </summary>
@@ -27,5 +28,6 @@ namespace RailChess.Core.Abstractions
         /// <param name="maxiumTransfer"></param>
         /// <returns></returns>
         public bool IsValidMove(Graph graph, int userId, int to, int steps, int maxiumTransfer = int.MaxValue);
+        public bool IsValidMove(Graph graph, int userId, int to, List<int> steps, int maxiumTransfer = int.MaxValue);
     }
 }
