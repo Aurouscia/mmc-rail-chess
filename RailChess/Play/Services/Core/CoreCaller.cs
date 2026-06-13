@@ -38,15 +38,8 @@ namespace RailChess.Play.Services.Core
 
             if (game.RandAlg == Models.Game.RandAlgType.FreeRange)
             {
-                var allPaths = new List<List<int>>();
-                for (int i = game.RandMin; i <= game.RandMax; i++)
-                {
-                    var paths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, i, game.AllowTransfer);
-                    foreach (var path in paths)
-                    {
-                        allPaths.Add(path.ToList());
-                    }
-                }
+                var steps = Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList();
+                var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, steps, game.AllowTransfer);
                 return allPaths;
             }
             else
@@ -74,14 +67,8 @@ namespace RailChess.Play.Services.Core
 
             if (game.RandAlg == Models.Game.RandAlgType.FreeRange)
             {
-                for (int i = game.RandMin; i <= game.RandMax; i++)
-                {
-                    if (_fixedStepPathFinder.IsValidMove(graph, currentUser, selected, i, game.AllowTransfer))
-                    {
-                        return true;
-                    }
-                }
-                return false;
+                var steps = Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList();
+                return _fixedStepPathFinder.IsValidMove(graph, currentUser, selected, steps, game.AllowTransfer);
             }
             else
             {
