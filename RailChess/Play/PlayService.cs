@@ -154,13 +154,13 @@ namespace RailChess.Play
                     selections.Add(p.ToList());
                 });
 
-                if (game.RandAlg != Models.Game.RandAlgType.FreeRange)
+                if (game.RandAlg != Models.Game.RandAlgType.FreeWithinRange)
                 {
                     rand = _eventsService.RandedResult();
                 }
                 else
                 {
-                    rand = 0; // 对于随意区间，不显示随机数
+                    rand = 0; // 对于区间内随意，不显示随机数
                 }
             }
             if (playback)

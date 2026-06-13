@@ -33,7 +33,7 @@ export enum RandAlgType
     TriangleLeft = 21,
     TriangleRight = 22,
     AlwaysNegativeOne = 90,
-    FreeRange = 100
+    FreeWithinRange = 100
 }
 export enum AiPlayerType
 {

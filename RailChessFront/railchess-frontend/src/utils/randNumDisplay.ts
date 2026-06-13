@@ -10,7 +10,7 @@ function displayForAB(num:number){
     return `${A}/${A+B}`;
 }
 export function displayForRandNum(num:number, gameInfo?: RailChessGame){
-    if(gameInfo && gameInfo.RandAlg === RandAlgType.FreeRange){
+    if(gameInfo && gameInfo.RandAlg === RandAlgType.FreeWithinRange){
         return `${gameInfo.RandMin}-${gameInfo.RandMax}`
     }
     if(isAB(num)){
@@ -25,7 +25,7 @@ export function useRandNumDisplay(randNum:Ref<number>, gameInfo?: Ref<RailChessG
         return isAB(randNum.value)
     })
     const randNumDisplay = computed<string>(()=>{
-        if(gameInfo && gameInfo.value && gameInfo.value.RandAlg === RandAlgType.FreeRange){
+        if(gameInfo && gameInfo.value && gameInfo.value.RandAlg === RandAlgType.FreeWithinRange){
             return `${gameInfo.value.RandMin}-${gameInfo.value.RandMax}`
         }
         if(randNumIsAB.value)

@@ -40,7 +40,7 @@ namespace RailChess.Models.Game
         TriangleLeft = 21,
         TriangleRight = 22,
         AlwaysNegativeOne = 90,
-        FreeRange = 100
+        FreeWithinRange = 100
     }
     public enum AiPlayerType
     {

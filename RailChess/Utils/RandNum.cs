@@ -16,7 +16,7 @@ namespace RailChess.Utils
                 RandAlgType.Gaussian20 => Gaussian(min, max, 2.0),
                 RandAlgType.Gaussian25 => Gaussian(min, max, 2.5),
                 RandAlgType.AlwaysNegativeOne => -1,
-                RandAlgType.FreeRange => -2,
+                RandAlgType.FreeWithinRange => -2,
                 _ => throw new NotImplementedException()
             };
         }
@@ -31,7 +31,7 @@ namespace RailChess.Utils
                 RandAlgType.Gaussian20 => "高斯2.0",
                 RandAlgType.Gaussian25 => "高斯2.5",
                 RandAlgType.AlwaysNegativeOne => "自由移动",
-                RandAlgType.FreeRange => "随意区间",
+                RandAlgType.FreeWithinRange => "区间内随意",
                 _ => "???"
             };
         }

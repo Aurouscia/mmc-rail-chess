@@ -36,7 +36,7 @@ namespace RailChess.Play.Services.Core
             var currentUser = _playerService.CurrentPlayer();
             var game = _gameService.OurGame();
 
-            if (game.RandAlg == Models.Game.RandAlgType.FreeRange)
+            if (game.RandAlg == Models.Game.RandAlgType.FreeWithinRange)
             {
                 var steps = Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList();
                 var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, steps, game.AllowTransfer);
@@ -65,7 +65,7 @@ namespace RailChess.Play.Services.Core
             if (locationEvent is null) throw new Exception("找不到玩家位置(未加入)");
             int location = locationEvent.StationId;
 
-            if (game.RandAlg == Models.Game.RandAlgType.FreeRange)
+            if (game.RandAlg == Models.Game.RandAlgType.FreeWithinRange)
             {
                 var steps = Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList();
                 return _fixedStepPathFinder.IsValidMove(graph, currentUser, selected, steps, game.AllowTransfer);
