@@ -65,10 +65,11 @@ export class Api{
                     "上传成功");
                 return res.success
             },
-            rankingList: async()=>{
+            rankingList: async(orderBy?:string, skip?:number, take?:number, search?:string)=>{
                 var res = await this.httpClient.request(
                     "/api/User/RankingList",
-                    "get")
+                    "get",
+                    {orderBy, skip, take, search})
                 if(res.success){
                     return res.data as UserRankingListItem[]
                 }

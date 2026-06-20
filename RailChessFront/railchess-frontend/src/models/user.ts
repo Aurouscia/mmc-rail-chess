@@ -10,5 +10,6 @@ export interface UserRankingListItem{
     UName:string,
     UAvt:string,
     Plays:number,
-    AvgRank:number
+    AvgRank:number,
+    LastPlayTime?:string
 }

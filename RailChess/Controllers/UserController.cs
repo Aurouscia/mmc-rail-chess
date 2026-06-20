@@ -162,18 +162,34 @@ namespace RailChess.Controllers
             return this.ApiResp();
         }
 
-        public IActionResult RankingList(int skip = 0, int take = 30)
+        public IActionResult RankingList(int skip = 0, int take = 30, string orderBy = "last30days", string? search = null)
         {
             take = Math.Clamp(take, 1, 30);
             var allUsers = _context.Users.ToList();
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchLower = search.ToLower();
+                allUsers = allUsers.Where(x => x.Name != null && x.Name.ToLower().Contains(searchLower)).ToList();
+            }
             var now = DateTime.Now;
-            var oneMonthAgo = now.AddDays(-30);
+            DateTime? threshold = orderBy switch
+            {
+                "last7days" => now.AddDays(-7),
+                "history" => null,
+                "recentGame" => null,
+                _ => now.AddDays(-30)
+            };
             var allGameRess = (
                 from res in _context.GameResults
                 join game in _context.Games on res.GameId equals game.Id
-                where game.StartTime > oneMonthAgo
-                group res by res.UserId into g
-                select new {UserId = g.Key, Count = g.Count()}
+                where threshold == null || game.StartTime > threshold
+                group new { res.UserId, game.StartTime } by res.UserId into g
+                select new
+                {
+                    UserId = g.Key,
+                    Count = orderBy == "recentGame" ? 0 : g.Count(),
+                    LastTime = orderBy == "recentGame" ? g.Max(x => x.StartTime) : (DateTime?)null
+                }
             ).ToList();
             var list = allUsers.ConvertAll(x => new UserRankingListItem()
             {
@@ -183,14 +199,25 @@ namespace RailChess.Controllers
             });
             foreach(var u in list)
             {
-                u.Plays = allGameRess.Find(x => x.UserId == u.UId)?.Count ?? 0;
+                var gr = allGameRess.Find(x => x.UserId == u.UId);
+                u.Plays = gr?.Count ?? 0;
+                u.LastPlayTime = gr?.LastTime?.ToString("yy/MM/dd HH:mm");
             }
-            list.RemoveAll(x => x.Plays == 0 && x.UId != _userId);
+            if (orderBy == "recentGame")
+                list.RemoveAll(x => x.LastPlayTime is null && x.UId != _userId);
+            else
+                list.RemoveAll(x => x.Plays == 0 && x.UId != _userId);
             list.Sort((x, y) => {
                 int xIsUser = x.UId == _userId ? 1:0;
                 int yIsUser = y.UId == _userId ? 1:0;
                 if (xIsUser != yIsUser)
                     return yIsUser - xIsUser;
+                if (orderBy == "recentGame")
+                {
+                    var xTime = allGameRess.Find(g => g.UserId == x.UId)?.LastTime ?? DateTime.MinValue;
+                    var yTime = allGameRess.Find(g => g.UserId == y.UId)?.LastTime ?? DateTime.MinValue;
+                    return DateTime.Compare(yTime, xTime);
+                }
                 return y.Plays - x.Plays;
             });
             list = list.Skip(skip).Take(take).ToList();
@@ -236,6 +263,7 @@ namespace RailChess.Controllers
             public string? UName { get; set; }
             public string? UAvt { get; set; }
             public int Plays { get; set; }
+            public string? LastPlayTime { get; set; }
             public List<float>? Ranks { get; set; }
             public int AvgRank { get; set; }
         }
