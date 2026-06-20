@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json;
 using RailChess.Models;
 using RailChess.Models.Game;
 using RailChess.Play.PlayHubRequestModel;
 using RailChess.Play.PlayHubResponseModel;
 using RailChess.Play.Services;
+using RailChess.Utils;
 
 namespace RailChess.Play
 {
@@ -14,6 +16,7 @@ namespace RailChess.Play
         private readonly PlayPlayerService _playerService;
         private readonly PlayEventsService _eventsService;
         private readonly PlayGameService _gameService;
+        private readonly IApiEncryption _encryption;
         private ILogger _logger;
 
         public IClientProxy Group => Clients.Group(GroupName);
@@ -27,13 +30,30 @@ namespace RailChess.Play
             PlayPlayerService playerService,
             PlayEventsService eventsService,
             PlayGameService gameService,
+            IApiEncryption encryption,
             ILogger<PlayHub> logger)
         {
             Service = playService;
             _playerService = playerService;
             _eventsService = eventsService;
             _gameService = gameService;
+            _encryption = encryption;
             _logger = logger;
+        }
+
+        private static readonly JsonSerializerSettings SyncJsonSettings = new()
+        {
+            // SignalR 默认序列化会把 C# 的 PascalCase 属性转为 camelCase，
+            // 前端 Vue/TypeScript 代码也按 camelCase 约定读取 sync 数据。
+            // 手动序列化 SyncData 时需要保持同样约定，否则前端属性名不匹配。
+            ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
+        };
+
+        private object WrapSyncData(SyncData data)
+        {
+            var json = JsonConvert.SerializeObject(data, SyncJsonSettings);
+            var encrypted = _encryption.Encrypt(json);
+            return new EncryptedSyncData { Payload = encrypted };
         }
         public string GroupName
         {
@@ -111,7 +131,7 @@ namespace RailChess.Play
             _playerService.InsertByConn(Context.ConnectionId, Service.UserId, Service.GameId);
 
             await Groups.AddToGroupAsync(Context.ConnectionId, GroupName);
-            await Clients.Caller.SendAsync(syncMethod, Service.GetSyncData());
+            await Clients.Caller.SendAsync(syncMethod, WrapSyncData(Service.GetSyncData()));
 
             var ended = _eventsService.GamedEnded();
             if (!ended)
@@ -208,18 +228,23 @@ namespace RailChess.Play
         public async Task SyncMe(SyncMeRequest req)
         {
             var data = Service.GetSyncData(false, req.TFilterId);
-            await Clients.Caller.SendAsync(syncMethod, data);
+            await Clients.Caller.SendAsync(syncMethod, WrapSyncData(data));
         }
         public async Task SyncMeIfNecessary(SyncMeRequest req)
         {
             var data = Service.GetSyncDataIfNecessary(req.MyLastSyncTimeMs);
-            await Clients.Caller.SendAsync(syncMethod, data);
+            if (data is null)
+            {
+                await Clients.Caller.SendAsync(syncMethod, data);
+                return;
+            }
+            await Clients.Caller.SendAsync(syncMethod, WrapSyncData(data));
         }
         private async Task SyncAll()
         {
             _logger.LogInformation("游戏[{gameId}]_开始同步所有人",Service.GameId);
             var data = Service.GetSyncData();
-            await Group.SendAsync(syncMethod, data);
+            await Group.SendAsync(syncMethod, WrapSyncData(data));
             _logger.LogInformation("游戏[{gameId}]_成功同步所有人", Service.GameId);
         }
         private string? SenderName()
