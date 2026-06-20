@@ -6,14 +6,11 @@ import { injectApi, injectPop, injectUserInfo } from '../provides';
 import Loading from '../components/Loading.vue';
 import Search from '../components/Search.vue';
 import { router } from '../main';
-import { useFeVersionChecker } from '../utils/feVersionCheck';
 
 const api = injectApi()
 const pop = injectPop()
 const me = ref<number>(0)
-const { checkAndPop } = useFeVersionChecker()
 const contact = import.meta.env.VITE_CONTACT
-checkAndPop()
 
 const active = ref<GameActiveResult>();
 async function loadActive(){

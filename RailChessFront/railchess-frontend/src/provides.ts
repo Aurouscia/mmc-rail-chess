@@ -4,6 +4,7 @@ import { IdentityInfoProvider } from './utils/userInfo';
 import Pop from './components/Pop.vue';
 import { router } from './main';
 import { Api } from './utils/api';
+import { createFeVersionChecker } from './utils/feVersionCheck';
 
 const popKey = 'pop';
 const httpKey = 'http';
@@ -28,8 +29,10 @@ export function useProvidesSetup(pop: Ref<InstanceType<typeof Pop>|null>){
     const displayTopbar = ref<boolean>(true);
     provide(hideTopbarKey, () => { displayTopbar.value = false })
 
+    const { checkAndPop } = createFeVersionChecker(pop);
     router.afterEach(() => {
         displayTopbar.value = true;
+        checkAndPop();
     })
     return { pop, displayTopbar }
 }

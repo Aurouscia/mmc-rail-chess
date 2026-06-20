@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { useFeVersionChecker } from '../utils/feVersionCheck';
-
 const intro = import.meta.env.VITE_INTRO
 const contact = import.meta.env.VITE_CONTACT
 const nonProfitNotice = import.meta.env.VITE_NONPROFIT_NOTICE
-const { checkAndPop } = useFeVersionChecker()
-checkAndPop()
 </script>
 
 <template>

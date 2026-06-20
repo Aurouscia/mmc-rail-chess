@@ -1,13 +1,16 @@
 import { appVersionCheck } from '@aurouscia/vite-app-version/check'
-import { injectPop } from '../provides';
+import { Ref } from 'vue';
+import Pop from '../components/Pop.vue';
 import viteAppVersionConfig from '../../appVersionOptions.json'
 
-export function useFeVersionChecker(){
-    const pop = injectPop();
+export function createFeVersionChecker(pop: Ref<InstanceType<typeof Pop>|null>){
     function checkAndPop(){
         appVersionCheck(viteAppVersionConfig).then(res=>{
             if(!res){
-                pop.value?.show("客户端已更新，建议刷新浏览器获取最新版", "warning")
+                pop.value?.show("有版本更新\n现为您刷新页面", "warning")
+                setTimeout(()=>{
+                    window.location.reload()
+                }, 1000)
             }
         })
     }
