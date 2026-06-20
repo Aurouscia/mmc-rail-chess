@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +12,11 @@ namespace RailChess.Models.COM
         public int code { get; set; }
         public object? data { get; set; }
         public string? errmsg { get; set; }
+        /// <summary>
+        /// 标记 data 字段是否已被加密
+        /// </summary>
+        public bool encrypted { get; set; }
+
         public ApiResponse(object? obj, bool success = true, string? errmsg = null, int code = 0)
         {
             data = obj;

@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.SignalR;
+using RailChess.Filters;
 using RailChess.Models.DbCtx;
 using RailChess.Play;
 using RailChess.Play.Services;
 using RailChess.Services;
+using RailChess.Utils;
 using RailChess.Utils.Startup;
 using Serilog;
 
@@ -17,11 +19,13 @@ try
     builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
     builder.Services.AddScoped<HttpUserIdProvider>();
     builder.Services.AddScoped<HttpUserInfoService>();
+    builder.Services.AddSingleton<IApiEncryption, ApiEncryption>();
     builder.Services.AddDb(c);
     builder.Services.AddJwtService(c);
     builder.Services.AddControllers(options =>
     {
         options.Filters.Add<ApiExceptionFilter>();
+        options.Filters.Add<ApiEncryptionFilter>();
     });
     builder.Services.AddSignalR(options =>
     {
