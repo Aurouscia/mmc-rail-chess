@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="RailChess.Core.Abstractions/RailChess.Core.Abstractions.csproj" />
+  <Project Path="RailChess.Core.Test/RailChess.Core.Test.csproj" />
+  <Project Path="RailChess.Core/RailChess.Core.csproj">
+    <BuildDependency Project="RailChess.Core.Abstractions/RailChess.Core.Abstractions.csproj" />
+  </Project>
+  <Project Path="RailChess.GraphDefinition/RailChess.GraphDefinition.csproj" />
+  <Project Path="RailChess/RailChess.csproj" />
+</Solution>
