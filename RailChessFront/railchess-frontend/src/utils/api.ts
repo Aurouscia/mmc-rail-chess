@@ -203,11 +203,11 @@ export class Api{
         }
     }
     gameResult = {
-        ofUser:async(userId:number)=>{
+        ofUser:async(userId:number, skip?:number, take?:number)=>{
             const resp = await this.httpClient.request(
                 "/api/GameResult/OfUser",
                 "get",
-                {userId}
+                {userId, skip, take}
             )
             if(resp.success){
                 return resp.data as GameResultListResponse

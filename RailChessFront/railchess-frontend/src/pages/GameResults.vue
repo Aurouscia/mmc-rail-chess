@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { Api } from '../utils/api';
-import { injectApi, injectUserInfo } from '../provides';
+import { injectApi, injectPop, injectUserInfo } from '../provides';
 import { IdentityInfo } from '../utils/userInfo';
 import Loading from '../components/Loading.vue';
 import { useRouter } from 'vue-router';
@@ -10,16 +10,37 @@ const props = defineProps<{
     userId:string|undefined
 }>();
 const idNum = parseInt(props.userId||"0");
+const PAGE_SIZE = 20;
 
 const data = ref<GameResultListResponse>();
-async function load(){
+const skip = ref(0);
+const hasMore = ref(true);
+const loadingMore = ref(false);
+async function loadMore(){
     let uid = idNum;
     if(!uid){
         uid = info.Id;
     }
-    const res = await api.gameResult.ofUser(uid);
-    if(res)
+    loadingMore.value = true;
+    const res = await api.gameResult.ofUser(uid, skip.value, PAGE_SIZE);
+    loadingMore.value = false;
+    if(!res) return;
+    if(res.Logs.length === 0){
+        if(skip.value > 0){
+            pop.value?.show("没有更多了", "info");
+        }
+        hasMore.value = false;
+    }
+    if(!data.value){
         data.value = res;
+    }else{
+        data.value.Logs.push(...res.Logs);
+    }
+    if(res.Logs.length < PAGE_SIZE){
+        hasMore.value = false;
+    }else{
+        skip.value += res.Logs.length;
+    }
 }
 
 const router = useRouter();
@@ -29,10 +50,11 @@ function jumpToGameLog(gameId:number){
 
 let api:Api;
 let info:IdentityInfo;
+const pop = injectPop();
 onMounted(async()=>{
     api = injectApi();
     info = await injectUserInfo().getIdentityInfo();
-    await load();
+    await loadMore();
 })
 </script>
 
@@ -64,6 +86,11 @@ onMounted(async()=>{
                     </td>
                 </tr>
             </tbody></table>
+            <div class="load-more">
+                <button v-if="hasMore" @click="loadMore" :disabled="loadingMore">
+                    {{ loadingMore ? '加载中...' : '加载更多' }}
+                </button>
+            </div>
         </div>
         <h1 v-else>
             暂无对弈记录
@@ -94,6 +121,13 @@ table{
 }
 .time-col{
     width: 120px;
+}
+.load-more{
+    text-align: center;
+    margin: 16px 0;
+}
+.load-more button{
+    padding: 8px 24px;
 }
 @media screen and (max-width: 800px) {
     .op-col{

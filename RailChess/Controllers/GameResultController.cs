@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using RailChess.Models.DbCtx;
 using RailChess.Play;
 using RailChess.Play.Services;
+using System.Linq;
 
 namespace RailChess.Controllers
 {
@@ -20,8 +21,9 @@ namespace RailChess.Controllers
             _cache = cache;
         }
 
-        public IActionResult OfUser(int userId)
+        public IActionResult OfUser(int userId, int skip = 0, int take = 20)
         {
+            take = Math.Clamp(take, 5, 20);
             var data = (
                 from r in _context.GameResults
                 from m in _context.Maps
@@ -31,6 +33,7 @@ namespace RailChess.Controllers
                 where g.UseMapId == m.Id
                 select new { r.Rank, r.GameId, g.GameName, g.StartTime, r.EloDelta, MapName = m.Title, MapId = m.Id }).ToList();
             data.Sort((x, y) => DateTime.Compare(y.StartTime, x.StartTime));
+            data = data.Skip(skip).Take(take).ToList();
             var userName = _context.Users.Where(x => x.Id == userId).Select(x => x.Name).FirstOrDefault();
 
             var gameIds = data.Select(x => x.GameId).ToList();

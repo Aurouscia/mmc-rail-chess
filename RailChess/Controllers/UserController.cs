@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -162,8 +162,9 @@ namespace RailChess.Controllers
             return this.ApiResp();
         }
 
-        public IActionResult RankingList()
+        public IActionResult RankingList(int skip = 0, int take = 30)
         {
+            take = Math.Clamp(take, 1, 30);
             var allUsers = _context.Users.ToList();
             var now = DateTime.Now;
             var oneMonthAgo = now.AddDays(-30);
@@ -192,6 +193,7 @@ namespace RailChess.Controllers
                     return yIsUser - xIsUser;
                 return y.Plays - x.Plays;
             });
+            list = list.Skip(skip).Take(take).ToList();
             return this.ApiResp(list);
         }
 
