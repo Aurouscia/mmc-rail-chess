@@ -3,13 +3,11 @@ import {AxiosError} from 'axios'
 import { useJwtTokenStore } from './stores/jwtTokenStore'
 import { storeToRefs } from 'pinia'
 import { Ref } from 'vue'
-import { decryptApiData } from './encryption'
 
 export type ApiResponse = {
     success: boolean
     data: any
     errmsg: string
-    encrypted?: boolean
 }
 export type RequestType = "get"|"postForm"|"postRaw";
 
@@ -96,17 +94,6 @@ export class HttpClient{
         }
         if(res){
             const resp = res.data as ApiResponse;
-            // 若服务端对 data 进行了加密，先解密
-            if(resp.success && resp.encrypted && typeof resp.data === 'string'){
-                try{
-                    resp.data = await decryptApiData(resp.data);
-                    resp.encrypted = false;
-                }catch(ex){
-                    console.error(`[${type}]${resource}解密失败`,ex);
-                    resp.success = false;
-                    resp.errmsg = '数据解密失败';
-                }
-            }
             if(resp.success){
                 console.log(`[${type}]${resource}成功`,resp.data)
                 if(successMsg){
