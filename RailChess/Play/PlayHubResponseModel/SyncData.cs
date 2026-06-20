@@ -1,14 +1,5 @@
-namespace RailChess.Play.PlayHubResponseModel
+﻿namespace RailChess.Play.PlayHubResponseModel
 {
-    /// <summary>
-    /// 用于 SignalR sync 消息的加密包装
-    /// </summary>
-    public class EncryptedSyncData
-    {
-        public bool Encrypted { get; set; } = true;
-        public string? Payload { get; set; }
-    }
-
     public class SyncData
     {
         public List<Player>? PlayerStatus { get; set; }

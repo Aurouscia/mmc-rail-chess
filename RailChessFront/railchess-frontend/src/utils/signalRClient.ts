@@ -1,6 +1,5 @@
 import * as signalR from '@microsoft/signalr'
 import { SyncData, TextMsg, getLocalTextMsg } from '../models/play';
-import { decryptApiData } from './encryption';
 
 export type SyncCall = (data:SyncData|null)=>void
 export type TextMsgCall = (data:TextMsg)=>void
@@ -65,18 +64,7 @@ export class SignalRClient{
             textMsgCall(getLocalTextMsg("已成功重新连接", 1))
             this.syncMe();
         });
-        this.conn.on(syncCallMethodName, async (m:any)=>{
-            console.log(m)
-            if(m && m.encrypted && typeof m.payload === 'string'){
-                try{
-                    m = await decryptApiData(m.payload);
-                }catch(e){
-                    console.error('sync 消息解密失败',e);
-                    return;
-                }
-            }
-            syncCall(m as SyncData|null);
-        });
+        this.conn.on(syncCallMethodName, syncCall);
         this.conn.on(textMsgMethodName, (m)=>{
             console.log("展示信息",m)
             textMsgCall(m)
