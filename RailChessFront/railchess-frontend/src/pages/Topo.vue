@@ -374,6 +374,7 @@ onMounted(async()=>{
       var s = stations.value.find(s=>s.Id==movingSta);
       if(s){
         s.X = x;s.Y = y;
+        console.log(`移动点：${s.Id}，位置：(${Math.round(x)}, ${Math.round(y)})`);
         Render();
       }
     }
@@ -384,6 +385,7 @@ onMounted(async()=>{
       var s = stations.value.find(s=>s.Id==movingSta);
       if(s){
         s.X = x;s.Y = y;
+        console.log(`已移动点：${s.Id}，最终位置：(${x}, ${y})`);
         Render();
       }
     }

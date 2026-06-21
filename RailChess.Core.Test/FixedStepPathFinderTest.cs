@@ -943,5 +943,104 @@ namespace RailChess.Core.Test
             var paths301 = _finder.FindAllPaths(graph, 1, 301).ToList().ConvertAll(x => x.Last());
             CollectionAssert.AreEquivalent(new List<int>() { 2, 5, 6 }, paths301);
         }
+
+        [TestMethod]
+        public void Temp4ManualGraph()
+        {
+            // 本测试用于重现多步数查询下的"过早剪枝"潜在 bug：
+            // 当同时请求多个步数（如 [5,6]）时，若算法在"某步数已有路径到达某站"时一律跳过入队，
+            // 则较短步数（5）确认过的站点会被丢弃，无法继续向更长步数（6）扩展，
+            // 最终遗漏通过 6 步才能到达的站点 611。
+            // 修复原则：仅当该步数等于最大请求步数时才允许 continue，否则仍应入队以继续扩展。
+            // 使用 TwowayConnect 手动构造 temp4.json 中的图结构
+            // 起点 665，步数 [5,6]，maxTransfer=1，应能到达 611
+
+            var sta666 = new Sta(666, 1);
+            var sta665 = new Sta(665, 1);
+            var sta612 = new Sta(612, 1);
+            var sta414 = new Sta(414, 1);
+            var sta198 = new Sta(198, 1);
+            var sta405 = new Sta(405, 1);
+            var sta115 = new Sta(115, 1);
+            var sta114 = new Sta(114, 1);
+            var sta304 = new Sta(304, 1);
+            var sta611 = new Sta(611, 1);
+            var sta413 = new Sta(413, 1);
+            var sta111 = new Sta(111, 1);
+            var sta297 = new Sta(297, 1);
+            var sta412 = new Sta(412, 1);
+            var sta805 = new Sta(805, 1);
+            var sta291 = new Sta(291, 1);
+            var sta293 = new Sta(293, 1);
+            var sta298 = new Sta(298, 1);
+            var sta404 = new Sta(404, 1);
+            var sta76 = new Sta(76, 1);
+            var sta303 = new Sta(303, 1);
+            var sta46 = new Sta(46, 1);
+            var sta201 = new Sta(201, 1);
+            var sta296 = new Sta(296, 1);
+            var sta199 = new Sta(199, 1);
+            var sta299 = new Sta(299, 1);
+            var sta197 = new Sta(197, 1);
+
+            List<Sta> stas = [sta666, sta665, sta612, sta414, sta198, sta405, sta115, sta114, sta304, sta611, sta413, sta111, sta297, sta412, sta805, sta291, sta293, sta298, sta404, sta76, sta303, sta46, sta201, sta296, sta199, sta299, sta197];
+
+            // Line 25: 198-199-197-201-298-299-297-303-304
+            sta198.TwowayConnect(sta199, 25);
+            sta199.TwowayConnect(sta197, 25);
+            sta197.TwowayConnect(sta201, 25);
+            sta201.TwowayConnect(sta298, 25);
+            sta298.TwowayConnect(sta299, 25);
+            sta299.TwowayConnect(sta297, 25);
+            sta297.TwowayConnect(sta303, 25);
+            sta303.TwowayConnect(sta304, 25);
+
+            // Line 20: 291-293-297-404-405-414-413-805-412
+            sta291.TwowayConnect(sta293, 20);
+            sta293.TwowayConnect(sta297, 20);
+            sta297.TwowayConnect(sta404, 20);
+            sta404.TwowayConnect(sta405, 20);
+            sta405.TwowayConnect(sta414, 20);
+            sta414.TwowayConnect(sta413, 20);
+            sta413.TwowayConnect(sta805, 20);
+            sta805.TwowayConnect(sta412, 20);
+
+            // Line 11: 111-114-115-296-297-611-612
+            sta111.TwowayConnect(sta114, 11);
+            sta114.TwowayConnect(sta115, 11);
+            sta115.TwowayConnect(sta296, 11);
+            sta296.TwowayConnect(sta297, 11);
+            sta297.TwowayConnect(sta611, 11);
+            sta611.TwowayConnect(sta612, 11);
+
+            // Line 3: 76-46-115-197-413-665-666
+            sta76.TwowayConnect(sta46, 3);
+            sta46.TwowayConnect(sta115, 3);
+            sta115.TwowayConnect(sta197, 3);
+            sta197.TwowayConnect(sta413, 3);
+            sta413.TwowayConnect(sta665, 3);
+            sta665.TwowayConnect(sta666, 3);
+
+            Dictionary<int, List<int>> lines = new()
+            {
+                { 25, [198, 199, 197, 201, 298, 299, 297, 303, 304] },
+                { 20, [291, 293, 297, 404, 405, 414, 413, 805, 412] },
+                { 11, [111, 114, 115, 296, 297, 611, 612] },
+                { 3, [76, 46, 115, 197, 413, 665, 666] }
+            };
+
+            var playerPos = new Dictionary<int, int>() { { 1, 665 } };
+            var graph = new Graph(stas, playerPos, lines);
+
+            // Act
+            var userId = 1;
+            var steps = new List<int>() { 5, 6 };
+            var maxTransfer = 1;
+
+            var reachablePaths = _finder.FindAllPaths(graph, userId, steps, maxTransfer).ToList();
+            var reachableStations = reachablePaths.Select(x => x.LastOrDefault()).ToList();
+
+            CollectionAssert.Contains(reachableStations, 611);
+        }
     }
 }

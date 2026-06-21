@@ -155,11 +155,14 @@ namespace RailChess.Core
                     if (isTransfer && reachableBySameLine.Contains(n.Station.Id))
                         continue; // 本来可以同线路到达一样的站，就不要换乘了（确保共线段仅在进入之初或离开时换乘）
 
-                    // 接近任何目标步数，且该终点已有其他路线作为终点，无需再进来
+                    // 剪枝策略说明（参见单元测试 Temp4ManualGraph）：
+                    // 当存在多个目标步数（如 [5,6]）时，若对每一个目标步数都因为"已有其他路径到达该终点"而跳过入队，
+                    // 则较短步数（如 5）确认过的路径会被丢弃，无法继续向更长步数（如 6）扩展，导致漏掉可达站点。
+                    // 因此仅当该目标步数等于最大请求步数 maxSteps 时才跳过；到达最大步数后不会再继续扩展，剪枝才是安全的。
                     bool shouldSkipByConfirmed = false;
                     foreach (var ns in nearFullSteps)
                     {
-                        if (confirmedDestByStep[ns].Contains(n.Station.Id))
+                        if (confirmedDestByStep[ns].Contains(n.Station.Id) && ns == maxSteps)
                         {
                             shouldSkipByConfirmed = true;
                             break;
