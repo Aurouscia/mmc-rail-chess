@@ -945,7 +945,7 @@ namespace RailChess.Core.Test
         }
 
         [TestMethod]
-        public void Temp4ManualGraph()
+        public void MultiStepOverPruningBug()
         {
             // 本测试用于重现多步数查询下的"过早剪枝"潜在 bug：
             // 当同时请求多个步数（如 [5,6]）时，若算法在"某步数已有路径到达某站"时一律跳过入队，
