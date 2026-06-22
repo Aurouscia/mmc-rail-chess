@@ -6,6 +6,7 @@ namespace RailChess.Core.Abstractions
     {
         public List<int> Steps { get; set; } = [];
         public int MaxiumTransfer { get; set; } = int.MaxValue;
+        public bool AllowReverseAtTerminal { get; set; } = false;
     }
 
     public interface IFixedStepPathFinder

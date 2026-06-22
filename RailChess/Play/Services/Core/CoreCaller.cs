@@ -39,14 +39,14 @@ namespace RailChess.Play.Services.Core
             if (game.RandAlg == Models.Game.RandAlgType.FreeWithinRange)
             {
                 var steps = Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList();
-                var options = new PathFindOptions { Steps = steps, MaxiumTransfer = game.AllowTransfer };
+                var options = new PathFindOptions { Steps = steps, MaxiumTransfer = game.AllowTransfer, AllowReverseAtTerminal = game.AllowReverseAtTerminal };
                 var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, options);
                 return allPaths;
             }
             else
             {
                 var randNum = _eventsService.RandedResult();
-                var options = new PathFindOptions { Steps = [randNum], MaxiumTransfer = game.AllowTransfer };
+                var options = new PathFindOptions { Steps = [randNum], MaxiumTransfer = game.AllowTransfer, AllowReverseAtTerminal = game.AllowReverseAtTerminal };
                 var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, options);
                 return allPaths;
             }

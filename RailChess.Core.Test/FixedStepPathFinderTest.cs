@@ -1042,5 +1042,55 @@ namespace RailChess.Core.Test
 
             CollectionAssert.Contains(reachableStations, 611);
         }
+
+        [TestMethod]
+        public void ReverseAtTerminal_NotAllowed()
+        {
+            // 线路1: 1-2-3
+            // 1是终点站（端点），不允许折返时，从1出发走2步不能回到1
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            List<Sta> stas = [sta1, sta2, sta3];
+            Dictionary<int, List<int>> lines = new()
+            {
+                { 1, [1, 2, 3] }
+            };
+            Dictionary<int, int> userPosition = new() { { 1, 1 } };
+            Graph g = new(stas, userPosition, lines);
+
+            // 不允许折返：从1出发2步，只能到3
+            var paths = _finder.FindAllPaths(g, 1, 2, 0).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 3 }, paths);
+
+            // 不允许折返：从1出发4步，无路可走
+            var paths4 = _finder.FindAllPaths(g, 1, 4, 0).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>(), paths4);
+        }
+
+        [TestMethod]
+        public void ReverseAtTerminal_Allowed()
+        {
+            // 线路1: 1-2-3
+            // 3是终点站（端点），允许折返时，从1出发3步可以到达2（1->2->3->2）
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            List<Sta> stas = [sta1, sta2, sta3];
+            Dictionary<int, List<int>> lines = new()
+            {
+                { 1, [1, 2, 3] }
+            };
+            Dictionary<int, int> userPosition = new() { { 1, 1 } };
+            Graph g = new(stas, userPosition, lines);
+
+            // 允许折返：从1出发3步，可以到达2
+            var paths = _finder.FindAllPaths(g, 1, new PathFindOptions { Steps = [3], MaxiumTransfer = 0, AllowReverseAtTerminal = true }).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 2 }, paths);
+        }
     }
 }

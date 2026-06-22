@@ -34,15 +34,17 @@ namespace RailChess.Core
             if (uniqueSteps.Count == 0)
                 return new List<List<int>>();
 
-            return FindAllPathsCore(graph, userId, uniqueSteps, options.MaxiumTransfer);
+            return FindAllPathsCore(graph, userId, uniqueSteps, options);
         }
 
         /// <summary>
         /// 特别感谢Momochai(SlinkierApple13)对算法优化的指导
         /// </summary>
         private IEnumerable<IEnumerable<int>> FindAllPathsCore(
-            Graph graph, int userId, List<int> stepsList, int maxiumTransfer)
+            Graph graph, int userId, List<int> stepsList, PathFindOptions options)
         {
+            var maxiumTransfer = options.MaxiumTransfer;
+            var allowReverseAtTerminal = options.AllowReverseAtTerminal;
             var limit = DateTime.Now.AddSeconds(3);
             ResetNeighborsTriedTimesTestOnly();
 
@@ -174,7 +176,12 @@ namespace RailChess.Core
                     if (p.Stations.Count >= 2)
                     {
                         var lastButOne = p.Stations[^2];
-                        if (lastButOne.Station.Id == n.Station.Id) continue; //不能掉头往回跑
+                        if (lastButOne.Station.Id == n.Station.Id)
+                        {
+                            // 默认禁止掉头；若允许在终点折返，则检查当前所在站是否在线路端点
+                            if (!allowReverseAtTerminal || !IsAtTerminal(pTail, graph))
+                                continue;
+                        }
                     }
 
                     IncrementNeighborsTriedTimesTestOnly();
@@ -395,6 +402,25 @@ namespace RailChess.Core
             if (isRing)
                 return diff == line.Count - 2;
             return false;
+        }
+
+        /// <summary>
+        /// 判断当前站点是否为其所在线路的终点（端点）<br/>
+        /// 线性线路：索引为0或最后一个；环线：无终点
+        /// </summary>
+        private static bool IsAtTerminal(LinedStaCollapsed sta, Graph graph)
+        {
+            if (graph.Lines.Count == 0)
+                return false; // 无线路信息
+            if (!graph.Lines.TryGetValue(sta.LineId, out var line))
+                return false;
+
+            // 环线无终点
+            if (line.Count >= 3 && line.First() == line.Last())
+                return false;
+
+            // 线性线路的端点
+            return sta.IndexChosen == 0 || sta.IndexChosen == line.Count - 1;
         }
     }
 }
