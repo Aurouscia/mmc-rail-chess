@@ -89,7 +89,8 @@ namespace RailChess.Play.Services.Core
         {
             var graph = _graphProvider.GetGraph();
             var lastMovedUser = _eventsService.UserId;
-            return _exclusiveStasFinder.FindExclusiveStas(graph, lastMovedUser);
+            var options = new ExclusiveStasOptions { Teams = null }; // TODO: 从 game 获取队伍信息
+            return _exclusiveStasFinder.FindExclusiveStas(graph, lastMovedUser, options);
         }
     }
 }

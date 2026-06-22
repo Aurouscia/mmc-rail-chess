@@ -173,5 +173,84 @@ namespace RailChess.Core.Test
             var res = _finder.FindExclusiveStas(graph, 1).ToList();
             CollectionAssert.AreEquivalent(new List<int>() { 1, 2 }, res);
         }
+
+        [TestMethod]
+        public void WithTeams()
+        {
+            //   3
+            //   |\
+            // 1-2-4-5
+            //     |
+            //     6
+            // 队伍[1,2]和[3,4]，玩家1在1，队友玩家2占领4，对手玩家3、4分别占领5、6
+            var sta1 = new Sta(1, 1);
+            var sta2 = new Sta(2, 0);
+            var sta3 = new Sta(3, 0);
+            var sta4 = new Sta(4, 2);
+            var sta5 = new Sta(5, 3);
+            var sta6 = new Sta(6, 4);
+            Dictionary<int, int> playerPosition = new()
+            {
+                { 1, 1 }, { 2, 4 }, { 3, 5 }, { 4, 6 }
+            };
+            Graph graph = new(new(){
+                sta1, sta2, sta3, sta4, sta5, sta6
+            }, playerPosition);
+            sta1.TwowayConnect(sta2);
+            sta2.TwowayConnect(sta3);
+            sta3.TwowayConnect(sta4);
+            sta2.TwowayConnect(sta4);
+            sta4.TwowayConnect(sta5);
+            sta4.TwowayConnect(sta6);
+
+            var options = new ExclusiveStasOptions
+            {
+                Teams = [[1, 2], [3, 4]]
+            };
+
+            // 玩家1独占的站：1、2、3；队友占领的4不应出现在结果中
+            var res = _finder.FindExclusiveStas(graph, 1, options).ToList();
+            CollectionAssert.AreEquivalent(new List<int>() { 1, 2, 3 }, res);
+        }
+
+        [TestMethod]
+        public void MultipleTeamsMembershipExclusive()
+        {
+            //   3
+            //   |\
+            // 1-2-4-5
+            //     |
+            //     6
+            // 玩家1同时属于队伍[1,2]和[1,3]，玩家4为对手
+            var sta1 = new Sta(1, 1);
+            var sta2 = new Sta(2, 0);
+            var sta3 = new Sta(3, 2);
+            var sta4 = new Sta(4, 3);
+            var sta5 = new Sta(5, 0);
+            var sta6 = new Sta(6, 4);
+            Dictionary<int, int> playerPosition = new()
+            {
+                { 1, 1 }, { 2, 3 }, { 3, 4 }, { 4, 6 }
+            };
+            Graph graph = new(new(){
+                sta1, sta2, sta3, sta4, sta5, sta6
+            }, playerPosition);
+            sta1.TwowayConnect(sta2);
+            sta2.TwowayConnect(sta3);
+            sta3.TwowayConnect(sta4);
+            sta2.TwowayConnect(sta4);
+            sta4.TwowayConnect(sta5);
+            sta4.TwowayConnect(sta6);
+
+            var options = new ExclusiveStasOptions
+            {
+                Teams = [[1, 2], [1, 3]]
+            };
+
+            // 玩家4在6，因4号站被队友3占领而无法通过，故5号站为独占
+            // 3、4号站为队友占领，不应出现在结果中
+            var res = _finder.FindExclusiveStas(graph, 1, options).ToList();
+            CollectionAssert.AreEquivalent(new List<int>() { 1, 2, 5 }, res);
+        }
     }
 }
