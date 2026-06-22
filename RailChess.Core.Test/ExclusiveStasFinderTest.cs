@@ -12,7 +12,7 @@ namespace RailChess.Core.Test
             _finder = new ExclusiveStasFinder();
 
             //测试中关掉超时机制，以便断点调试
-            //ExclusiveStasFinder.DisableTimeoutTestOnly = true;
+            ExclusiveStasFinder.DisableTimeoutTestOnly = true;
         }
         [TestMethod]
         public void Simple()

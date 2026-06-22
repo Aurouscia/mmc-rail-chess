@@ -8,6 +8,7 @@ namespace RailChess.Core
         public List<int> FindExclusiveStas(Graph graph, int userId)
         {
             var allStas = graph.Stations;
+            var userOwnedStations = allStas.Where(x => x.Owner == userId).Select(x => x.Id).ToHashSet();
             var othersReachable = new HashSet<int>();
             var limit = DateTime.Now.AddSeconds(3);
             foreach(var p in graph.UserPosition)
@@ -46,6 +47,10 @@ namespace RailChess.Core
                 {
                     othersReachable.Add(r);
                 }
+
+                // 优化：若 othersReachable 已经覆盖了所有其他点，则除自己已占领的点外无 exclusive 点，直接返回当前已占领的
+                if (othersReachable.Count + userOwnedStations.Count >= allStas.Count)
+                    return userOwnedStations.ToList();
             }
             return allStas.ConvertAll(x=>x.Id).Except(othersReachable).ToList();
         }
