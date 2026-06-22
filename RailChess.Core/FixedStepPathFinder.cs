@@ -6,14 +6,9 @@ namespace RailChess.Core
 {
     public class FixedStepPathFinder : IFixedStepPathFinder
     {
-        public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, int steps, int maxiumTransfer = int.MaxValue)
+        public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, PathFindOptions options)
         {
-            return FindAllPaths(graph, userId, [steps], maxiumTransfer);
-        }
-
-        /// <inheritdoc/>
-        public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, List<int> steps, int maxiumTransfer = int.MaxValue)
-        {
+            var steps = options.Steps;
             if (steps is null || steps.Count == 0)
                 return new List<List<int>>();
 
@@ -39,7 +34,7 @@ namespace RailChess.Core
             if (uniqueSteps.Count == 0)
                 return new List<List<int>>();
 
-            return FindAllPathsCore(graph, userId, uniqueSteps, maxiumTransfer);
+            return FindAllPathsCore(graph, userId, uniqueSteps, options.MaxiumTransfer);
         }
 
         /// <summary>
@@ -302,14 +297,9 @@ namespace RailChess.Core
             return result;
         }
 
-        public bool IsValidMove(Graph graph, int userId, int to, int steps, int maxiumTransfer = int.MaxValue)
+        public bool IsValidMove(Graph graph, int userId, int to, PathFindOptions options)
         {
-            return IsValidMove(graph, userId, to, [steps], maxiumTransfer);
-        }
-
-        public bool IsValidMove(Graph graph, int userId, int to, List<int> steps, int maxiumTransfer = int.MaxValue)
-        {
-            var paths = FindAllPaths(graph, userId, steps, maxiumTransfer);
+            var paths = FindAllPaths(graph, userId, options);
             return paths.Any(x => x.LastOrDefault() == to);
         }
 

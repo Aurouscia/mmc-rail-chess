@@ -39,13 +39,15 @@ namespace RailChess.Play.Services.Core
             if (game.RandAlg == Models.Game.RandAlgType.FreeWithinRange)
             {
                 var steps = Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList();
-                var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, steps, game.AllowTransfer);
+                var options = new PathFindOptions { Steps = steps, MaxiumTransfer = game.AllowTransfer };
+                var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, options);
                 return allPaths;
             }
             else
             {
                 var randNum = _eventsService.RandedResult();
-                var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, randNum, game.AllowTransfer);
+                var options = new PathFindOptions { Steps = [randNum], MaxiumTransfer = game.AllowTransfer };
+                var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, options);
                 return allPaths;
             }
         }
@@ -68,12 +70,14 @@ namespace RailChess.Play.Services.Core
             if (game.RandAlg == Models.Game.RandAlgType.FreeWithinRange)
             {
                 var steps = Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList();
-                return _fixedStepPathFinder.IsValidMove(graph, currentUser, selected, steps, game.AllowTransfer);
+                var options = new PathFindOptions { Steps = steps, MaxiumTransfer = game.AllowTransfer };
+                return _fixedStepPathFinder.IsValidMove(graph, currentUser, selected, options);
             }
             else
             {
                 var randNum = _eventsService.RandedResult();
-                return _fixedStepPathFinder.IsValidMove(graph, currentUser, selected, randNum, game.AllowTransfer);
+                var options = new PathFindOptions { Steps = [randNum], MaxiumTransfer = game.AllowTransfer };
+                return _fixedStepPathFinder.IsValidMove(graph, currentUser, selected, options);
             }
         }
 

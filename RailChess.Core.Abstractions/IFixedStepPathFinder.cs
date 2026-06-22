@@ -1,7 +1,13 @@
-﻿using RailChess.GraphDefinition;
+using RailChess.GraphDefinition;
 
 namespace RailChess.Core.Abstractions
 {
+    public class PathFindOptions
+    {
+        public List<int> Steps { get; set; } = [];
+        public int MaxiumTransfer { get; set; } = int.MaxValue;
+    }
+
     public interface IFixedStepPathFinder
     {
         /// <summary>
@@ -13,21 +19,37 @@ namespace RailChess.Core.Abstractions
         /// </summary>
         /// <param name="graph">当前图</param>
         /// <param name="userId">当前玩家id</param>
-        /// <param name="steps">步数</param>
-        /// <param name="maxiumTransfer">最多换乘次数</param>
+        /// <param name="options">查找选项</param>
         /// <returns></returns>
-        public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, int steps, int maxiumTransfer = int.MaxValue);
-        public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, List<int> steps, int maxiumTransfer = int.MaxValue);
+        public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, PathFindOptions options);
         /// <summary>
         /// 是否是有效的移动
         /// </summary>
         /// <param name="graph"></param>
         /// <param name="userId"></param>
         /// <param name="to"></param>
-        /// <param name="steps"></param>
-        /// <param name="maxiumTransfer"></param>
+        /// <param name="options"></param>
         /// <returns></returns>
-        public bool IsValidMove(Graph graph, int userId, int to, int steps, int maxiumTransfer = int.MaxValue);
-        public bool IsValidMove(Graph graph, int userId, int to, List<int> steps, int maxiumTransfer = int.MaxValue);
+        public bool IsValidMove(Graph graph, int userId, int to, PathFindOptions options);
+    }
+
+    public static class FixedStepPathFinderExtensions
+    {
+        public static IEnumerable<IEnumerable<int>> FindAllPaths(this IFixedStepPathFinder finder, Graph graph, int userId, int steps, int maxiumTransfer = int.MaxValue)
+        {
+            return finder.FindAllPaths(graph, userId, new PathFindOptions { Steps = [steps], MaxiumTransfer = maxiumTransfer });
+        }
+        public static IEnumerable<IEnumerable<int>> FindAllPaths(this IFixedStepPathFinder finder, Graph graph, int userId, List<int> steps, int maxiumTransfer = int.MaxValue)
+        {
+            return finder.FindAllPaths(graph, userId, new PathFindOptions { Steps = steps, MaxiumTransfer = maxiumTransfer });
+        }
+        public static bool IsValidMove(this IFixedStepPathFinder finder, Graph graph, int userId, int to, int steps, int maxiumTransfer = int.MaxValue)
+        {
+            return finder.IsValidMove(graph, userId, to, new PathFindOptions { Steps = [steps], MaxiumTransfer = maxiumTransfer });
+        }
+        public static bool IsValidMove(this IFixedStepPathFinder finder, Graph graph, int userId, int to, List<int> steps, int maxiumTransfer = int.MaxValue)
+        {
+            return finder.IsValidMove(graph, userId, to, new PathFindOptions { Steps = steps, MaxiumTransfer = maxiumTransfer });
+        }
     }
 }
