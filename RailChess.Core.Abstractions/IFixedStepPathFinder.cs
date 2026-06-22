@@ -7,6 +7,11 @@ namespace RailChess.Core.Abstractions
         public List<int> Steps { get; set; } = [];
         public int MaxiumTransfer { get; set; } = int.MaxValue;
         public bool AllowReverseAtTerminal { get; set; } = false;
+        /// <summary>
+        /// 队伍分组，每个内层列表代表一队玩家。
+        /// 同一队玩家可以走到/经过队友占领的站，但路径终点不能与队友当前位置重合。
+        /// </summary>
+        public List<List<int>>? Teams { get; set; }
     }
 
     public interface IFixedStepPathFinder

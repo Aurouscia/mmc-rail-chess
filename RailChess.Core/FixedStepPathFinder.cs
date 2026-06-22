@@ -45,6 +45,7 @@ namespace RailChess.Core
         {
             var maxiumTransfer = options.MaxiumTransfer;
             var allowReverseAtTerminal = options.AllowReverseAtTerminal;
+            var teammates = GetTeammates(options.Teams, userId);
             var limit = DateTime.Now.AddSeconds(3);
             ResetNeighborsTriedTimesTestOnly();
 
@@ -65,10 +66,11 @@ namespace RailChess.Core
             List<List<int>> negativeOnePaths = [];
             if (hasNegativeOne)
             {
-                var mineOrEmpty = graph.Stations.Where(x =>
-                    (x.Owner == 0 || x.Owner == userId) && x.Id != from);
-                negativeOnePaths = mineOrEmpty
+                var mineOrTeammate = graph.Stations.Where(x =>
+                    (x.Owner == 0 || x.Owner == userId || teammates.Contains(x.Owner)) && x.Id != from);
+                negativeOnePaths = mineOrTeammate
                     .Select(x => new List<int> { from, x.Id })
+                    .Where(x => !IsTeammateCurrentPosition(graph, teammates, x.Last()))
                     .ToList();
             }
 
@@ -171,8 +173,8 @@ namespace RailChess.Core
                     if (transferUsedUp || pJustStared)
                         if (isTransfer)
                             continue; // 已经到了换乘上限，不能往别的线跑；走出的第一步，也不能往别的线跑
-                    if (n.Station.Owner != 0 && n.Station.Owner != userId)
-                        continue; // 不是自己的/空的就不能往这走
+                    if (n.Station.Owner != 0 && n.Station.Owner != userId && !teammates.Contains(n.Station.Owner))
+                        continue; // 不是自己的/空的/队友的就不能往这走
                     if (p.Stations.Count >= 2)
                     {
                         var lastButOne = p.Stations[^2];
@@ -293,6 +295,7 @@ namespace RailChess.Core
             var result = resultPaths
                 .DistinctBy(x => x.Tail?.Station.Id)
                 .Select(x => x.ToIds().ToList())
+                .Where(x => !IsTeammateCurrentPosition(graph, teammates, x.Last()))
                 .ToList();
 
             // 合并 -1 的结果
@@ -421,6 +424,34 @@ namespace RailChess.Core
 
             // 线性线路的端点
             return sta.IndexChosen == 0 || sta.IndexChosen == line.Count - 1;
+        }
+
+        /// <summary>
+        /// 获取指定玩家的队友集合（不含自己）<br/>
+        /// 支持一个玩家同时属于多个队伍
+        /// </summary>
+        private static HashSet<int> GetTeammates(List<List<int>>? teams, int userId)
+        {
+            if (teams is null)
+                return new HashSet<int>();
+            return teams
+                .Where(t => t.Contains(userId))
+                .SelectMany(t => t)
+                .Where(id => id != userId)
+                .ToHashSet();
+        }
+
+        /// <summary>
+        /// 判断指定站点是否是某个队友的当前位置
+        /// </summary>
+        private static bool IsTeammateCurrentPosition(Graph graph, HashSet<int> teammates, int stationId)
+        {
+            foreach (var (playerId, pos) in graph.UserPosition)
+            {
+                if (teammates.Contains(playerId) && pos == stationId)
+                    return true;
+            }
+            return false;
         }
     }
 }

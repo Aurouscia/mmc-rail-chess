@@ -1092,5 +1092,90 @@ namespace RailChess.Core.Test
             var paths = _finder.FindAllPaths(g, 1, new PathFindOptions { Steps = [3], MaxiumTransfer = 0, AllowReverseAtTerminal = true }).ToList().ConvertAll(x => x.Last());
             CollectionAssert.AreEquivalent(new List<int> { 2 }, paths);
         }
+
+        [TestMethod]
+        public void TeamsCanPassThroughButNotEndAtTeammatePosition()
+        {
+            //   3
+            //   |\
+            // 1-2-4-5
+            //     |
+            //     6
+            // 玩家1从1出发，队友是玩家2（位于4，占领3和4），对手玩家3占领5
+            var sta1 = new Sta(1, 1);
+            var sta2 = new Sta(2, 1);
+            var sta3 = new Sta(3, 2);
+            var sta4 = new Sta(4, 2);
+            var sta5 = new Sta(5, 3);
+            var sta6 = new Sta(6, 1);
+            var playerPos = new Dictionary<int, int>()
+            {
+                { 1, 1 }, { 2, 4 }, { 3, 5 }
+            };
+            Graph graph = new(new(){
+                sta1, sta2, sta3, sta4, sta5, sta6
+            }, playerPos);
+            sta1.TwowayConnect(sta2);
+            sta2.TwowayConnect(sta3);
+            sta3.TwowayConnect(sta4);
+            sta2.TwowayConnect(sta4);
+            sta4.TwowayConnect(sta5);
+            sta4.TwowayConnect(sta6);
+
+            var options = new PathFindOptions
+            {
+                Steps = [1, 2, 3, 4, 5],
+                MaxiumTransfer = int.MaxValue,
+                Teams = [[1, 2]]
+            };
+            var reachable = _finder.FindAllPaths(graph, 1, options).ToList().ConvertAll(x => x.Last());
+
+            // 可以走到空的2、队友占领的3，以及经过队友位置4后到达的6
+            // 玩家也可能绕一圈回到自己原本的位置1
+            // 不能到达队友当前位置4，也不能到达对手占领的5
+            CollectionAssert.AreEquivalent(new List<int> { 1, 2, 3, 6 }, reachable);
+        }
+
+        [TestMethod]
+        public void MultipleTeamsMembership()
+        {
+            //   3
+            //   |\
+            // 1-2-4-5
+            //     |
+            //     6
+            // 玩家1从1出发，玩家2在3、玩家3在4，1同时与2和3组队
+            var sta1 = new Sta(1, 1);
+            var sta2 = new Sta(2, 1);
+            var sta3 = new Sta(3, 2);
+            var sta4 = new Sta(4, 3);
+            var sta5 = new Sta(5, 1);
+            var sta6 = new Sta(6, 1);
+            var playerPos = new Dictionary<int, int>()
+            {
+                { 1, 1 }, { 2, 3 }, { 3, 4 }
+            };
+            Graph graph = new(new(){
+                sta1, sta2, sta3, sta4, sta5, sta6
+            }, playerPos);
+            sta1.TwowayConnect(sta2);
+            sta2.TwowayConnect(sta3);
+            sta3.TwowayConnect(sta4);
+            sta2.TwowayConnect(sta4);
+            sta4.TwowayConnect(sta5);
+            sta4.TwowayConnect(sta6);
+
+            var options = new PathFindOptions
+            {
+                Steps = [1, 2, 3, 4, 5],
+                MaxiumTransfer = int.MaxValue,
+                Teams = [[1, 2], [1, 3]]
+            };
+            var reachable = _finder.FindAllPaths(graph, 1, options).ToList().ConvertAll(x => x.Last());
+
+            // 2和3都是队友，他们占领的站可经过，但他们当前所在位置3、4不能作为终点
+            // 玩家也可能绕一圈回到自己原本的位置1
+            CollectionAssert.AreEquivalent(new List<int> { 1, 2, 5, 6 }, reachable);
+        }
     }
 }
