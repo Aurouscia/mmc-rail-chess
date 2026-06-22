@@ -156,9 +156,8 @@ onMounted(async ()=>{
             </td>
         </tr>
         <tr>
-            <td>可终点折返</td>
-            <td>暂不支持设定</td>
-            <!-- <td><input type="checkbox" v-model="creating.AllowReverseAtTerminal"/></td> -->
+            <td>可终点折返（新）</td>
+            <td><input type="checkbox" v-model="creating.AllowReverseAtTerminal"/></td>
         </tr>
         <tr>
             <td>可中途换乘</td>

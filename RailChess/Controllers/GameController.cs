@@ -209,7 +209,8 @@ namespace RailChess.Controllers
                         $"卡住{game.StucksToLose}次出局;" +
                         $"允许换乘{game.AllowTransfer}次;" +
                         $"随机数[{RandNum.AlgTypeName(game.RandAlg)}]{game.RandMin}-{game.RandMax};" +
-                        $"出生点[{SpawnRule.SpawnRuleTypeName(game.SpawnRule)}]";
+                        $"出生点[{SpawnRule.SpawnRuleTypeName(game.SpawnRule)}];" +
+                        $"{(game.AllowReverseAtTerminal ? "可" : "不可")}终点折返";
                     if (game.Started)
                         StartedMins = (int)(DateTime.Now - game.StartTime).TotalMinutes;
                     else
