@@ -30,7 +30,7 @@ namespace RailChess.Play.Services.Core
         /// 轮到某玩家时，根据随机出的步数数字，提供可选的路线
         /// </summary>
         /// <returns>可选路线</returns>
-        public IEnumerable<IEnumerable<int>> GetSelections()
+        public List<List<int>> GetSelections()
         {
             var graph = _graphProvider.GetGraph();
             var currentUser = _playerService.CurrentPlayer();
@@ -85,7 +85,7 @@ namespace RailChess.Play.Services.Core
         /// 玩家做出选择且已实际移动后，给出其他玩家再也无法占领的站
         /// </summary>
         /// <returns>已自动占领站id</returns>
-        public IEnumerable<int> AutoCapturables()
+        public List<int> AutoCapturables()
         {
             var graph = _graphProvider.GetGraph();
             var lastMovedUser = _eventsService.UserId;

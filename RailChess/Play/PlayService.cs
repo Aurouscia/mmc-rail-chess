@@ -146,12 +146,12 @@ namespace RailChess.Play
             var started = _eventsService.GameStarted();
             if (started && !ended && !playback)
             {
-                var paths = _coreCaller.GetSelections().ToList();
+                var paths = _coreCaller.GetSelections();
                 paths.ForEach(p =>
                 {
                     if (!p.Any())
                         return;
-                    selections.Add(p.ToList());
+                    selections.Add(p);
                 });
 
                 if (game.RandAlg != Models.Game.RandAlgType.FreeWithinRange)
@@ -288,7 +288,7 @@ namespace RailChess.Play
                 distNewlyCaptured = true;
             }
             var existing = _eventsService.PlayerCaptureEvents().ConvertAll(x=>x.StationId);
-            var autoCaptures = _coreCaller.AutoCapturables().ToList();
+            var autoCaptures = _coreCaller.AutoCapturables();
             autoCaptures.RemoveAll(existing.Contains);
             foreach(var capture in autoCaptures)
             {

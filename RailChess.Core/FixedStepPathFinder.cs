@@ -6,7 +6,7 @@ namespace RailChess.Core
 {
     public class FixedStepPathFinder : IFixedStepPathFinder
     {
-        public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, PathFindOptions options)
+        public List<List<int>> FindAllPaths(Graph graph, int userId, PathFindOptions options)
         {
             var steps = options.Steps;
             if (steps is null || steps.Count == 0)
@@ -40,7 +40,7 @@ namespace RailChess.Core
         /// <summary>
         /// 特别感谢Momochai(SlinkierApple13)对算法优化的指导
         /// </summary>
-        private IEnumerable<IEnumerable<int>> FindAllPathsCore(
+        private List<List<int>> FindAllPathsCore(
             Graph graph, int userId, List<int> stepsList, PathFindOptions options)
         {
             var maxiumTransfer = options.MaxiumTransfer;
@@ -292,7 +292,7 @@ namespace RailChess.Core
 
             var result = resultPaths
                 .DistinctBy(x => x.Tail?.Station.Id)
-                .Select(x => x.ToIds())
+                .Select(x => x.ToIds().ToList())
                 .ToList();
 
             // 合并 -1 的结果
@@ -337,7 +337,7 @@ namespace RailChess.Core
                     TransferredTimes++;
             }
 
-            public IEnumerable<int> ToIds()
+            public List<int> ToIds()
             {
                 return Stations.ConvertAll(x => x.Station.Id);
             }

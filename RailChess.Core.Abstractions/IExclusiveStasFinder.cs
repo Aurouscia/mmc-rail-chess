@@ -4,6 +4,6 @@ namespace RailChess.Core.Abstractions
 {
     public interface IExclusiveStasFinder
     {
-        public IEnumerable<int> FindExclusiveStas(Graph graph, int userId);
+        public List<int> FindExclusiveStas(Graph graph, int userId);
     }
 }

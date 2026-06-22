@@ -22,7 +22,7 @@ namespace RailChess.Core.Abstractions
         /// <param name="userId">当前玩家id</param>
         /// <param name="options">查找选项</param>
         /// <returns></returns>
-        public IEnumerable<IEnumerable<int>> FindAllPaths(Graph graph, int userId, PathFindOptions options);
+        public List<List<int>> FindAllPaths(Graph graph, int userId, PathFindOptions options);
         /// <summary>
         /// 是否是有效的移动
         /// </summary>
@@ -36,11 +36,11 @@ namespace RailChess.Core.Abstractions
 
     public static class FixedStepPathFinderExtensions
     {
-        public static IEnumerable<IEnumerable<int>> FindAllPaths(this IFixedStepPathFinder finder, Graph graph, int userId, int steps, int maxiumTransfer = int.MaxValue)
+        public static List<List<int>> FindAllPaths(this IFixedStepPathFinder finder, Graph graph, int userId, int steps, int maxiumTransfer = int.MaxValue)
         {
             return finder.FindAllPaths(graph, userId, new PathFindOptions { Steps = [steps], MaxiumTransfer = maxiumTransfer });
         }
-        public static IEnumerable<IEnumerable<int>> FindAllPaths(this IFixedStepPathFinder finder, Graph graph, int userId, List<int> steps, int maxiumTransfer = int.MaxValue)
+        public static List<List<int>> FindAllPaths(this IFixedStepPathFinder finder, Graph graph, int userId, List<int> steps, int maxiumTransfer = int.MaxValue)
         {
             return finder.FindAllPaths(graph, userId, new PathFindOptions { Steps = steps, MaxiumTransfer = maxiumTransfer });
         }

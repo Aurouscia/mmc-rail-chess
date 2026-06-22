@@ -5,7 +5,7 @@ namespace RailChess.Core
 {
     public class ExclusiveStasFinder : IExclusiveStasFinder
     {
-        public IEnumerable<int> FindExclusiveStas(Graph graph, int userId)
+        public List<int> FindExclusiveStas(Graph graph, int userId)
         {
             var allStas = graph.Stations;
             var othersReachable = new HashSet<int>();
@@ -47,7 +47,7 @@ namespace RailChess.Core
                     othersReachable.Add(r);
                 }
             }
-            return allStas.ConvertAll(x=>x.Id).Except(othersReachable);
+            return allStas.ConvertAll(x=>x.Id).Except(othersReachable).ToList();
         }
 
         public static bool DisableTimeoutTestOnly { get; set; } = false;
