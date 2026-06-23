@@ -30,10 +30,12 @@ try
     builder.Services.AddPlayLogics();
 
     builder.Services.AddCors(c);
+    builder.Services.AddEmbed(c);
 
     var app = builder.Build();
 
     app.UseConfiguredCors();
+    app.UseEmbedHeaders();
     app.UseFileServer();
 
     app.UseRouting();

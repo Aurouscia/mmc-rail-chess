@@ -21,6 +21,10 @@ const nonProfitNotice = import.meta.env.VITE_NONPROFIT_NOTICE
             AARC &rarr; 轨交棋 转换器
         </router-link>
     </div>
+    <div class="widgets">
+        <iframe src="/api/embed/active?count=5&theme=light" class="widget" title="当前进行中的对局"></iframe>
+        <iframe src="/api/embed/recent?count=5&theme=light" class="widget" title="最新完成对局"></iframe>
+    </div>
     <div class="gitInfo">
         <iframe src="/gitInfo.html"></iframe>
     </div>
@@ -35,7 +39,24 @@ const nonProfitNotice = import.meta.env.VITE_NONPROFIT_NOTICE
 </template>
 
 <style scoped>
-iframe{
+.widgets{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    margin: 20px 0;
+}
+.widget{
+    width: 100%;
+    max-width: 320px;
+    height: 420px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: visible;
+}
+.gitInfo iframe{
     width: 100%;
     max-width: 600px;
     height: 500px;
