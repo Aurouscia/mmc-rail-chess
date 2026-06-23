@@ -430,10 +430,9 @@ namespace RailChess.Core
         }
 
         /// <summary>
-        /// 线性扫描剪枝：在换乘次数为0且不允许折返的非环线路上，
-        /// 若从指定索引出发沿线路单向最远可走步数小于 minSteps，
+        /// 线性扫描剪枝：在换乘次数为0的情况下，
+        /// 若从指定索引出发沿线路单向（可考虑环线、折返、障碍物）最远可走步数小于 minSteps，
         /// 则该初始方向不可能完成任何目标，可跳过入队。
-        /// 扫描时会将被非自己/非队友占领的站点视为障碍。
         /// </summary>
         private static bool CanInitialDirectionPossiblyReach(
             Graph graph, LinedStaCollapsed startSta, int userId, int minSteps,
@@ -446,10 +445,6 @@ namespace RailChess.Core
             if (minSteps <= 0)
                 return true;
 
-            // 允许折返时可以在端点附近反复走，无法简单用端点距离剪枝
-            if (allowReverseAtTerminal)
-                return true;
-
             // 无线路信息时无法判断，保守保留
             if (graph.Lines.Count == 0 || graph.LineStaIndexes is null)
                 return true;
@@ -457,37 +452,78 @@ namespace RailChess.Core
             if (!graph.Lines.TryGetValue(startSta.LineId, out var line))
                 return true;
 
-            // 环线不启用（首尾相连，索引不单调）
-            if (line.Count >= 3 && line.First() == line.Last())
-                return true;
+            int leftSteps = ScanWalkableStepsOnLine(
+                graph, line, startSta.IndexChosen, -1,
+                allowReverseAtTerminal, minSteps, userId, teammates);
+            int rightSteps = ScanWalkableStepsOnLine(
+                graph, line, startSta.IndexChosen, +1,
+                allowReverseAtTerminal, minSteps, userId, teammates);
 
-            int startIndex = startSta.IndexChosen;
+            return Math.Max(leftSteps, rightSteps) >= minSteps;
+        }
 
-            // 向左（索引减小）扫描，直到端点或遇到无法经过的站
-            int leftDistance = 0;
-            for (int i = startIndex - 1; i >= 0; i--)
+        /// <summary>
+        /// 在线路上沿指定初始方向行走，考虑环线、折返规则和站点占领状态，
+        /// 返回在不换乘的情况下可连续经过的最大步数。
+        /// 扫描步数上限为 maxScanSteps，避免折返或环线导致无限循环。
+        /// </summary>
+        private static int ScanWalkableStepsOnLine(
+            Graph graph, List<int> line, int startIndex, int initialDirection,
+            bool allowReverseAtTerminal, int maxScanSteps, int userId, HashSet<int> teammates)
+        {
+            bool isRing = line.Count >= 3 && line.First() == line.Last();
+            int currentIndex = startIndex;
+            int direction = initialDirection;
+            int steps = 0;
+
+            while (steps < maxScanSteps)
             {
-                var station = graph.Stations.Find(s => s.Id == line[i]);
+                int? nextIndex = GetNextIndexOnLine(line, currentIndex, direction, isRing);
+
+                if (nextIndex is null)
+                {
+                    // 非环线到达物理端点，如果不允许折返则直接结束，允许折返则反向继续
+                    if (!allowReverseAtTerminal)
+                        break;
+
+                    direction *= -1;
+                    continue;
+                }
+
+                var station = graph.Stations.Find(s => s.Id == line[nextIndex.Value]);
                 if (station is null)
                     break;
+
                 if (!IsEmptyOrMineOrTeammateOwned(station, userId, teammates))
                     break;
-                leftDistance++;
+
+                currentIndex = nextIndex.Value;
+                steps++;
             }
 
-            // 向右（索引增大）扫描，直到端点或遇到无法经过的站
-            int rightDistance = 0;
-            for (int i = startIndex + 1; i < line.Count; i++)
+            return steps;
+        }
+
+        /// <summary>
+        /// 获取线路上沿指定方向移动的下一个索引。
+        /// 环线会跳过首尾重复的端点；非环线到达物理端点时返回 null。
+        /// </summary>
+        private static int? GetNextIndexOnLine(List<int> line, int currentIndex, int direction, bool isRing)
+        {
+            int nextIndex = currentIndex + direction;
+
+            if (isRing)
             {
-                var station = graph.Stations.Find(s => s.Id == line[i]);
-                if (station is null)
-                    break;
-                if (!IsEmptyOrMineOrTeammateOwned(station, userId, teammates))
-                    break;
-                rightDistance++;
+                if (nextIndex >= line.Count)
+                    nextIndex = 1; // 跳过与索引0重复的末尾
+                else if (nextIndex < 0)
+                    nextIndex = line.Count - 2; // 跳过与末尾重复的索引0
             }
 
-            return Math.Max(leftDistance, rightDistance) >= minSteps;
+            if (nextIndex < 0 || nextIndex >= line.Count)
+                return null;
+
+            return nextIndex;
         }
 
         /// <summary>
