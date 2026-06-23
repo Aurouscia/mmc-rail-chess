@@ -1,7 +1,40 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import copy from 'copy-to-clipboard'
+
 const intro = import.meta.env.VITE_INTRO
 const contact = import.meta.env.VITE_CONTACT
 const nonProfitNotice = import.meta.env.VITE_NONPROFIT_NOTICE
+
+interface WidgetConfig {
+    id: string
+    src: string
+    title: string
+}
+
+const widgets: WidgetConfig[] = [
+    { id: 'active', src: '/api/embed/active?count=5&theme=light', title: '当前进行中的对局' },
+    { id: 'recent', src: '/api/embed/recent?count=5&theme=light', title: '最新完成对局' }
+]
+
+const copiedId = ref<string | null>(null)
+
+function iframeHtml(src: string): string {
+    const absSrc = new URL(src, window.location.origin).href
+    return `<iframe src="${absSrc}" width="320" height="420" frameborder="0"></iframe>`
+}
+
+function copyHtml(id: string, src: string) {
+    const html = iframeHtml(src)
+    if (copy(html)) {
+        copiedId.value = id
+        setTimeout(() => {
+            if (copiedId.value === id) {
+                copiedId.value = null
+            }
+        }, 2000)
+    }
+}
 </script>
 
 <template>
@@ -22,8 +55,12 @@ const nonProfitNotice = import.meta.env.VITE_NONPROFIT_NOTICE
         </router-link>
     </div>
     <div class="widgets">
-        <iframe src="/api/embed/active?count=5&theme=light" class="widget" title="当前进行中的对局"></iframe>
-        <iframe src="/api/embed/recent?count=5&theme=light" class="widget" title="最新完成对局"></iframe>
+        <div v-for="w in widgets" :key="w.id" class="widget-wrapper">
+            <iframe :src="w.src" class="widget" :title="w.title"></iframe>
+            <button class="copy-btn" @click="copyHtml(w.id, w.src)">
+                {{ copiedId === w.id ? '复制成功' : '复制widget代码' }}
+            </button>
+        </div>
     </div>
     <div class="gitInfo">
         <iframe src="/gitInfo.html"></iframe>
@@ -46,6 +83,12 @@ const nonProfitNotice = import.meta.env.VITE_NONPROFIT_NOTICE
     gap: 16px;
     margin: 20px 0;
 }
+.widget-wrapper{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
 .widget{
     width: 100%;
     max-width: 320px;
@@ -55,6 +98,20 @@ const nonProfitNotice = import.meta.env.VITE_NONPROFIT_NOTICE
     background: #fff;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     overflow: visible;
+}
+.copy-btn{
+    padding: 6px 14px;
+    font-size: 13px;
+    color: #666;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.copy-btn:hover{
+    background: #eee;
+    color: #333;
 }
 .gitInfo iframe{
     width: 100%;
