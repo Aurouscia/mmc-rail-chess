@@ -310,11 +310,8 @@ namespace RailChess.Core
             return result;
         }
 
-        public bool IsValidMove(Graph graph, int userId, int to, PathFindOptions options)
-        {
-            var paths = FindAllPaths(graph, userId, options);
-            return paths.Any(x => x.LastOrDefault() == to);
-        }
+        public bool IsValidMove(Graph graph, int userId, int to, PathFindOptions options) =>
+            FindAllPaths(graph, userId, options).Any(x => x.LastOrDefault() == to);
 
         public static bool DisableTimeoutTestOnly { get; set; }
         [Conditional("DEBUG")]
@@ -343,10 +340,8 @@ namespace RailChess.Core
                     TransferredTimes++;
             }
 
-            public List<int> ToIds()
-            {
-                return Stations.ConvertAll(x => x.Station.Id);
-            }
+            public List<int> ToIds() =>
+                Stations.ConvertAll(x => x.Station.Id);
         }
 
         /// <summary>
@@ -377,18 +372,14 @@ namespace RailChess.Core
             /// </summary>
             /// <param name="sta">目标</param>
             /// <returns>坍缩结果</returns>
-            public static List<LinedStaCollapsed> Collapse(LinedSta sta)
-            {
-                return sta.Indexes is not null
+            public static List<LinedStaCollapsed> Collapse(LinedSta sta) =>
+                sta.Indexes is not null
                     ? sta.Indexes.ConvertAll(x => new LinedStaCollapsed(sta, x))
                     : [new LinedStaCollapsed(sta, 0)]; // 无线路信息（单元测试环境）
-            }
-            public bool IsEquivAs(LinedStaCollapsed other)
-            {
-                return this.LineId == other.LineId
+            public bool IsEquivAs(LinedStaCollapsed other) =>
+                this.LineId == other.LineId
                     && this.Station.Id == other.Station.Id
                     && this.IndexChosen == other.IndexChosen;
-            }
         }
 
         /// <summary>
@@ -401,7 +392,7 @@ namespace RailChess.Core
         /// <returns>是否相邻</returns>
         private static bool IsSerialNeighborInLine(int indexA, int indexB, List<int> line)
         {
-            var isRing = line.Count >= 3 && line.First() == line.Last();
+            var isRing = IsRingLine(line);
             var diff = Math.Abs(indexA - indexB);
             if (diff == 1)
                 return true;
@@ -422,7 +413,7 @@ namespace RailChess.Core
                 return false;
 
             // 环线无终点
-            if (line.Count >= 3 && line.First() == line.Last())
+            if (IsRingLine(line))
                 return false;
 
             // 线性线路的端点
@@ -471,7 +462,7 @@ namespace RailChess.Core
             Graph graph, List<int> line, int startIndex, int initialDirection,
             bool allowReverseAtTerminal, int maxScanSteps, int userId, HashSet<int> teammates)
         {
-            bool isRing = line.Count >= 3 && line.First() == line.Last();
+            bool isRing = IsRingLine(line);
             int currentIndex = startIndex;
             int direction = initialDirection;
             int steps = 0;
@@ -527,6 +518,12 @@ namespace RailChess.Core
         }
 
         /// <summary>
+        /// 判断线路是否为环线（长度至少3且首尾id相同）
+        /// </summary>
+        private static bool IsRingLine(List<int> line) =>
+            line.Count >= 3 && line.First() == line.Last();
+
+        /// <summary>
         /// 获取指定玩家的队友集合（不含自己）<br/>
         /// 支持一个玩家同时属于多个队伍
         /// </summary>
@@ -544,10 +541,8 @@ namespace RailChess.Core
         /// <summary>
         /// 判断指定站点是否为空、被自己占领或被队友占领（即可安全经过）
         /// </summary>
-        private static bool IsEmptyOrMineOrTeammateOwned(Sta station, int userId, HashSet<int> teammates)
-        {
-            return station.Owner == 0 || station.Owner == userId || teammates.Contains(station.Owner);
-        }
+        private static bool IsEmptyOrMineOrTeammateOwned(Sta station, int userId, HashSet<int> teammates) =>
+            station.Owner == 0 || station.Owner == userId || teammates.Contains(station.Owner);
 
         /// <summary>
         /// 判断指定站点是否是某个队友的当前位置
