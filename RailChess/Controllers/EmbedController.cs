@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using RailChess.Models.DbCtx;
 using RailChess.Play.Services;
 using RailChess.Play.Services.Core;
@@ -13,19 +14,23 @@ namespace RailChess.Controllers
         private readonly PlayEventsService _eventsService;
         private readonly PlayToposService _toposService;
         private readonly CoreGraphProvider _graphProvider;
+        private readonly IMemoryCache _cache;
         private const int DefaultCount = 10;
         private const int MaxCount = 20;
+        private static readonly TimeSpan CacheExpiration = TimeSpan.FromSeconds(20);
 
         public EmbedController(
             RailChessContext context,
             PlayEventsService eventsService,
             PlayToposService toposService,
-            CoreGraphProvider graphProvider)
+            CoreGraphProvider graphProvider,
+            IMemoryCache cache)
         {
             _context = context;
             _eventsService = eventsService;
             _toposService = toposService;
             _graphProvider = graphProvider;
+            _cache = cache;
         }
 
         /// <summary>
@@ -35,6 +40,10 @@ namespace RailChess.Controllers
         public IActionResult Active(int count = DefaultCount, string theme = "light")
         {
             count = Math.Clamp(count, 1, MaxCount);
+            string cacheKey = CacheKey("active", count, theme);
+            if (_cache.TryGetValue(cacheKey, out string? cachedHtml) && cachedHtml is not null)
+                return Content(cachedHtml, "text/html; charset=utf-8");
+
             var eventTimeout = TimeSpan.FromMinutes(60);
             var cutoff = DateTime.Now - eventTimeout;
 
@@ -83,6 +92,7 @@ namespace RailChess.Controllers
             }).ToList();
 
             string html = BuildHtml("当前进行中的对局", theme, items);
+            _cache.Set(CacheKey("active", count, theme), html, CacheExpiration);
             return Content(html, "text/html; charset=utf-8");
         }
 
@@ -93,6 +103,9 @@ namespace RailChess.Controllers
         public IActionResult Recent(int count = DefaultCount, string theme = "light")
         {
             count = Math.Clamp(count, 1, MaxCount);
+            string cacheKey = CacheKey("recent", count, theme);
+            if (_cache.TryGetValue(cacheKey, out string? cachedHtml) && cachedHtml is not null)
+                return Content(cachedHtml, "text/html; charset=utf-8");
 
             var games = _context.Games
                 .Where(x => x.Ended && !x.Deleted && string.IsNullOrWhiteSpace(x.AllowUserIdCsv))
@@ -133,6 +146,7 @@ namespace RailChess.Controllers
             }).ToList();
 
             string html = BuildHtml("最新完成对局", theme, items);
+            _cache.Set(CacheKey("recent", count, theme), html, CacheExpiration);
             return Content(html, "text/html; charset=utf-8");
         }
 
@@ -263,6 +277,9 @@ namespace RailChess.Controllers
             sb.AppendLine("</html>");
             return sb.ToString();
         }
+
+        private static string CacheKey(string action, int count, string theme)
+            => $"embed:{action}:{count}:{theme?.ToLowerInvariant() ?? "light"}";
 
         private static string HtmlEncode(string? text) => WebUtility.HtmlEncode(text ?? string.Empty);
 
