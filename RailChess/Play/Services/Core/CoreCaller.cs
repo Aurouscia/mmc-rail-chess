@@ -1,4 +1,5 @@
 using RailChess.Core.Abstractions;
+using RailChess.Models.Game;
 
 namespace RailChess.Play.Services.Core
 {
@@ -36,20 +37,11 @@ namespace RailChess.Play.Services.Core
             var currentUser = _playerService.CurrentPlayer();
             var game = _gameService.OurGame();
 
-            if (game.RandAlg == Models.Game.RandAlgType.FreeWithinRange)
-            {
-                var steps = Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList();
-                var options = new PathFindOptions { Steps = steps, MaxiumTransfer = game.AllowTransfer, AllowReverseAtTerminal = game.AllowReverseAtTerminal };
-                var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, options);
-                return allPaths;
-            }
-            else
-            {
-                var randNum = _eventsService.RandedResult();
-                var options = new PathFindOptions { Steps = [randNum], MaxiumTransfer = game.AllowTransfer, AllowReverseAtTerminal = game.AllowReverseAtTerminal };
-                var allPaths = _fixedStepPathFinder.FindAllPaths(graph, currentUser, options);
-                return allPaths;
-            }
+            var steps = game.RandAlg == RandAlgType.FreeWithinRange
+                ? Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList()
+                : new List<int> { _eventsService.RandedResult() };
+            var options = BuildPathFindOptions(steps, game);
+            return _fixedStepPathFinder.FindAllPaths(graph, currentUser, options);
         }
 
         /// <summary>
@@ -67,18 +59,11 @@ namespace RailChess.Play.Services.Core
             if (locationEvent is null) throw new Exception("找不到玩家位置(未加入)");
             int location = locationEvent.StationId;
 
-            if (game.RandAlg == Models.Game.RandAlgType.FreeWithinRange)
-            {
-                var steps = Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList();
-                var options = new PathFindOptions { Steps = steps, MaxiumTransfer = game.AllowTransfer };
-                return _fixedStepPathFinder.IsValidMove(graph, currentUser, selected, options);
-            }
-            else
-            {
-                var randNum = _eventsService.RandedResult();
-                var options = new PathFindOptions { Steps = [randNum], MaxiumTransfer = game.AllowTransfer };
-                return _fixedStepPathFinder.IsValidMove(graph, currentUser, selected, options);
-            }
+            var steps = game.RandAlg == RandAlgType.FreeWithinRange
+                ? Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList()
+                : new List<int> { _eventsService.RandedResult() };
+            var options = BuildPathFindOptions(steps, game);
+            return _fixedStepPathFinder.IsValidMove(graph, currentUser, selected, options);
         }
 
         /// <summary>
@@ -91,6 +76,11 @@ namespace RailChess.Play.Services.Core
             var lastMovedUser = _eventsService.UserId;
             var options = new ExclusiveStasOptions { Teams = null }; // TODO: 从 game 获取队伍信息
             return _exclusiveStasFinder.FindExclusiveStas(graph, lastMovedUser, options);
+        }
+
+        private static PathFindOptions BuildPathFindOptions(List<int> steps, RailChessGame game)
+        {
+            return new PathFindOptions { Steps = steps, MaxiumTransfer = game.AllowTransfer, AllowReverseAtTerminal = game.AllowReverseAtTerminal };
         }
     }
 }
