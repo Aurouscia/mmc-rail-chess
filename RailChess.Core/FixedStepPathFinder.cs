@@ -48,6 +48,9 @@ namespace RailChess.Core
             var teammates = GetTeammates(options.Teams, userId);
             var limit = DateTime.Now.AddSeconds(3);
             ResetNeighborsTriedTimesTestOnly();
+            ResetPromisingPrunedTimesTestOnly();
+            ResetPromisingCheckTimesTestOnly();
+            ResetInitialPrunedTimesTestOnly();
 
             int maxSteps = stepsList.Max();
             if (maxSteps == 0 && !stepsList.Contains(-1))
@@ -262,6 +265,42 @@ namespace RailChess.Core
                             if (newPathRedundant)
                                 continue; // 新路线多余：不构造，直接去下个循环
                         }
+
+                        // 当前这一步发生换乘，且换乘后刚好耗尽所有换乘次数时，
+                        // 判断新线路上从该邻居出发是否还能走够剩余的最小目标步数
+                        // （排除立即掉头回上一站的方向）
+                        if (needTransfer && transferredTimesNew == maxiumTransfer && minStepRequired > currentStepCount + 1)
+                        {
+                            IncrementPromisingCheckTimesTestOnly();
+                            int remainingSteps = minStepRequired - currentStepCount - 1;
+                            if (graph.Lines.TryGetValue(ncr.LineId, out var line))
+                            {
+                                bool isRing = IsRingLine(line);
+                                int maxWalkable = 0;
+                                // 换乘后方向不确定，尝试两个方向取最大值
+                                foreach (int dir in new[] { +1, -1 })
+                                {
+                                    int? firstStep = GetNextIndexOnLine(line, ncr.IndexChosen, dir, isRing);
+                                    if (firstStep is null)
+                                        continue;
+                                    // 排除立即掉头回上一站的方向
+                                    if (line[firstStep.Value] == pTail.Station.Id)
+                                        continue;
+
+                                    int walkable = 1 + ScanWalkableStepsOnLine(
+                                        graph, line, firstStep.Value, dir,
+                                        allowReverseAtTerminal, remainingSteps - 1, userId, teammates);
+                                    maxWalkable = Math.Max(maxWalkable, walkable);
+                                }
+
+                                if (maxWalkable < remainingSteps)
+                                {
+                                    IncrementPromisingPrunedTimesTestOnly();
+                                    continue; // 没前途，跳过
+                                }
+                            }
+                        }
+
                         LinedPath newPath = new(p, ncr, needTransfer);
                         paths.Enqueue(newPath);
 
@@ -319,6 +358,24 @@ namespace RailChess.Core
         [Conditional("DEBUG")]
         private void IncrementNeighborsTriedTimesTestOnly() => NeighborsTriedTimesTestOnly++;
         public int NeighborsTriedTimesTestOnly { get; private set; }
+
+        [Conditional("DEBUG")]
+        private void ResetPromisingPrunedTimesTestOnly() => PromisingPrunedTimesTestOnly = 0;
+        [Conditional("DEBUG")]
+        private void IncrementPromisingPrunedTimesTestOnly() => PromisingPrunedTimesTestOnly++;
+        public int PromisingPrunedTimesTestOnly { get; private set; }
+
+        [Conditional("DEBUG")]
+        private void ResetPromisingCheckTimesTestOnly() => PromisingCheckTimesTestOnly = 0;
+        [Conditional("DEBUG")]
+        private void IncrementPromisingCheckTimesTestOnly() => PromisingCheckTimesTestOnly++;
+        public int PromisingCheckTimesTestOnly { get; private set; }
+
+        [Conditional("DEBUG")]
+        private void ResetInitialPrunedTimesTestOnly() => InitialPrunedTimesTestOnly = 0;
+        [Conditional("DEBUG")]
+        private void IncrementInitialPrunedTimesTestOnly() => InitialPrunedTimesTestOnly++;
+        public int InitialPrunedTimesTestOnly { get; private set; }
 
         private class LinedPath
         {
@@ -425,7 +482,7 @@ namespace RailChess.Core
         /// 若从指定索引出发沿线路单向（可考虑环线、折返、障碍物）最远可走步数小于 minSteps，
         /// 则该初始方向不可能完成任何目标，可跳过入队。
         /// </summary>
-        private static bool CanInitialDirectionPossiblyReach(
+        private bool CanInitialDirectionPossiblyReach(
             Graph graph, LinedStaCollapsed startSta, int userId, int minSteps,
             bool allowReverseAtTerminal, int maxiumTransfer, HashSet<int> teammates)
         {
@@ -450,7 +507,10 @@ namespace RailChess.Core
                 graph, line, startSta.IndexChosen, +1,
                 allowReverseAtTerminal, minSteps, userId, teammates);
 
-            return Math.Max(leftSteps, rightSteps) >= minSteps;
+            bool canReach = Math.Max(leftSteps, rightSteps) >= minSteps;
+            if (!canReach)
+                IncrementInitialPrunedTimesTestOnly();
+            return canReach;
         }
 
         /// <summary>

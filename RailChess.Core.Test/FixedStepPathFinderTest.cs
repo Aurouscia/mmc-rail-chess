@@ -10,6 +10,9 @@ namespace RailChess.Core.Test
     {
         private readonly IFixedStepPathFinder _finder;
         private Func<int> GetNeighborsTriedTimes;
+        private Func<int> GetPromisingPrunedTimes;
+        private Func<int> GetPromisingCheckTimes;
+        private Func<int> GetInitialPrunedTimes;
         public FixedStepPathFinderTest()
         {
             var finder = new FixedStepPathFinder();
@@ -18,6 +21,9 @@ namespace RailChess.Core.Test
             //测试中关掉超时机制，以便断点调试
             FixedStepPathFinder.DisableTimeoutTestOnly = true;
             GetNeighborsTriedTimes = () => finder.NeighborsTriedTimesTestOnly;
+            GetPromisingPrunedTimes = () => finder.PromisingPrunedTimesTestOnly;
+            GetPromisingCheckTimes = () => finder.PromisingCheckTimesTestOnly;
+            GetInitialPrunedTimes = () => finder.InitialPrunedTimesTestOnly;
         }
         [TestMethod]
         public void Simple()
@@ -852,6 +858,108 @@ namespace RailChess.Core.Test
 
             var paths_4_2 = _finder.FindAllPaths(g, 1, 4, 2).Select(x => x.Last()).ToList();
             CollectionAssert.AreEquivalent(new List<int>() { 5, 3, 6, 7, 8, 2, 4 }, paths_4_2);
+        }
+
+        [TestMethod]
+        public void CrossShapePromisingPruning()
+        {
+            // 十字形线路：
+            // 线路1: 21 - 20 - 10 - 40 - 41
+            // 线路2: 31 - 30 - 10 - 50 - 51
+            // 玩家从 20 出发
+            Sta sta10 = new(10, 1);
+            Sta sta20 = new(20, 1);
+            Sta sta21 = new(21, 1);
+            Sta sta30 = new(30, 1);
+            Sta sta31 = new(31, 1);
+            Sta sta40 = new(40, 1);
+            Sta sta41 = new(41, 1);
+            Sta sta50 = new(50, 1);
+            Sta sta51 = new(51, 1);
+            List<Sta> stas = [sta10, sta20, sta21, sta30, sta31, sta40, sta41, sta50, sta51];
+            Dictionary<int, List<int>> lines = new()
+            {
+                { 1, [21, 20, 10, 40, 41] },
+                { 2, [31, 30, 10, 50, 51] }
+            };
+            Graph g = new(stas, lines);
+            g.UserPosition.Add(1, 20);
+
+            sta21.TwowayConnect(sta20, 1);
+            sta20.TwowayConnect(sta10, 1);
+            sta10.TwowayConnect(sta40, 1);
+            sta40.TwowayConnect(sta41, 1);
+
+            sta31.TwowayConnect(sta30, 2);
+            sta30.TwowayConnect(sta10, 2);
+            sta10.TwowayConnect(sta50, 2);
+            sta50.TwowayConnect(sta51, 2);
+
+            // 允许换乘1次，走1步：无剪枝，可达 21、10
+            var paths1 = _finder.FindAllPaths(g, 1, 1, 1).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 21, 10 }, paths1);
+            Assert.AreEqual(0, GetPromisingPrunedTimes());
+            Assert.AreEqual(0, GetPromisingCheckTimes());
+
+            // 允许换乘1次，走2步：无剪枝，可达 30、40、50
+            var paths2 = _finder.FindAllPaths(g, 1, 2, 1).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 30, 40, 50 }, paths2);
+            Assert.AreEqual(0, GetPromisingPrunedTimes());
+            Assert.AreEqual(0, GetPromisingCheckTimes());
+
+            // 允许换乘1次，走3步：不应发生剪枝，可达点3个
+            var paths3 = _finder.FindAllPaths(g, 1, 3, 1).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 31, 41, 51 }, paths3);
+            Assert.AreEqual(0, GetPromisingPrunedTimes());
+            Assert.AreEqual(2, GetPromisingCheckTimes());
+
+            // 允许换乘1次，走4步：无可达点，发生2次剪枝
+            var paths4 = _finder.FindAllPaths(g, 1, 4, 1).ToList();
+            CollectionAssert.AreEquivalent(new List<int>(), paths4.ConvertAll(x => x.Last()));
+            Assert.AreEqual(2, GetPromisingPrunedTimes());
+            Assert.AreEqual(2, GetPromisingCheckTimes());
+
+            // 允许换乘1次，走5步：无可达点，发生2次剪枝
+            var paths5 = _finder.FindAllPaths(g, 1, 5, 1).ToList();
+            CollectionAssert.AreEquivalent(new List<int>(), paths5.ConvertAll(x => x.Last()));
+            Assert.AreEqual(2, GetPromisingPrunedTimes());
+            Assert.AreEqual(2, GetPromisingCheckTimes());
+        }
+
+        [TestMethod]
+        public void InitialPruningOnLine()
+        {
+            // 线路: 1 - 2 - 3 - 4，玩家从 2 出发
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            Sta sta4 = new(4, 1);
+            List<Sta> stas = [sta1, sta2, sta3, sta4];
+            Dictionary<int, List<int>> lines = new()
+            {
+                { 1, [1, 2, 3, 4] }
+            };
+            Graph g = new(stas, lines);
+            g.UserPosition.Add(1, 2);
+
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            sta3.TwowayConnect(sta4, 1);
+
+            // 走1步：不发生初始剪枝，可达 1、3
+            var paths1 = _finder.FindAllPaths(g, 1, 1, 0).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 1, 3 }, paths1);
+            Assert.AreEqual(0, GetInitialPrunedTimes());
+
+            // 走2步：不发生初始剪枝，可达 4
+            var paths2 = _finder.FindAllPaths(g, 1, 2, 0).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 4 }, paths2);
+            Assert.AreEqual(0, GetInitialPrunedTimes());
+
+            // 走3步：发生1次初始剪枝，无可达点
+            var paths3 = _finder.FindAllPaths(g, 1, 3, 0).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>(), paths3);
+            Assert.AreEqual(1, GetInitialPrunedTimes());
         }
 
         [TestMethod]
