@@ -102,8 +102,11 @@ namespace RailChess.Core
                 startStas = startPoint.Neighbors.ConvertAll(x => new LinedStaCollapsed(x.LineId, startPoint, 0));
             }
 
+            int minStepRequired = sortedSteps.Min();
             Queue<LinedPath> paths = [];
-            var initPaths = startStas.Select(x => new LinedPath(x));
+            var initPaths = startStas
+                .Where(x => CanInitialDirectionPossiblyReach(graph, x, userId, minStepRequired, allowReverseAtTerminal, maxiumTransfer, teammates))
+                .Select(x => new LinedPath(x));
             foreach (var p in initPaths)
                 paths.Enqueue(p);
 
@@ -173,7 +176,7 @@ namespace RailChess.Core
                     if (transferUsedUp || pJustStared)
                         if (isTransfer)
                             continue; // 已经到了换乘上限，不能往别的线跑；走出的第一步，也不能往别的线跑
-                    if (n.Station.Owner != 0 && n.Station.Owner != userId && !teammates.Contains(n.Station.Owner))
+                    if (!IsEmptyOrMineOrTeammateOwned(n.Station, userId, teammates))
                         continue; // 不是自己的/空的/队友的就不能往这走
                     if (p.Stations.Count >= 2)
                     {
@@ -427,6 +430,67 @@ namespace RailChess.Core
         }
 
         /// <summary>
+        /// 线性扫描剪枝：在换乘次数为0且不允许折返的非环线路上，
+        /// 若从指定索引出发沿线路单向最远可走步数小于 minSteps，
+        /// 则该初始方向不可能完成任何目标，可跳过入队。
+        /// 扫描时会将被非自己/非队友占领的站点视为障碍。
+        /// </summary>
+        private static bool CanInitialDirectionPossiblyReach(
+            Graph graph, LinedStaCollapsed startSta, int userId, int minSteps,
+            bool allowReverseAtTerminal, int maxiumTransfer, HashSet<int> teammates)
+        {
+            // 仅在换乘次数为0时启用此保守剪枝
+            if (maxiumTransfer != 0)
+                return true;
+
+            if (minSteps <= 0)
+                return true;
+
+            // 允许折返时可以在端点附近反复走，无法简单用端点距离剪枝
+            if (allowReverseAtTerminal)
+                return true;
+
+            // 无线路信息时无法判断，保守保留
+            if (graph.Lines.Count == 0 || graph.LineStaIndexes is null)
+                return true;
+
+            if (!graph.Lines.TryGetValue(startSta.LineId, out var line))
+                return true;
+
+            // 环线不启用（首尾相连，索引不单调）
+            if (line.Count >= 3 && line.First() == line.Last())
+                return true;
+
+            int startIndex = startSta.IndexChosen;
+
+            // 向左（索引减小）扫描，直到端点或遇到无法经过的站
+            int leftDistance = 0;
+            for (int i = startIndex - 1; i >= 0; i--)
+            {
+                var station = graph.Stations.Find(s => s.Id == line[i]);
+                if (station is null)
+                    break;
+                if (!IsEmptyOrMineOrTeammateOwned(station, userId, teammates))
+                    break;
+                leftDistance++;
+            }
+
+            // 向右（索引增大）扫描，直到端点或遇到无法经过的站
+            int rightDistance = 0;
+            for (int i = startIndex + 1; i < line.Count; i++)
+            {
+                var station = graph.Stations.Find(s => s.Id == line[i]);
+                if (station is null)
+                    break;
+                if (!IsEmptyOrMineOrTeammateOwned(station, userId, teammates))
+                    break;
+                rightDistance++;
+            }
+
+            return Math.Max(leftDistance, rightDistance) >= minSteps;
+        }
+
+        /// <summary>
         /// 获取指定玩家的队友集合（不含自己）<br/>
         /// 支持一个玩家同时属于多个队伍
         /// </summary>
@@ -439,6 +503,14 @@ namespace RailChess.Core
                 .SelectMany(t => t)
                 .Where(id => id != userId)
                 .ToHashSet();
+        }
+
+        /// <summary>
+        /// 判断指定站点是否为空、被自己占领或被队友占领（即可安全经过）
+        /// </summary>
+        private static bool IsEmptyOrMineOrTeammateOwned(Sta station, int userId, HashSet<int> teammates)
+        {
+            return station.Owner == 0 || station.Owner == userId || teammates.Contains(station.Owner);
         }
 
         /// <summary>
