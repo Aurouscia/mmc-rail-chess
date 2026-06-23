@@ -35,12 +35,7 @@ namespace RailChess.Play.Services.Core
         {
             var graph = _graphProvider.GetGraph();
             var currentUser = _playerService.CurrentPlayer();
-            var game = _gameService.OurGame();
-
-            var steps = game.RandAlg == RandAlgType.FreeWithinRange
-                ? Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList()
-                : new List<int> { _eventsService.RandedResult() };
-            var options = BuildPathFindOptions(steps, game);
+            var options = CreatePathFindOptions();
             return _fixedStepPathFinder.FindAllPaths(graph, currentUser, options);
         }
 
@@ -53,16 +48,12 @@ namespace RailChess.Play.Services.Core
         {
             var currentUser = _eventsService.UserId;
             var graph = _graphProvider.GetGraph();
-            var game = _gameService.OurGame();
             var locationEvents = _eventsService.PlayerLocateEvents();
             var locationEvent = locationEvents.Where(x => x.PlayerId == currentUser).LastOrDefault();
             if (locationEvent is null) throw new Exception("找不到玩家位置(未加入)");
             int location = locationEvent.StationId;
 
-            var steps = game.RandAlg == RandAlgType.FreeWithinRange
-                ? Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList()
-                : new List<int> { _eventsService.RandedResult() };
-            var options = BuildPathFindOptions(steps, game);
+            var options = CreatePathFindOptions();
             return _fixedStepPathFinder.IsValidMove(graph, currentUser, selected, options);
         }
 
@@ -78,9 +69,17 @@ namespace RailChess.Play.Services.Core
             return _exclusiveStasFinder.FindExclusiveStas(graph, lastMovedUser, options);
         }
 
-        private static PathFindOptions BuildPathFindOptions(List<int> steps, RailChessGame game)
+        private PathFindOptions CreatePathFindOptions()
         {
-            return new PathFindOptions { Steps = steps, MaxiumTransfer = game.AllowTransfer, AllowReverseAtTerminal = game.AllowReverseAtTerminal };
+            var game = _gameService.OurGame();
+            var steps = game.RandAlg == RandAlgType.FreeWithinRange
+                ? Enumerable.Range(game.RandMin, game.RandMax - game.RandMin + 1).ToList()
+                : [_eventsService.RandedResult()];
+            return new PathFindOptions { 
+                Steps = steps,
+                MaxiumTransfer = game.AllowTransfer,
+                AllowReverseAtTerminal = game.AllowReverseAtTerminal
+            };
         }
     }
 }
