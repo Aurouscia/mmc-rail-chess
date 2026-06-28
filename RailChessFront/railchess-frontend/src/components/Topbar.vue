@@ -17,6 +17,11 @@
     </div>
     <div class="topbar-item">
       <div>
+        <RouterLink to="/competitions">比赛</RouterLink>
+      </div>
+    </div>
+    <div class="topbar-item">
+      <div>
         <RouterLink to="/maps">棋盘</RouterLink>
       </div>
     </div>

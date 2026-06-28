@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using RailChess.Models.Game;
 using RailChess.Models.Map;
 
@@ -15,6 +15,8 @@ namespace RailChess.Models.DbCtx
         public DbSet<RailChessGame> Games { get; set; }
         public DbSet<RailChessEvent> Events { get; set; }
         public DbSet<GameResult> GameResults { get; set; }
+        public DbSet<Competition> Competitions { get; set; }
+        public DbSet<CompetitionMatch> CompetitionMatches { get; set; }
     }
     public static class DbContextSetup
     {

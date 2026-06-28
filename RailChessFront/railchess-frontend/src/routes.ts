@@ -4,6 +4,7 @@ import Login from './pages/Login.vue'
 import Maps from './pages/Maps.vue'
 import Topo from './pages/Topo.vue'
 import Games from './pages/Games.vue'
+import Competitions from './pages/Competitions.vue'
 import Play from './pages/Play.vue'
 import GameResults from './pages/GameResults.vue'
 import GameResultsOfGame from './pages/GameResultsOfGame.vue'
@@ -33,6 +34,10 @@ export const routes = [
     },{
         path: '/games',
         component: Games
+    },{
+        path: '/competitions',
+        component: Competitions,
+        name: 'competitions'
     },{
         path: '/play/:id',
         component: Play,

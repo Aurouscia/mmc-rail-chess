@@ -3,6 +3,7 @@ import { RailChessMapIndexResult, RailChessTopo, TopoEditorLoadResult } from "..
 import { GameInitData } from "../models/play";
 import { QuickSearchResult } from "../models/quickSearch";
 import { User, UserRankingListItem } from "../models/user";
+import { Competition, CompetitionDetail, CompetitionListResponse } from "../models/competition";
 import { HttpClient } from "./httpClient";
 import { IdentityInfo } from "./userInfo";
 
@@ -201,6 +202,16 @@ export class Api{
             )
             if(resp.success)
                 return resp.data as GameTimeline
+        },
+        quickSearch:async(s:string)=>{
+            const resp = await this.httpClient.request(
+                "/api/Game/QuickSearch",
+                "get",
+                {s}
+            );
+            if(resp.success){
+                return resp.data as QuickSearchResult
+            }
         }
     }
     gameResult = {
@@ -223,6 +234,91 @@ export class Api{
             if(resp.success){
                 return resp.data as GameResultListResponse
             }
+        }
+    }
+    competition = {
+        list: async(skip?:number, take?:number)=>{
+            const resp = await this.httpClient.request(
+                "/api/Competition/List",
+                "get",
+                {skip, take}
+            );
+            if(resp.success){
+                return resp.data as CompetitionListResponse
+            }
+        },
+        create: async(competition:Competition)=>{
+            const resp = await this.httpClient.request(
+                "/api/Competition/Create",
+                "postRaw",
+                competition,
+                "创建成功"
+            );
+            return resp.success
+        },
+        update: async(competition:Competition)=>{
+            const resp = await this.httpClient.request(
+                "/api/Competition/Update",
+                "postRaw",
+                competition,
+                "保存成功"
+            );
+            return resp.success
+        },
+        delete: async(id:number)=>{
+            const resp = await this.httpClient.request(
+                "/api/Competition/Delete",
+                "get",
+                {id},
+                "删除成功"
+            );
+            return resp.success
+        },
+        detail: async(id:number)=>{
+            const resp = await this.httpClient.request(
+                "/api/Competition/Detail",
+                "get",
+                {id}
+            );
+            if(resp.success){
+                return resp.data as CompetitionDetail
+            }
+        },
+        addMatch: async(competitionId:number, gameId:number)=>{
+            const resp = await this.httpClient.request(
+                "/api/Competition/AddMatch",
+                "get",
+                {competitionId, gameId},
+                "添加成功"
+            );
+            return resp.success
+        },
+        removeMatch: async(competitionId:number, gameId:number)=>{
+            const resp = await this.httpClient.request(
+                "/api/Competition/RemoveMatch",
+                "get",
+                {competitionId, gameId},
+                "移除成功"
+            );
+            return resp.success
+        },
+        updateMatchOrder: async(competitionId:number, matchIds:number[])=>{
+            const resp = await this.httpClient.request(
+                `/api/Competition/UpdateMatchOrder?competitionId=${competitionId}`,
+                "postRaw",
+                matchIds,
+                "排序已保存"
+            );
+            return resp.success
+        },
+        updateMatchScheduledStartTime: async(matchId:number, scheduledStartTime:string)=>{
+            const resp = await this.httpClient.request(
+                "/api/Competition/UpdateMatchScheduledStartTime",
+                "get",
+                {matchId, scheduledStartTime},
+                "已保存"
+            );
+            return resp.success
         }
     }
     aarcConvert = {

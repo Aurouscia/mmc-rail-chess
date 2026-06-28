@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RailChess.Models.COM;
 using RailChess.Models.DbCtx;
 using RailChess.Models.Game;
 using RailChess.Models.Map;
@@ -178,6 +179,24 @@ namespace RailChess.Controllers
             if (game.MapUpdateTime > game.GameStartTime)
                 timeline.Warning = "【注意】地图在棋局后有改动，可能与当时有差异";
             return this.ApiResp(timeline);
+        }
+
+        public IActionResult QuickSearch(string s)
+        {
+            var games = (
+                from g in _context.Games
+                join m in _context.Maps on g.UseMapId equals m.Id
+                where !g.Deleted && g.GameName != null && g.GameName.Contains(s)
+                orderby g.Id descending
+                select new { g.Id, g.GameName, m.Title }
+            ).Take(6).ToList();
+
+            var res = new QuickSearchResult();
+            foreach (var g in games)
+            {
+                res.Items.Add(new(g.GameName, g.Title, g.Id));
+            }
+            return this.ApiResp(res);
         }
 
 
