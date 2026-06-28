@@ -1,11 +1,12 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { appVersionMark } from '@aurouscia/vite-app-version'
+import { signalrCommentFixerPlugin } from '@aurouscia/signalr-comment-fixer'
 import viteAppVersionConfig from './appVersionOptions.json'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue(), appVersionMark(viteAppVersionConfig)],
+  plugins: [vue(), appVersionMark(viteAppVersionConfig), signalrCommentFixerPlugin()],
   envDir: 'env',
   build:{
     outDir:"../../RailChess/wwwroot",
@@ -26,10 +27,6 @@ export default defineConfig({
           if (id.includes('node_modules'))
             return 'libs'
         }
-      },
-      onwarn(msg, defaultHandler) {
-        if (msg.code !== 'INVALID_ANNOTATION')
-          defaultHandler(msg)
       },
     },
   }

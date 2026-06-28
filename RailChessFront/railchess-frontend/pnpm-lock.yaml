@@ -11,6 +11,9 @@ importers:
       '@aurouscia/au-undo-redo':
         specifier: ^0.3.0
         version: 0.3.0
+      '@aurouscia/signalr-comment-fixer':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@microsoft/signalr':
         specifier: ^10.0.0
         version: 10.0.0
@@ -74,6 +77,9 @@ packages:
 
   '@aurouscia/au-undo-redo@0.3.0':
     resolution: {integrity: sha512-pZ0dL58L4bV/81iACKSuJBMS7h7Mw6eD+MgECjz87aTr2hziUVok2jQXl/w+sCukCsWpKfvqdNhvOV58lLQ7mg==}
+
+  '@aurouscia/signalr-comment-fixer@1.0.0':
+    resolution: {integrity: sha512-/9IU82/aA4mgUOgYTk52kDceiHZyhY6n+Qi5PBUBioAqVnMF9CczqqsPY9dymZ3M4RrrQ4QzC4K6tjV3pmZDig==}
 
   '@aurouscia/vite-app-version@0.2.0':
     resolution: {integrity: sha512-4kW0V1XTZKM01LCridmD23TF/8hfLlZyCCouWstsubnguZFPLLL6sF00I2ho827sX1YH6SLbWpQeY92vi5YDVg==}
@@ -1174,6 +1180,8 @@ snapshots:
   '@aurouscia/au-undo-redo@0.3.0':
     dependencies:
       rfdc: 1.4.1
+
+  '@aurouscia/signalr-comment-fixer@1.0.0': {}
 
   '@aurouscia/vite-app-version@0.2.0': {}
 

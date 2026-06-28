@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@aurouscia/au-undo-redo": "^0.3.0",
+    "@aurouscia/signalr-comment-fixer": "^1.0.0",
     "@microsoft/signalr": "^10.0.0",
     "axios": "^1.18.0",
     "chart.js": "^4.5.1",
