@@ -151,6 +151,7 @@ async function onGameSelected(_name: string, gameId: number) {
 
 async function removeMatch(gameId: number) {
     if (!editing.value) return
+    if (!window.confirm('确认从比赛中移除该对局？')) return
     const ok = await api.competition.removeMatch(editing.value.Id, gameId)
     if (ok) {
         await loadMatches(editing.value.Id)
@@ -159,7 +160,7 @@ async function removeMatch(gameId: number) {
 }
 
 function viewWidget(id: number) {
-    const url = `${import.meta.env.VITE_BASEURL}/api/Competition/Widget?competitionId=${id}`
+    const url = `${import.meta.env.VITE_BASEURL}/api/Embed/Widget?competitionId=${id}`
     window.open(url, '_blank')
 }
 
@@ -274,7 +275,6 @@ onMounted(async () => {
                 </div>
                 <div class="cardOps">
                     <button v-if="isOwner(c)" class="minor" @click="edit(c)">编辑</button>
-                    <button class="minor" @click="viewWidget(c.Id)">Widget</button>
                 </div>
             </div>
         </div>

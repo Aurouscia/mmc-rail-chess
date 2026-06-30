@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using RailChess.Models.DbCtx;
+using RailChess.Models.Game;
 using RailChess.Play.Services;
 using RailChess.Play.Services.Core;
 using System.Net;
@@ -150,6 +152,113 @@ namespace RailChess.Controllers
             return Content(html, "text/html; charset=utf-8");
         }
 
+        /// <summary>
+        /// 当前比赛中各对局的实时状况 widget
+        /// GET /api/embed/widget?competitionId=1&theme=light
+        /// </summary>
+        public IActionResult Widget(int competitionId, string theme = "light")
+        {
+            string cacheKey = $"embed:widget:{competitionId}:{theme?.ToLowerInvariant() ?? "light"}";
+            if (_cache.TryGetValue(cacheKey, out string? cachedHtml) && cachedHtml is not null)
+                return Content(cachedHtml, "text/html; charset=utf-8");
+
+            var competition = _context.Competitions
+                .Include(x => x.Matches)
+                .ThenInclude(x => x.Game)
+                .FirstOrDefault(x => x.Id == competitionId && !x.Deleted);
+
+            if (competition is null)
+                return Content("<div style='padding:12px;'>比赛不存在</div>", "text/html; charset=utf-8");
+
+            var games = competition.Matches
+                .Where(m => m.Game is not null && !m.Game.Deleted)
+                .Select(m => m.Game!)
+                .ToList();
+
+            var mapIds = games.Select(g => g.UseMapId).Distinct().ToList();
+            var maps = _context.Maps
+                .Where(m => mapIds.Contains(m.Id))
+                .ToDictionary(m => m.Id, m => m.Title);
+
+            var hostIds = games.Select(g => g.HostUserId).Distinct().ToList();
+            var hosts = _context.Users
+                .Where(u => hostIds.Contains(u.Id))
+                .ToDictionary(u => u.Id, u => u.Name);
+
+            var items = competition.Matches
+                .Where(m => m.Game is not null && !m.Game.Deleted)
+                .Select(m => new { Match = m, Game = m.Game! })
+                .OrderBy(x => x.Game.Started
+                    ? (x.Game.Ended ? 2 : 0) // 进行中 0，已结束 2
+                    : 1)                     // 未开赛 1
+                .ThenByDescending(x => x.Game.Id)
+                .Select(x =>
+                {
+                    var m = x.Match;
+                    var game = x.Game;
+                    string mapName = maps.GetValueOrDefault(game.UseMapId) ?? "???";
+                    string? title = !string.IsNullOrWhiteSpace(game.GameName) ? game.GameName : mapName;
+                    string? subTitle = !string.IsNullOrWhiteSpace(game.GameName) ? mapName : null;
+                    string hostName = hosts.GetValueOrDefault(game.HostUserId) ?? "???";
+
+                    string status;
+                    string url;
+                    List<PlayerLine> players;
+
+                    if (!game.Started)
+                    {
+                        status = "正在等人";
+                        url = $"/#/play/{game.Id}";
+                        players = new List<PlayerLine>();
+                    }
+                    else if (!game.Ended)
+                    {
+                        status = $"进行中 {(int)(DateTime.Now - game.StartTime).TotalMinutes} 分钟";
+                        url = $"/#/play/{game.Id}";
+                        players = GetActivePlayers(game.Id);
+                    }
+                    else
+                    {
+                        status = $"已结束 · {game.StartTime:yyyy/MM/dd HH:mm}";
+                        url = $"/#/playback/{game.Id}";
+                        players = GetFinalPlayers(game.Id);
+                    }
+
+                    return new WidgetItem(title, subTitle, hostName, status, url, players, m.Stage);
+                })
+                .ToList();
+
+            string header = $"{competition.Title ?? "比赛"} · {GetStatusText(competition.Status)}";
+            string html = BuildHtml(header, theme ?? "light", items);
+            _cache.Set(cacheKey, html, CacheExpiration);
+            return Content(html, "text/html; charset=utf-8");
+        }
+
+        private List<PlayerLine> GetFinalPlayers(int gameId)
+        {
+            var results = (
+                from r in _context.GameResults
+                join u in _context.Users on r.UserId equals u.Id
+                where r.GameId == gameId
+                orderby r.Score descending
+                select new { u.Name, r.Score }
+            ).ToList();
+
+            return results
+                .Select(r => new PlayerLine(r.Name ?? "???", r.Score))
+                .ToList();
+        }
+
+        private static string GetStatusText(CompetitionStatus status)
+            => status switch
+            {
+                CompetitionStatus.Planned => "未开始",
+                CompetitionStatus.Ongoing => "进行中",
+                CompetitionStatus.Completed => "已结束",
+                CompetitionStatus.Cancelled => "已取消",
+                _ => status.ToString()
+            };
+
         private List<PlayerLine> GetActivePlayers(int gameId)
         {
             try
@@ -223,6 +332,7 @@ namespace RailChess.Controllers
             sb.AppendLine($".item:hover {{ background: {hover}; }}");
             sb.AppendLine(".title { font-weight: 600; font-size: 14px; margin-bottom: 2px; line-height: 1.3; }");
             sb.AppendLine($".subtitle {{ font-size: 12px; color: {muted}; margin-bottom: 4px; line-height: 1.3; }}");
+            sb.AppendLine($".stage {{ display: inline-block; font-size: 11px; color: {muted}; background: {hover}; padding: 1px 6px; border-radius: 4px; margin-bottom: 4px; }}");
             sb.AppendLine($".meta {{ font-size: 12px; color: {muted}; line-height: 1.4; margin-bottom: 6px; }}");
             sb.AppendLine(".players { display: flex; flex-direction: column; gap: 3px; }");
             sb.AppendLine($".player {{ font-size: 12px; color: {muted}; line-height: 1.4; }}");
@@ -247,6 +357,8 @@ namespace RailChess.Controllers
                 foreach (var item in items)
                 {
                     sb.AppendLine($"<a class=\"item\" href=\"{item.Url}\" target=\"_blank\">");
+                    if (!string.IsNullOrWhiteSpace(item.Stage))
+                        sb.AppendLine($"<div class=\"stage\">{HtmlEncode(item.Stage)}</div>");
                     sb.AppendLine($"<div class=\"title\">{HtmlEncode(item.Title)}</div>");
                     if (!string.IsNullOrWhiteSpace(item.SubTitle))
                         sb.AppendLine($"<div class=\"subtitle\">{HtmlEncode(item.SubTitle)}</div>");
@@ -283,7 +395,7 @@ namespace RailChess.Controllers
 
         private static string HtmlEncode(string? text) => WebUtility.HtmlEncode(text ?? string.Empty);
 
-        private record WidgetItem(string? Title, string? SubTitle, string? HostName, string Status, string Url, List<PlayerLine> Players);
+        private record WidgetItem(string? Title, string? SubTitle, string? HostName, string Status, string Url, List<PlayerLine> Players, string? Stage = null);
         private record PlayerLine(string Name, int Score, bool IsOut = false);
     }
 }
