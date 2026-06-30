@@ -16,6 +16,7 @@ import { boxTypes } from '../components/Pop.vue';
 import Timeline from '../components/Timeline.vue';
 import PlayOptions from '../components/PlayOptions.vue';
 import PlayStatus from '../components/PlayStatus.vue';
+import SyncPollProgress from '../components/SyncPollProgress.vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { usePlayOptionsStore } from '../utils/stores/playOptionsStore';
@@ -441,7 +442,7 @@ const sidebarOptions = useTemplateRef('sidebarOptions')
 const msgs = ref<TextMsg[]>([]);
 const frame = useTemplateRef('frame')
 const arena = useTemplateRef('arena')
-const { bgOpacity, staSizeRatio, connDisplayMode } = storeToRefs(usePlayOptionsStore())
+const { bgOpacity, staSizeRatio, connDisplayMode, syncMeIntervalSec } = storeToRefs(usePlayOptionsStore())
 const staSize = ref<number>(0.8)
 function autoStaSize(){
     if(!frame.value || !arena.value){return;}
@@ -466,19 +467,35 @@ async function visibilityChangedHandler(){
     }
 }
 //保险措施，有时因为客户端休眠等原因没收到sync指令
-const pollIntv = 15 * 1000
+const pollIntv = computed(()=>syncMeIntervalSec.value * 1000)
 let pollTimer = 0
+let pollStartTime = Date.now()
+const pollProgress = ref(0)
+let pollRafId = 0
 async function poll(){
     if(!props.playback){
+        pollStartTime = Date.now()
+        console.log('发送syncMeIfNecessary')
         await sgrc.syncMeIfNecessary(myLastSyncTimeMs)
     }
 }
 function resetPollTimer(){
+    console.log('重置poll timer')
     disposePollTimer()
-    pollTimer = window.setInterval(poll, pollIntv)
+    pollStartTime = Date.now()
+    pollTimer = window.setInterval(poll, pollIntv.value)
 }
+//设置调整后，销毁旧定时器并按新的间隔重新创建，确保和进度条对得上
+watch(syncMeIntervalSec, ()=>{
+    resetPollTimer()
+})
 function disposePollTimer(){
     window.clearInterval(pollTimer)
+}
+function updatePollProgress(){
+    const elapsed = Date.now() - pollStartTime
+    pollProgress.value = Math.min(elapsed / pollIntv.value, 1)
+    pollRafId = requestAnimationFrame(updatePollProgress)
 }
 
 var api:Api;
@@ -546,6 +563,8 @@ onMounted(async()=>{
         scaler = new Scaler(frame.value,arena.value,renderStaList, moveLocked, bg);
     }
 
+    updatePollProgress()
+
     window.addEventListener("keypress",(ev)=>{
         if(ev.key=="Enter"){
             send();
@@ -560,6 +579,7 @@ onMounted(async()=>{
 onBeforeUnmount(()=>{
     stopPathAnim()
     disposePollTimer()
+    cancelAnimationFrame(pollRafId)
     document.removeEventListener("visibilitychange", visibilityChangedHandler)
     sgrc.conn.stop();
 })
@@ -649,6 +669,7 @@ watch(props,()=>{
     <button class="minor" @click="sidebarStatus?.extend">战况</button>
     <button class="confirm" @click="sidebar?.extend">菜单</button>
 </div>
+<SyncPollProgress v-if="!playback" class="syncPollProgress" :progress="pollProgress" @click="sidebarOptions?.extend()" />
 <div class="scaleBtn" :style="{right:scalerPosRight+'px'}">
     <button class="scaleFold off" @click="toggleScaler">缩放</button>
     <button @click="scaler?.autoMutiple(5)">500%</button>
@@ -881,6 +902,11 @@ canvas{
     gap: 1px;
     background-color: white;
     border-radius: 8px;
+}
+.syncPollProgress{
+    position: fixed;
+    right: 10px;
+    top: 110px;
 }
 .playerData{
     font-size: 14px;

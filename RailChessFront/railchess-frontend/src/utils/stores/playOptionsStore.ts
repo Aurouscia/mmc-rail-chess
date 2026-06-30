@@ -17,6 +17,8 @@ function fixStringNumbers(){
         store.vacuumStaOpacity = parseFloat(store.vacuumStaOpacity)
     if(typeof store.autoSeekInterval == 'string')
         store.autoSeekInterval = parseFloat(store.autoSeekInterval)
+    if(typeof store.syncMeIntervalSec == 'string')
+        store.syncMeIntervalSec = parseFloat(store.syncMeIntervalSec)
 }
 
 const storeName = 'playOptionsStore'
@@ -26,7 +28,8 @@ export const usePlayOptionsStore = defineStore(storeName, ()=>{
     const vacuumStaOpacity = ref<number>(1)
     const connDisplayMode = ref<'none'|'anim'>('none')
     const autoSeekInterval = ref<number>(3000)
-    
+    const syncMeIntervalSec = ref<number>(15)
+
     watch(() => vacuumStaOpacity.value, () => {
         applyVacuumStaOpacity()
     })
@@ -36,7 +39,8 @@ export const usePlayOptionsStore = defineStore(storeName, ()=>{
         staSizeRatio,
         vacuumStaOpacity,
         connDisplayMode,
-        autoSeekInterval
+        autoSeekInterval,
+        syncMeIntervalSec
     }
 }, {
     persist:{
