@@ -40,15 +40,16 @@ namespace RailChess.Controllers
 
         /// <summary>创建比赛</summary>
         [Authorize]
-        public IActionResult Create([FromBody] Competition competition)
+        public IActionResult Create([FromBody] CompetitionDto dto)
         {
-            if (string.IsNullOrWhiteSpace(competition.Title))
+            if (string.IsNullOrWhiteSpace(dto.Title))
                 return this.ApiFailedResp("比赛标题不能为空");
-            if (competition.Title.Length > 128)
+            if (dto.Title.Length > 128)
                 return this.ApiFailedResp("比赛标题过长");
 
+            var competition = dto.ToCompetition();
             competition.HostUserId = _userId;
-            competition.CreateTime = DateTime.Now;
+            competition.CreateTime = DateTime.UtcNow;
             competition.Status = CompetitionStatus.Planned;
             competition.Deleted = false;
             competition.Matches = new List<CompetitionMatch>();
@@ -85,20 +86,13 @@ namespace RailChess.Controllers
                 .ToDictionary(u => u.Id, u => u.Name);
 
             var items = pageItems
-                .Select(x => new CompetitionListItem
-                {
-                    Id = x.Id,
-                    Title = x.Title,
-                    HostUserId = x.HostUserId,
-                    HostName = hostNames.GetValueOrDefault(x.HostUserId),
-                    StartTime = x.StartTime,
-                    EndTime = x.EndTime,
-                    Status = x.Status,
-                    MatchCount = matchCounts.GetValueOrDefault(x.Id),
-                    ParticipantCount = string.IsNullOrWhiteSpace(x.ParticipantUserIdCsv)
+                .Select(x => CompetitionDto.From(
+                    x,
+                    hostNames,
+                    matchCounts.GetValueOrDefault(x.Id),
+                    string.IsNullOrWhiteSpace(x.ParticipantUserIdCsv)
                         ? 0
-                        : x.ParticipantUserIdCsv.Split(',', StringSplitOptions.RemoveEmptyEntries).Length
-                })
+                        : x.ParticipantUserIdCsv.Split(',', StringSplitOptions.RemoveEmptyEntries).Length))
                 .ToList();
 
             return this.ApiResp(new { total, items });
@@ -127,66 +121,55 @@ namespace RailChess.Controllers
                 .Select(u => new { u.Id, u.Name })
                 .ToList();
 
-            var detail = new CompetitionDetail
-            {
-                Id = competition.Id,
-                Title = competition.Title,
-                Description = competition.Description,
-                HostUserId = competition.HostUserId,
-                CreateTime = competition.CreateTime,
-                StartTime = competition.StartTime,
-                EndTime = competition.EndTime,
-                Status = competition.Status,
-                ParticipantUserIdCsv = competition.ParticipantUserIdCsv,
-                Matches = competition.Matches
-                    .OrderBy(m => m.OrderIndex)
-                    .ThenBy(m => m.Id)
-                    .Select(m =>
+            var detail = CompetitionDto.From(competition);
+            detail.Matches = competition.Matches
+                .OrderBy(m => m.OrderIndex)
+                .ThenBy(m => m.Id)
+                .Select(m =>
+                {
+                    var gh = gameHosts.FirstOrDefault(g => g.Id == m.GameId);
+                    var hostName = gh is null ? null : hosts.FirstOrDefault(u => u.Id == gh.HostUserId)?.Name;
+                    return new CompetitionMatchDto
                     {
-                        var gh = gameHosts.FirstOrDefault(g => g.Id == m.GameId);
-                        var hostName = gh is null ? null : hosts.FirstOrDefault(u => u.Id == gh.HostUserId)?.Name;
-                        return new CompetitionMatchItem
-                        {
-                            MatchId = m.Id,
-                            GameId = m.GameId,
-                            OrderIndex = m.OrderIndex,
-                            Stage = m.Stage,
-                            ScheduledStartTime = m.ScheduledStartTime,
-                            GameName = gh?.GameName,
-                            HostUserName = hostName
-                        };
-                    })
-                    .ToList()
-            };
+                        MatchId = m.Id,
+                        GameId = m.GameId,
+                        OrderIndex = m.OrderIndex,
+                        Stage = m.Stage,
+                        ScheduledStartTime = CompetitionDto.ToTimestamp(m.ScheduledStartTime),
+                        GameName = gh?.GameName,
+                        HostUserName = hostName
+                    };
+                })
+                .ToList();
 
             return this.ApiResp(detail);
         }
 
         /// <summary>更新比赛基本信息</summary>
         [Authorize]
-        public IActionResult Update([FromBody] Competition competition)
+        public IActionResult Update([FromBody] CompetitionDto dto)
         {
-            if (competition is null || competition.Id <= 0)
+            if (dto is null || dto.Id <= 0)
                 return BadRequest();
 
-            var existing = _context.Competitions.Find(competition.Id);
+            var existing = _context.Competitions.Find(dto.Id);
             if (existing is null || existing.Deleted)
                 return this.ApiFailedResp("找不到指定比赛");
             if (existing.HostUserId != _userId)
                 return this.ApiFailedResp("只有创建者能修改比赛");
 
-            if (string.IsNullOrWhiteSpace(competition.Title))
+            if (string.IsNullOrWhiteSpace(dto.Title))
                 return this.ApiFailedResp("比赛标题不能为空");
-            if (competition.Title.Length > 128)
+            if (dto.Title.Length > 128)
                 return this.ApiFailedResp("比赛标题过长");
-            if (competition.Description is not null && competition.Description.Length > 1024)
+            if (dto.Description is not null && dto.Description.Length > 1024)
                 return this.ApiFailedResp("比赛说明过长");
 
-            existing.Title = competition.Title;
-            existing.Description = competition.Description;
-            existing.StartTime = competition.StartTime;
-            existing.EndTime = competition.EndTime;
-            existing.Status = competition.Status;
+            existing.Title = dto.Title;
+            existing.Description = dto.Description;
+            existing.StartTime = CompetitionDto.FromTimestamp(dto.StartTime);
+            existing.EndTime = CompetitionDto.FromTimestamp(dto.EndTime);
+            existing.Status = dto.Status;
 
             _context.SaveChanges();
             return this.ApiResp();
@@ -294,7 +277,7 @@ namespace RailChess.Controllers
 
         /// <summary>更新对局预计开始时间</summary>
         [Authorize]
-        public IActionResult UpdateMatchScheduledStartTime(int matchId, DateTime scheduledStartTime)
+        public IActionResult UpdateMatchScheduledStartTime(int matchId, long scheduledStartTime)
         {
             var match = _context.CompetitionMatches
                 .Include(m => m.Competition)
@@ -304,7 +287,7 @@ namespace RailChess.Controllers
             if (match.Competition.HostUserId != _userId)
                 return this.ApiFailedResp("只有创建者能修改比赛");
 
-            match.ScheduledStartTime = scheduledStartTime;
+            match.ScheduledStartTime = CompetitionDto.FromTimestamp(scheduledStartTime);
             _context.SaveChanges();
             return this.ApiResp();
         }
@@ -423,43 +406,7 @@ namespace RailChess.Controllers
                 : null;
         }
 
-        public class CompetitionListItem
-        {
-            public int Id { get; set; }
-            public string? Title { get; set; }
-            public int HostUserId { get; set; }
-            public string? HostName { get; set; }
-            public DateTime StartTime { get; set; }
-            public DateTime EndTime { get; set; }
-            public CompetitionStatus Status { get; set; }
-            public int MatchCount { get; set; }
-            public int ParticipantCount { get; set; }
-        }
 
-        public class CompetitionDetail
-        {
-            public int Id { get; set; }
-            public string? Title { get; set; }
-            public string? Description { get; set; }
-            public int HostUserId { get; set; }
-            public DateTime CreateTime { get; set; }
-            public DateTime StartTime { get; set; }
-            public DateTime EndTime { get; set; }
-            public CompetitionStatus Status { get; set; }
-            public string? ParticipantUserIdCsv { get; set; }
-            public List<CompetitionMatchItem> Matches { get; set; } = new();
-        }
-
-        public class CompetitionMatchItem
-        {
-            public int MatchId { get; set; }
-            public int GameId { get; set; }
-            public int OrderIndex { get; set; }
-            public string? Stage { get; set; }
-            public DateTime ScheduledStartTime { get; set; }
-            public string? GameName { get; set; }
-            public string? HostUserName { get; set; }
-        }
 
         #region Widget Helpers
 

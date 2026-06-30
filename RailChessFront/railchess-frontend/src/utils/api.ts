@@ -311,7 +311,7 @@ export class Api{
             );
             return resp.success
         },
-        updateMatchScheduledStartTime: async(matchId:number, scheduledStartTime:string)=>{
+        updateMatchScheduledStartTime: async(matchId:number, scheduledStartTime:number)=>{
             const resp = await this.httpClient.request(
                 "/api/Competition/UpdateMatchScheduledStartTime",
                 "get",

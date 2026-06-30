@@ -39,8 +39,8 @@ function create() {
         Title: '',
         Description: '',
         HostUserId: me.value,
-        StartTime: formatDateTimeLocal(new Date()),
-        EndTime: formatDateTimeLocal(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+        StartTime: dateToTimestamp(new Date()),
+        EndTime: dateToTimestamp(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
         Status: CompetitionStatus.Planned
     }
     editingMatches.value = undefined
@@ -104,11 +104,17 @@ async function confirm() {
         return
     }
 
-    const competition: Competition = {
-        ...editing.value,
-        StartTime: toIsoString(editing.value.StartTime),
-        EndTime: toIsoString(editing.value.EndTime)
+    console.log({
+        s: editing.value.StartTime,
+        e: editing.value.EndTime
+    })
+
+    if (isNaN(editing.value.StartTime) || isNaN(editing.value.EndTime)) {
+        pop.value.show('请选择有效的开始和结束时间', 'failed')
+        return
     }
+
+    const competition: Competition = { ...editing.value }
 
     let ok: boolean
     if (editing.value.Id > 0) {
@@ -157,31 +163,39 @@ function viewWidget(id: number) {
     window.open(url, '_blank')
 }
 
+function dateToTimestamp(d: Date): number {
+    return d.getTime()
+}
+
+function timestampToDateTimeLocal(ts?: number): string {
+    if (ts === undefined || isNaN(ts)) return ''
+    return formatDateTimeLocal(new Date(ts))
+}
+
+function dateTimeLocalToTimestamp(local: string): number {
+    return new Date(local).getTime()
+}
+
 function formatDateTimeLocal(d: Date): string {
     const pad = (n: number) => n.toString().padStart(2, '0')
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-function toIsoString(local: string): string {
-    return new Date(local).toISOString()
-}
-
-function formatTime(s?: string): string {
-    if (!s) return '-'
-    const d = new Date(s)
+function formatTime(ts?: number): string {
+    if (ts === undefined || ts === null || isNaN(ts)) return '-'
+    const d = new Date(ts)
     return `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
 }
 
-function formatDateTimeLocalFromString(s?: string): string {
-    if (!s) return formatDateTimeLocal(new Date())
-    const d = new Date(s)
-    return formatDateTimeLocal(d)
+function formatDateTimeLocalFromTimestamp(ts?: number): string {
+    if (ts === undefined || ts === null || isNaN(ts)) return ''
+    return formatDateTimeLocal(new Date(ts))
 }
 
 async function updateMatchScheduledStartTime(m: CompetitionMatch, value: string) {
-    const iso = toIsoString(value)
-    m.ScheduledStartTime = iso
-    const ok = await api.competition.updateMatchScheduledStartTime(m.MatchId, iso)
+    const ts = dateTimeLocalToTimestamp(value)
+    m.ScheduledStartTime = ts
+    const ok = await api.competition.updateMatchScheduledStartTime(m.MatchId, ts)
     if (!ok) {
         await loadMatches(editing.value!.Id)
     }
@@ -291,11 +305,15 @@ onMounted(async () => {
         </tr>
         <tr>
             <td>开始时间</td>
-            <td><input type="datetime-local" v-model="editing.StartTime" /></td>
+            <td><input type="datetime-local"
+                :value="timestampToDateTimeLocal(editing?.StartTime)"
+                @input="(e) => editing && (editing.StartTime = dateTimeLocalToTimestamp((e.target as HTMLInputElement).value))" /></td>
         </tr>
         <tr>
             <td>结束时间</td>
-            <td><input type="datetime-local" v-model="editing.EndTime" /></td>
+            <td><input type="datetime-local"
+                :value="timestampToDateTimeLocal(editing?.EndTime)"
+                @input="(e) => editing && (editing.EndTime = dateTimeLocalToTimestamp((e.target as HTMLInputElement).value))" /></td>
         </tr>
         <tr>
             <td>状态</td>
@@ -327,15 +345,15 @@ onMounted(async () => {
                     <div class="matchStage" v-if="m.Stage">{{ m.Stage }}</div>
                     <div class="matchHost">房主：{{ m.HostUserName || '???' }}</div>
                     <div class="matchScheduled">
-                        预计开始：
+                        预定
                         <input type="datetime-local" class="scheduledInput"
-                            :value="formatDateTimeLocalFromString(m.ScheduledStartTime)"
+                            :value="formatDateTimeLocalFromTimestamp(m.ScheduledStartTime)"
                             @change="(e) => updateMatchScheduledStartTime(m, (e.target as HTMLInputElement).value)" />
                     </div>
                 </div>
                 <div class="matchOps">
-                    <button @click="moveMatchUp(idx)" :disabled="idx === 0" class="minor" title="上移">↑</button>
-                    <button @click="removeMatch(m.GameId)" class="cancel">移除</button>
+                    <button @click="moveMatchUp(idx)" :disabled="idx === 0" class="lite" title="上移">↑</button>
+                    <button @click="removeMatch(m.GameId)" class="lite">×</button>
                 </div>
             </div>
             <div v-if="orderedMatches.length === 0" class="emptySmall">暂无对局</div>

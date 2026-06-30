@@ -4,9 +4,9 @@ export interface Competition {
     Description?: string
     HostUserId: number
     HostName?: string
-    CreateTime?: string
-    StartTime: string
-    EndTime: string
+    CreateTime?: number
+    StartTime: number
+    EndTime: number
     Status: CompetitionStatus
     ParticipantUserIdCsv?: string
     ParticipantCount?: number
@@ -37,7 +37,7 @@ export interface CompetitionMatch {
     GameId: number
     OrderIndex: number
     Stage?: string
-    ScheduledStartTime?: string
+    ScheduledStartTime?: number
     GameName?: string
     HostUserName?: string
 }

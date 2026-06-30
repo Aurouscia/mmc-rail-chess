@@ -1,5 +1,9 @@
-﻿namespace RailChess.Models.Game
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace RailChess.Models.Game
 {
+    [Index(nameof(GameId))]
+    [Index(nameof(UserId))]
     public class GameResult
     {
         public int Id { get; set; }

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace RailChess.Models.Game
@@ -5,6 +6,7 @@ namespace RailChess.Models.Game
     /// <summary>
     /// 比赛对局：一场 Competition 与一场 RailChessGame 的关联，可携带在该比赛中的元信息
     /// </summary>
+    [Index(nameof(CompetitionId))]
     public class CompetitionMatch
     {
         public int Id { get; set; }
@@ -19,7 +21,6 @@ namespace RailChess.Models.Game
         public int OrderIndex { get; set; }
 
         /// <summary>阶段说明，例如：小组赛、八强、半决赛、决赛</summary>
-        [MaxLength(64)]
         public string? Stage { get; set; }
 
         /// <summary>预计开始时间</summary>

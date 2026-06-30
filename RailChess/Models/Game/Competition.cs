@@ -9,10 +9,8 @@ namespace RailChess.Models.Game
     {
         public int Id { get; set; }
 
-        [MaxLength(128)]
         public string? Title { get; set; }
 
-        [MaxLength(1024)]
         public string? Description { get; set; }
 
         /// <summary>创建者/主办方用户Id</summary>
@@ -31,7 +29,6 @@ namespace RailChess.Models.Game
         public bool Deleted { get; set; }
 
         /// <summary>参赛用户Id列表，CSV格式</summary>
-        [MaxLength(2048)]
         public string? ParticipantUserIdCsv { get; set; }
 
         /// <summary>比赛包含的对局</summary>
