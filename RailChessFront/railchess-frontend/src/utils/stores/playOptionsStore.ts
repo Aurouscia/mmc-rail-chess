@@ -28,7 +28,7 @@ export const usePlayOptionsStore = defineStore(storeName, ()=>{
     const vacuumStaOpacity = ref<number>(1)
     const connDisplayMode = ref<'none'|'anim'>('none')
     const autoSeekInterval = ref<number>(3000)
-    const syncMeIntervalSec = ref<number>(15)
+    const syncMeIntervalSec = ref<number>(8)
 
     watch(() => vacuumStaOpacity.value, () => {
         applyVacuumStaOpacity()

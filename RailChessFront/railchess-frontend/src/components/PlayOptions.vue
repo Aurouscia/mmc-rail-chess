@@ -30,8 +30,8 @@ const { bgOpacity, staSizeRatio, vacuumStaOpacity, autoSeekInterval, connDisplay
     <div v-if="!playback" class="sideBarOption">
         <b>兜底同步间隔：{{ syncMeIntervalSec }} 秒</b>
         <input type="range" v-model.number="syncMeIntervalSec" min="3" max="15" step="1">
-        <p style="color: gray; margin: 10px;">
-            由于移动端性能问题或网络波动，传来的更新可能丢失，这里是一个兜底机制，（理论上）进度条走到头时会强制更新一次。如果进度条多次走到头了依然有丢更新的问题，请向Au反馈。
+        <p style="color: gray; margin: 10px; font-size: 15px;">
+            由于移动端性能问题或网络波动，传来的更新可能丢失，这里是一个兜底机制，（理论上）进度条走到头时会强制更新一次，你可以按需调整这个速度。如果进度条多次走到头了依然有丢更新的问题，请向Au反馈。
         </p>
     </div>
     <div class="sideBarOption">

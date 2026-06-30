@@ -483,7 +483,10 @@ function resetPollTimer(){
     console.log('重置poll timer')
     disposePollTimer()
     pollStartTime = Date.now()
-    pollTimer = window.setInterval(poll, pollIntv.value)
+    const intv = pollIntv.value
+    if(intv > 0){
+        pollTimer = window.setInterval(poll, intv)
+    }
 }
 //设置调整后，销毁旧定时器并按新的间隔重新创建，确保和进度条对得上
 watch(syncMeIntervalSec, ()=>{
@@ -493,8 +496,13 @@ function disposePollTimer(){
     window.clearInterval(pollTimer)
 }
 function updatePollProgress(){
-    const elapsed = Date.now() - pollStartTime
-    pollProgress.value = Math.min(elapsed / pollIntv.value, 1)
+    const intv = pollIntv.value
+    if(!Number.isFinite(intv) || intv <= 0){
+        pollProgress.value = 0
+    }else{
+        const elapsed = Date.now() - pollStartTime
+        pollProgress.value = Math.min(elapsed / intv, 1)
+    }
     pollRafId = requestAnimationFrame(updatePollProgress)
 }
 

@@ -29,9 +29,11 @@ interface KickAfkRequest extends RequestModelBase{}
 export class SignalRClient{
     gameId:number
     conn:signalR.HubConnection
+    private textMsgCall:TextMsgCall
 
     constructor(gameId:number, jwtToken:string, syncCall:SyncCall, textMsgCall:TextMsgCall){
         this.gameId = gameId;
+        this.textMsgCall = textMsgCall;
         const baseUrl = import.meta.env.VITE_BASEURL;
         const url = baseUrl+"/Play";
         const retryDelays = [500, 500, 1000, 1000, 2000, 2000, 4000, 4000]
@@ -62,7 +64,7 @@ export class SignalRClient{
             window.clearInterval(reconMsgTimer)
             reconMsgCounter = 0
             textMsgCall(getLocalTextMsg("已成功重新连接", 1))
-            this.syncMe();
+            this.syncMe().catch(()=>{});
         });
         this.conn.on(syncCallMethodName, syncCall);
         this.conn.on(textMsgMethodName, (m)=>{
@@ -70,40 +72,64 @@ export class SignalRClient{
             textMsgCall(m)
         });
     }
+
+    private errTimestamps = new Map<string, number>()
+    private showErr(methodName:string, err:unknown, suppressIntervalMs:number = 0){
+        const now = Date.now()
+        const last = this.errTimestamps.get(methodName) || 0
+        if(now - last <= suppressIntervalMs){
+            return
+        }
+        this.errTimestamps.set(methodName, now)
+        const msg = err instanceof Error ? err.message : String(err)
+        this.textMsgCall(getLocalTextMsg(`${methodName}失败：${msg}`, 2))
+    }
+    private async invokeWithErr(methodName:string, req:unknown, suppressIntervalMs:number = 0){
+        try{
+            await this.conn.invoke(methodName, req)
+        }catch(err){
+            this.showErr(methodName, err, suppressIntervalMs)
+        }
+    }
+
     async connect(){
-        await this.conn.start();
+        try{
+            await this.conn.start();
+        }catch(err){
+            this.showErr("连接", err)
+        }
     }
     async join(){
         const r:JoinRequest = {
             GameId: this.gameId
         }
-        await this.conn.invoke("Join",r);
+        await this.invokeWithErr("Join", r)
     }
     async enter(){
         const r:EnterRequest = {
             GameId: this.gameId
         }
-        await this.conn.invoke("Enter",r);
+        await this.invokeWithErr("Enter", r)
     }
     async sendTextMsg(content:string){
         const r:SendTextMsgRequest = {
             GameId: this.gameId,
             Content: content
         }
-        await this.conn.invoke("SendTextMsg",r)
+        await this.invokeWithErr("SendTextMsg", r)
     }
     async gameStart(){
         const r:GameStartRequest = {
             GameId: this.gameId
         }
-        await this.conn.invoke("GameStart",r);
+        await this.invokeWithErr("GameStart", r)
     }
     async gameReset(){
         const r:GameResetRequest = {
             GameId: this.gameId
         }
         if(window.confirm("是否重置本局游戏")){
-            await this.conn.invoke("GameReset",r);
+            await this.invokeWithErr("GameReset", r)
         }
     }
     async select(path:number[]){
@@ -111,14 +137,14 @@ export class SignalRClient{
             GameId: this.gameId,
             Path: path
         }
-        await this.conn.invoke("Select",r)
+        await this.invokeWithErr("Select", r)
     }
     async out(){
         const r:OutRequest = {
             GameId: this.gameId
         };
         if(window.confirm("是否退出棋局")){
-            await this.conn.invoke("Out",r);
+            await this.invokeWithErr("Out", r)
         }
     }
     async syncMe(tFilterId:number = 0){
@@ -126,7 +152,7 @@ export class SignalRClient{
             GameId: this.gameId,
             TFilterId: tFilterId
         };
-        await this.conn.invoke("SyncMe",r)
+        await this.invokeWithErr("SyncMe", r, 30000)
     }
     async syncMeIfNecessary(myLastSyncTimeMs:number){
         const r:SyncMeRequest = {
@@ -134,12 +160,12 @@ export class SignalRClient{
             TFilterId: 0,
             MyLastSyncTimeMs: myLastSyncTimeMs
         }
-        await this.conn.invoke("SyncMeIfNecessary",r)
+        await this.invokeWithErr("SyncMeIfNecessary", r, 30000)
     }
     async kickAfk(){
         const r:KickAfkRequest = {
             GameId: this.gameId
         };
-        await this.conn.invoke("KickAfk",r)
+        await this.invokeWithErr("KickAfk", r)
     }
 }

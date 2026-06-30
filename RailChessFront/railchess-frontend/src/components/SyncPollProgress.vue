@@ -1,15 +1,25 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue';
+
+const props = defineProps<{
     progress: number
 }>()
 const emit = defineEmits<{
     click: []
 }>()
+
+const safeProgress = computed(()=>{
+    const p = Number(props.progress)
+    if(!Number.isFinite(p)){
+        return 0
+    }
+    return Math.max(0, Math.min(1, p))
+})
 </script>
 
 <template>
     <div class="poll-progress" @click="emit('click')">
-        <div class="poll-progress-bar" :style="{ height: `${Math.max(0, Math.min(1, progress)) * 100}%` }"></div>
+        <div class="poll-progress-bar" :style="{ height: `${safeProgress * 100}%` }"></div>
     </div>
 </template>
 
@@ -30,6 +40,6 @@ const emit = defineEmits<{
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #aaa;
+    background-color: black;
 }
 </style>
