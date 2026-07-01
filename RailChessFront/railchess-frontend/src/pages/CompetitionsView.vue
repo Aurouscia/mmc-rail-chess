@@ -31,6 +31,10 @@ function widgetSrc(id: number): string {
     return `${import.meta.env.VITE_BASEURL}/api/Embed/Widget?competitionId=${id}&theme=light`
 }
 
+function participantsSrc(id: number): string {
+    return `${import.meta.env.VITE_BASEURL}/api/Embed/Participants?competitionId=${id}&theme=light`
+}
+
 onMounted(() => {
     loadMore()
 })
@@ -47,8 +51,9 @@ onMounted(() => {
         </div>
     </h1>
     <div class="widgets">
-        <div v-for="c in items" :key="c.Id" class="widgetWrapper">
+        <div v-for="c in items" :key="c.Id" class="competitionBox">
             <iframe :src="widgetSrc(c.Id)" class="widget" :title="c.Title || '比赛 #' + c.Id"></iframe>
+            <iframe :src="participantsSrc(c.Id)" class="widget" :title="(c.Title || '比赛 #' + c.Id) + ' 积分榜'"></iframe>
         </div>
     </div>
     <div v-if="!loading && items.length === 0" class="empty">当前暂无比赛</div>
@@ -76,23 +81,25 @@ onMounted(() => {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 16px;
+    gap: 20px;
     margin: 20px 0;
 }
-.widgetWrapper{
+.competitionBox{
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
 }
 .widget{
-    width: 100%;
-    max-width: 320px;
+    width: 320px;
     height: 420px;
     border: 1px solid #eee;
     border-radius: 8px;
     background: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     overflow: visible;
 }
 .loadingWrap{

@@ -7,6 +7,7 @@ using RailChess.Play.Services;
 using RailChess.Play.Services.Core;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 
 namespace RailChess.Controllers
 {
@@ -249,6 +250,105 @@ namespace RailChess.Controllers
                 .ToList();
         }
 
+        /// <summary>
+        /// 比赛参与者积分榜 widget
+        /// GET /api/embed/participants?competitionId=1&theme=light
+        /// </summary>
+        public IActionResult Participants(int competitionId, string theme = "light")
+        {
+            string cacheKey = $"embed:participants:{competitionId}:{theme?.ToLowerInvariant() ?? "light"}";
+            if (_cache.TryGetValue(cacheKey, out string? cachedHtml) && cachedHtml is not null)
+                return Content(cachedHtml, "text/html; charset=utf-8");
+
+            var competition = _context.Competitions
+                .Include(x => x.Matches)
+                .ThenInclude(x => x.Game)
+                .FirstOrDefault(x => x.Id == competitionId && !x.Deleted);
+
+            if (competition is null)
+                return Content("<div style='padding:12px;'>比赛不存在</div>", "text/html; charset=utf-8");
+
+            var participants = JsonSerializer.Deserialize<List<CompetitionParticipant>>(
+                competition.ParticipantsJson ?? "[]") ?? new List<CompetitionParticipant>();
+
+            var participantUserIds = participants.Select(p => p.UserId).ToList();
+            var userNames = _context.Users
+                .Where(u => participantUserIds.Contains(u.Id))
+                .ToDictionary(u => u.Id, u => u.Name);
+
+            var endedMatches = competition.Matches
+                .Where(m => m.Game is not null && !m.Game.Deleted && m.Game.Ended)
+                .ToList();
+
+            var gameIds = endedMatches.Select(m => m.GameId).ToList();
+            var allResults = _context.GameResults
+                .Where(r => gameIds.Contains(r.GameId))
+                .Select(r => new { r.GameId, r.UserId, r.Rank })
+                .ToList();
+            var resultsByGame = allResults.GroupBy(r => r.GameId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var pointsByUser = participants.ToDictionary(p => p.UserId, _ => 0);
+            var participantSet = participantUserIds.ToHashSet();
+
+            foreach (var match in endedMatches)
+            {
+                if (!resultsByGame.TryGetValue(match.GameId, out var results))
+                    continue;
+
+                var rules = ParseScoringRules(match.ScoringJson);
+                int playerCount = results.Count;
+                if (!rules.TryGetValue(playerCount, out var points))
+                    continue;
+
+                foreach (var result in results)
+                {
+                    if (!participantSet.Contains(result.UserId))
+                        continue;
+                    int index = result.Rank - 1;
+                    if (index < 0 || index >= points.Count)
+                        continue;
+                    pointsByUser[result.UserId] += points[index];
+                }
+            }
+
+            var displayItems = participants
+                .Select(p => new ParticipantDisplay(
+                    userNames.TryGetValue(p.UserId, out var name) ? name ?? "???" : "???",
+                    p.Number,
+                    pointsByUser.GetValueOrDefault(p.UserId)))
+                .OrderByDescending(p => p.Score)
+                .ThenBy(p => p.Number, StringComparer.Ordinal)
+                .ThenBy(p => p.Name)
+                .ToList();
+
+            string header = $"{competition.Title ?? "比赛"} · 积分榜";
+            string html = BuildParticipantHtml(header, theme ?? "light", displayItems);
+            _cache.Set(cacheKey, html, CacheExpiration);
+            return Content(html, "text/html; charset=utf-8");
+        }
+
+        private static Dictionary<int, List<int>> ParseScoringRules(string? scoringJson)
+        {
+            if (string.IsNullOrWhiteSpace(scoringJson))
+                return new Dictionary<int, List<int>>();
+
+            try
+            {
+                var scoring = JsonSerializer.Deserialize<CompetitionMatchScoring>(scoringJson);
+                if (scoring?.Rules is null)
+                    return new Dictionary<int, List<int>>();
+
+                return scoring.Rules
+                    .Where(r => r.PlayerCount > 0 && r.Points is not null)
+                    .ToDictionary(r => r.PlayerCount, r => r.Points);
+            }
+            catch
+            {
+                return new Dictionary<int, List<int>>();
+            }
+        }
+
         private static string GetStatusText(CompetitionStatus status)
             => status switch
             {
@@ -301,6 +401,68 @@ namespace RailChess.Controllers
             {
                 return new List<PlayerLine>();
             }
+        }
+
+        private static string BuildParticipantHtml(string header, string theme, List<ParticipantDisplay> participants)
+        {
+            var (bg, fg, muted, border, hover) = theme?.ToLowerInvariant() switch
+            {
+                "dark" => ("#1a1a1a", "#f0f0f0", "#aaa", "#444", "#2a2a2a"),
+                "transparent" => ("transparent", "#333", "#666", "#ddd", "rgba(0,0,0,0.05)"),
+                _ => ("#ffffff", "#333", "#666", "#eee", "#f8f8f8")
+            };
+
+            var sb = new StringBuilder();
+            sb.AppendLine("<!DOCTYPE html>");
+            sb.AppendLine("<html>");
+            sb.AppendLine("<head>");
+            sb.AppendLine("<meta charset=\"utf-8\" />");
+            sb.AppendLine("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />");
+            sb.AppendLine("<style>");
+            sb.AppendLine("*, *::before, *::after { box-sizing: border-box; }");
+            sb.AppendLine($"body {{ margin: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background: {bg}; color: {fg}; }}");
+            sb.AppendLine(".widget { padding: 12px; }");
+            sb.AppendLine($".header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: {fg}; }}");
+            sb.AppendLine(".brand { display: flex; align-items: center; gap: 6px; }");
+            sb.AppendLine(".brand img { width: 20px; height: 20px; display: block; }");
+            sb.AppendLine(".brand span { font-size: 14px; font-weight: 600; }");
+            sb.AppendLine($".header-title {{ font-size: 12px; color: {muted}; font-weight: normal; }}");
+            sb.AppendLine(".list { display: flex; flex-direction: column; gap: 8px; }");
+            sb.AppendLine($".item {{ padding: 10px; border: 1px solid {border}; border-radius: 8px; }}");
+            sb.AppendLine(".title { font-weight: 600; font-size: 14px; margin-bottom: 2px; line-height: 1.3; }");
+            sb.AppendLine($".meta {{ font-size: 12px; color: {muted}; line-height: 1.4; }}");
+            sb.AppendLine(".empty { font-size: 13px; color: #999; text-align: center; padding: 24px 0; }");
+            sb.AppendLine("</style>");
+            sb.AppendLine("</head>");
+            sb.AppendLine("<body>");
+            sb.AppendLine("<div class=\"widget\">");
+            sb.AppendLine("<div class=\"header\">");
+            sb.AppendLine("<div class=\"brand\"><img src=\"/railchessLogo.svg\" alt=\"\" /><span>轨交棋</span></div>");
+            sb.AppendLine($"<div class=\"header-title\">{HtmlEncode(header)}</div>");
+            sb.AppendLine("</div>");
+            sb.AppendLine("<div class=\"list\">");
+
+            if (participants.Count == 0)
+            {
+                sb.AppendLine("<div class=\"empty\">暂无参赛选手</div>");
+            }
+            else
+            {
+                foreach (var p in participants)
+                {
+                    sb.AppendLine("<div class=\"item\">");
+                    sb.AppendLine($"<div class=\"title\">{HtmlEncode(p.Name)}</div>");
+                    string numberText = string.IsNullOrWhiteSpace(p.Number) ? "-" : p.Number;
+                    sb.AppendLine($"<div class=\"meta\">参赛编号 {HtmlEncode(numberText)} · {p.Score} 积分</div>");
+                    sb.AppendLine("</div>");
+                }
+            }
+
+            sb.AppendLine("</div>");
+            sb.AppendLine("</div>");
+            sb.AppendLine("</body>");
+            sb.AppendLine("</html>");
+            return sb.ToString();
         }
 
         private static string BuildHtml(string header, string theme, List<WidgetItem> items)
@@ -397,5 +559,6 @@ namespace RailChess.Controllers
 
         private record WidgetItem(string? Title, string? SubTitle, string? HostName, string Status, string Url, List<PlayerLine> Players, string? Stage = null);
         private record PlayerLine(string Name, int Score, bool IsOut = false);
+        private record ParticipantDisplay(string Name, string? Number, int Score);
     }
 }
