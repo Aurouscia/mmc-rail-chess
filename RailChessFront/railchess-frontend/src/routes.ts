@@ -54,6 +54,11 @@ export const routes = [
         props: (route:RouteLocation) => ({ id: route.params.id, playback: 'playback' }),
         name:'playback'
     },{
+        path: '/playback/:id/autoplay',
+        component: Play,
+        props: (route:RouteLocation) => ({ id: route.params.id, playback: 'playback', autoplay: 'autoplay' }),
+        name:'playbackAutoplay'
+    },{
         path: '/results/ofPlayer/:userId?',
         component: GameResults,
         props:true,

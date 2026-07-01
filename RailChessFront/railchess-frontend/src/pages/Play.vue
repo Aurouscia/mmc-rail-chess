@@ -26,7 +26,8 @@ import { useRandNumDisplay } from '../utils/randNumDisplay';
 const router = useRouter()
 const props = defineProps<{
     id:string,
-    playback?:string
+    playback?:string,
+    autoplay?:string
 }>();
 const gameId = parseInt(props.id);
 
@@ -717,7 +718,7 @@ watch(props,()=>{
 <SideBar ref="sidebarOptions">
     <PlayOptions :playback="playback"></PlayOptions>
 </SideBar>
-<Timeline v-if="playback" :game-id="gameId" @view-time="t=>sgrc.syncMe(t)"></Timeline>
+<Timeline v-if="playback" :game-id="gameId" :autoplay="autoplay" @view-time="t=>sgrc.syncMe(t)"></Timeline>
 </template>
 
 <style scoped lang="scss">

@@ -8,7 +8,8 @@ import { clamp, throttle } from 'lodash-es';
 import { displayForRandNum } from '../utils/randNumDisplay';
 
 const props = defineProps<{
-    gameId:number
+    gameId:number,
+    autoplay?:string
 }>()
 const emit = defineEmits<{
     (e:'viewTime', eid?:number):void
@@ -175,6 +176,11 @@ onMounted(async()=>{
     await load()
     if(data.value?.Warning){
         pop.value.show(data.value.Warning, 'warning')
+    }
+    if(props.autoplay && data.value){
+        selectedIdx.value = -1
+        selectedItem(true)
+        toggleAuto()
     }
 })
 </script>
