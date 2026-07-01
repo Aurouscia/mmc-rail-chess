@@ -24,13 +24,20 @@ namespace RailChess.Controllers
 
         public IActionResult Active()
         {
-            var g = _context.Games.Where(x => !x.Ended && !x.Deleted).OrderByDescending(x => x.Id).Take(20).ToList();
+            var g = _context.Games.Where(x => !x.Ended && !x.Deleted).OrderByDescending(x => x.Id).Take(100).ToList();
             var timeoutSpan = TimeSpan.FromMinutes(unplayedGameTimeoutMins);
             var timeouts = g.FindAll(x => DateTime.Now - x.StartTime > timeoutSpan);
             if (timeouts.Count > 0)
             {
+                var timeoutGameIds = timeouts.Select(x => x.Id).ToList();
+                var protectedGameIds = _context.CompetitionMatches
+                    .Where(x => timeoutGameIds.Contains(x.GameId))
+                    .Select(x => x.GameId)
+                    .ToHashSet();
                 timeouts.ForEach(game =>
                 {
+                    if (protectedGameIds.Contains(game.Id))
+                        return;
                     var itsLastEvent = _context.Events
                         .Where(x => x.GameId == game.Id)
                         .OrderByDescending(x=>x.Time)
