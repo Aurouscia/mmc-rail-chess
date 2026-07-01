@@ -3,7 +3,7 @@ import { RailChessMapIndexResult, RailChessTopo, TopoEditorLoadResult } from "..
 import { GameInitData } from "../models/play";
 import { QuickSearchResult } from "../models/quickSearch";
 import { User, UserRankingListItem } from "../models/user";
-import { Competition, CompetitionDetail, CompetitionListResponse } from "../models/competition";
+import { Competition, CompetitionDetail, CompetitionListResponse, CompetitionMatchScoring } from "../models/competition";
 import { HttpClient } from "./httpClient";
 import { IdentityInfo } from "./userInfo";
 
@@ -84,6 +84,17 @@ export class Api{
                 if(resp.success){
                     return resp.data as QuickSearchResult
                 }
+            },
+            getUserInfoByIds: async(ids:number[])=>{
+                const resp = await this.httpClient.request(
+                    "/api/User/GetUserInfoByIds",
+                    "postRaw",
+                    ids
+                );
+                if(resp.success){
+                    return resp.data as { Id: number, Name: string }[]
+                }
+                return []
             }
         }
     }
@@ -317,6 +328,15 @@ export class Api{
                 "get",
                 {matchId, scheduledStartTime},
                 "已保存"
+            );
+            return resp.success
+        },
+        updateMatchScoring: async(matchId:number, scoring:CompetitionMatchScoring|undefined)=>{
+            const resp = await this.httpClient.request(
+                `/api/Competition/UpdateMatchScoring?matchId=${matchId}`,
+                "postRaw",
+                scoring ?? null,
+                "积分规则已保存"
             );
             return resp.success
         }

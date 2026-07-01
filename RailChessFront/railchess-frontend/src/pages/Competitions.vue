@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef } from 'vue';
+import { onMounted, ref, useTemplateRef } from 'vue';
 import { injectApi, injectPop, injectUserInfo } from '../provides';
-import { Competition, CompetitionDetail, CompetitionMatch, CompetitionStatus, CompetitionStatusText } from '../models/competition';
+import { Competition, CompetitionDetail, CompetitionMatch, CompetitionMatchScoring, CompetitionStatus, CompetitionStatusText } from '../models/competition';
 import Loading from '../components/Loading.vue';
 import SideBar from '../components/SideBar.vue';
 import Search from '../components/Search.vue';
+import CompetitionParticipantEditor from '../components/CompetitionParticipantEditor.vue';
+import CompetitionScoringEditor from '../components/CompetitionScoringEditor.vue';
 
 const api = injectApi()
 const pop = injectPop()
@@ -20,7 +22,6 @@ const sidebar = useTemplateRef('sidebar')
 const editing = ref<Competition | undefined>()
 const editingMatches = ref<CompetitionDetail | undefined>()
 const orderedMatches = ref<CompetitionMatch[]>([])
-const initialMatchIds = ref<number[]>([])
 
 async function load() {
     loading.value = true
@@ -45,7 +46,6 @@ function create() {
     }
     editingMatches.value = undefined
     orderedMatches.value = []
-    initialMatchIds.value = []
     sidebar.value?.extend()
 }
 
@@ -61,7 +61,6 @@ function edit(item: Competition) {
     editing.value = { ...item }
     editingMatches.value = undefined
     orderedMatches.value = []
-    initialMatchIds.value = []
     loadMatches(item.Id)
     sidebar.value?.extend()
 }
@@ -71,29 +70,25 @@ async function loadMatches(id: number) {
     if (detail && editing.value?.Id === id) {
         editingMatches.value = detail
         orderedMatches.value = [...detail.Matches].sort((a, b) => a.OrderIndex - b.OrderIndex)
-        initialMatchIds.value = orderedMatches.value.map(m => m.MatchId)
     }
 }
 
-function moveMatchUp(index: number) {
+async function moveMatchUp(index: number) {
     if (index <= 0 || orderedMatches.value.length < 2) return
     const arr = orderedMatches.value
     ;[arr[index - 1], arr[index]] = [arr[index], arr[index - 1]]
     orderedMatches.value = [...arr]
+    await saveMatchOrder()
 }
 
-const isOrderChanged = computed(() => {
-    if (orderedMatches.value.length !== initialMatchIds.value.length) return false
-    return orderedMatches.value.some((m, i) => m.MatchId !== initialMatchIds.value[i])
-})
-
 async function saveMatchOrder() {
-    if (!editing.value || !isOrderChanged.value) return
+    if (!editing.value) return
     const matchIds = orderedMatches.value.map(m => m.MatchId)
     const ok = await api.competition.updateMatchOrder(editing.value.Id, matchIds)
     if (ok) {
-        initialMatchIds.value = [...matchIds]
         await load()
+    } else {
+        await loadMatches(editing.value.Id)
     }
 }
 
@@ -202,6 +197,26 @@ async function updateMatchScheduledStartTime(m: CompetitionMatch, value: string)
     }
 }
 
+function parseScoring(json?: string): CompetitionMatchScoring | undefined {
+    if (!json) return undefined
+    try {
+        const parsed = JSON.parse(json) as CompetitionMatchScoring
+        if (parsed && Array.isArray(parsed.Rules)) {
+            return parsed
+        }
+    } catch {
+        // ignore
+    }
+    return undefined
+}
+
+async function saveMatchScoring(m: CompetitionMatch) {
+    if (!editing.value) return
+    const scoring = parseScoring(m.ScoringJson)
+    await api.competition.updateMatchScoring(m.MatchId, scoring)
+    await loadMatches(editing.value.Id)
+}
+
 const totalPageCount = () => Math.ceil(total.value / pageSize.value)
 const pageCanPrev = () => pageIdx.value > 0
 const pageCanNext = () => pageIdx.value < totalPageCount() - 1
@@ -292,7 +307,7 @@ onMounted(async () => {
 
 <SideBar ref="sidebar">
     <h1>{{ editing && editing.Id > 0 ? '编辑比赛' : '新建比赛' }}</h1>
-    <table v-if="editing"><tbody>
+    <table v-if="editing" class="editTable"><tbody>
         <tr>
             <td>名称</td>
             <td><input v-model="editing.Title" placeholder="比赛名称" /></td>
@@ -326,6 +341,16 @@ onMounted(async () => {
                 </select>
             </td>
         </tr>
+        <tr>
+            <td>主页链接</td>
+            <td><input v-model="editing.HomepageUrl" placeholder="https://..." /></td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div class="participantSectionTitle">参赛选手名单</div>
+                <CompetitionParticipantEditor v-model="editing.ParticipantsJson" />
+            </td>
+        </tr>
         <tr class="noneBackground">
             <td colspan="2"><button @click="confirm" class="confirm">保存</button></td>
         </tr>
@@ -341,7 +366,13 @@ onMounted(async () => {
         <div v-if="editingMatches" class="matchList">
             <div v-for="(m, idx) in orderedMatches" :key="m.MatchId" class="matchItem">
                 <div class="matchInfo">
-                    <div class="matchName">{{ m.GameName || '棋局 #' + m.GameId }}</div>
+                    <div class="matchHeader">
+                        <div class="matchName">{{ m.GameName || '棋局 #' + m.GameId }}</div>
+                        <div class="matchOps">
+                            <button @click="moveMatchUp(idx)" :disabled="idx === 0" class="lite" title="上移">↑</button>
+                            <button @click="removeMatch(m.GameId)" class="lite">×</button>
+                        </div>
+                    </div>
                     <div class="matchStage" v-if="m.Stage">{{ m.Stage }}</div>
                     <div class="matchHost">房主：{{ m.HostUserName || '???' }}</div>
                     <div class="matchScheduled">
@@ -350,16 +381,15 @@ onMounted(async () => {
                             :value="formatDateTimeLocalFromTimestamp(m.ScheduledStartTime)"
                             @change="(e) => updateMatchScheduledStartTime(m, (e.target as HTMLInputElement).value)" />
                     </div>
-                </div>
-                <div class="matchOps">
-                    <button @click="moveMatchUp(idx)" :disabled="idx === 0" class="lite" title="上移">↑</button>
-                    <button @click="removeMatch(m.GameId)" class="lite">×</button>
+                    <div class="matchScoring">
+                        <div class="scoringLabel">积分规则</div>
+                        <CompetitionScoringEditor v-model="m.ScoringJson" />
+                        <button class="confirm" @click="saveMatchScoring(m)">保存积分规则</button>
+                    </div>
                 </div>
             </div>
             <div v-if="orderedMatches.length === 0" class="emptySmall">暂无对局</div>
-            <div v-if="isOrderChanged" class="saveOrder">
-                <button @click="saveMatchOrder" class="confirm">保存排序</button>
-            </div>
+
         </div>
         <Loading v-else></Loading>
     </div>
@@ -376,6 +406,7 @@ onMounted(async () => {
 }
 .desktopTable {
     min-width: 760px;
+    width: 100%;
 }
 .titleCell {
     font-weight: 600;
@@ -474,13 +505,16 @@ onMounted(async () => {
     gap: 8px;
 }
 .matchItem {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 6px;
     background: white;
+}
+.matchHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
 }
 .matchInfo {
     flex: 1;
@@ -512,6 +546,22 @@ onMounted(async () => {
     display: flex;
     align-items: center;
     gap: 4px;
+}
+.matchScoring {
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #f9f9f9;
+}
+.matchScoring button{
+    width: stretch;
+}
+.scoringLabel {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 6px;
+    font-weight: 600;
 }
 .scheduledInput {
     width: 170px;
@@ -545,6 +595,18 @@ onMounted(async () => {
     border-top: 1px solid #ccc;
     display: flex;
     justify-content: center;
+}
+
+.editTable input,
+.editTable textarea {
+    width: 180px;
+}
+
+.participantSectionTitle {
+    text-align: center;
+    font-weight: bold;
+    padding: 10px 0 6px;
+    font-size: 15px;
 }
 
 textarea {

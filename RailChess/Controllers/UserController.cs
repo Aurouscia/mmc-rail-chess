@@ -257,6 +257,18 @@ namespace RailChess.Controllers
             return this.ApiResp(res);
         }
 
+        /// <summary>根据用户Id列表批量获取用户名</summary>
+        public IActionResult GetUserInfoByIds([FromBody] List<int> ids)
+        {
+            if (ids is null || ids.Count == 0)
+                return this.ApiResp(new List<object>());
+            var users = _context.Users
+                .Where(x => ids.Contains(x.Id))
+                .Select(x => new { x.Id, x.Name })
+                .ToList();
+            return this.ApiResp(users);
+        }
+
         public class UserRankingListItem
         {
             public int UId { get; set; }

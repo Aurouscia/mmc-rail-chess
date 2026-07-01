@@ -8,7 +8,8 @@ export interface Competition {
     StartTime: number
     EndTime: number
     Status: CompetitionStatus
-    ParticipantUserIdCsv?: string
+    HomepageUrl?: string
+    ParticipantsJson?: string
     ParticipantCount?: number
     MatchCount?: number
 }
@@ -27,6 +28,20 @@ export const CompetitionStatusText: Record<CompetitionStatus, string> = {
     [CompetitionStatus.Cancelled]: '已取消'
 }
 
+export interface CompetitionParticipant {
+    UserId: number
+    Number?: string
+}
+
+export interface CompetitionMatchScoringRule {
+    PlayerCount: number
+    Points: number[]
+}
+
+export interface CompetitionMatchScoring {
+    Rules: CompetitionMatchScoringRule[]
+}
+
 export interface CompetitionListResponse {
     total: number
     items: Competition[]
@@ -38,6 +53,7 @@ export interface CompetitionMatch {
     OrderIndex: number
     Stage?: string
     ScheduledStartTime?: number
+    ScoringJson?: string
     GameName?: string
     HostUserName?: string
 }

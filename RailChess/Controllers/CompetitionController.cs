@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using RailChess.Models.DbCtx;
 using RailChess.Models.Game;
 using RailChess.Services;
+using System.Text.Json;
 
 namespace RailChess.Controllers
 {
@@ -71,9 +72,7 @@ namespace RailChess.Controllers
                     x,
                     hostNames,
                     matchCounts.GetValueOrDefault(x.Id),
-                    string.IsNullOrWhiteSpace(x.ParticipantUserIdCsv)
-                        ? 0
-                        : x.ParticipantUserIdCsv.Split(',', StringSplitOptions.RemoveEmptyEntries).Length))
+                    CountParticipants(x.ParticipantsJson)))
                 .ToList();
 
             return this.ApiResp(new { total, items });
@@ -116,7 +115,10 @@ namespace RailChess.Controllers
                         GameId = m.GameId,
                         OrderIndex = m.OrderIndex,
                         Stage = m.Stage,
-                        ScheduledStartTime = CompetitionDto.ToTimestamp(m.ScheduledStartTime),
+                        ScheduledStartTime = m.ScheduledStartTime == default
+                            ? null
+                            : CompetitionDto.ToTimestamp(m.ScheduledStartTime),
+                        ScoringJson = m.ScoringJson,
                         GameName = gh?.GameName,
                         HostUserName = hostName
                     };
@@ -151,6 +153,8 @@ namespace RailChess.Controllers
             existing.StartTime = CompetitionDto.FromTimestamp(dto.StartTime);
             existing.EndTime = CompetitionDto.FromTimestamp(dto.EndTime);
             existing.Status = dto.Status;
+            existing.HomepageUrl = dto.HomepageUrl;
+            existing.ParticipantsJson = dto.ParticipantsJson;
 
             _context.SaveChanges();
             return this.ApiResp();
@@ -202,7 +206,6 @@ namespace RailChess.Controllers
             };
             competition.Matches.Add(match);
 
-            UpdateParticipantCsv(competition);
             _context.SaveChanges();
             return this.ApiResp();
         }
@@ -226,7 +229,6 @@ namespace RailChess.Controllers
             competition.Matches.Remove(match);
             _context.CompetitionMatches.Remove(match);
 
-            UpdateParticipantCsv(competition);
             _context.SaveChanges();
             return this.ApiResp();
         }
@@ -273,36 +275,54 @@ namespace RailChess.Controllers
             return this.ApiResp();
         }
 
-        /// <summary>根据比赛下所有对局的 AllowUserIdCsv 重新计算参赛用户并集</summary>
-        private void UpdateParticipantCsv(Competition competition)
+        /// <summary>更新对局积分规则</summary>
+        [Authorize]
+        public IActionResult UpdateMatchScoring(int matchId, [FromBody] CompetitionMatchScoring? scoring)
         {
-            var gameIds = competition.Matches.Select(m => m.GameId).ToList();
-            if (gameIds.Count == 0)
-            {
-                competition.ParticipantUserIdCsv = null;
-                return;
-            }
+            var match = _context.CompetitionMatches
+                .Include(m => m.Competition)
+                .FirstOrDefault(m => m.Id == matchId);
+            if (match is null || match.Competition is null || match.Competition.Deleted)
+                return this.ApiFailedResp("找不到指定对局");
+            if (match.Competition.HostUserId != _userId)
+                return this.ApiFailedResp("只有创建者能修改比赛");
 
-            var csvs = _context.Games
-                .Where(g => gameIds.Contains(g.Id))
-                .Select(g => g.AllowUserIdCsv)
-                .ToList();
-
-            var userIds = new HashSet<int>();
-            foreach (var csv in csvs)
+            if (scoring is not null)
             {
-                if (string.IsNullOrWhiteSpace(csv))
-                    continue;
-                foreach (var part in csv.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                if (scoring.Rules.Count == 0)
+                    return this.ApiFailedResp("积分规则格式异常");
+                var duplicatePlayerCount = scoring.Rules
+                    .GroupBy(r => r.PlayerCount)
+                    .FirstOrDefault(g => g.Count() > 1)?.Key;
+                if (duplicatePlayerCount.HasValue)
+                    return this.ApiFailedResp($"存在重复的人数设置：{duplicatePlayerCount.Value}人");
+                foreach (var rule in scoring.Rules)
                 {
-                    if (int.TryParse(part.Trim(), out int uid))
-                        userIds.Add(uid);
+                    if (rule.PlayerCount < 1)
+                        return this.ApiFailedResp("参赛人数必须大于0");
+                    if (rule.Points.Count != rule.PlayerCount)
+                        return this.ApiFailedResp("积分数量必须与参赛人数一致");
                 }
+                scoring.Rules = scoring.Rules.OrderBy(r => r.PlayerCount).ToList();
             }
 
-            competition.ParticipantUserIdCsv = userIds.Count > 0
-                ? string.Join(",", userIds.OrderBy(x => x))
-                : null;
+            match.ScoringJson = scoring is null ? null : JsonSerializer.Serialize(scoring);
+            _context.SaveChanges();
+            return this.ApiResp();
+        }
+
+        private static int CountParticipants(string? participantsJson)
+        {
+            if (string.IsNullOrWhiteSpace(participantsJson))
+                return 0;
+            try
+            {
+                return JsonSerializer.Deserialize<List<CompetitionParticipant>>(participantsJson)?.Count ?? 0;
+            }
+            catch
+            {
+                return 0;
+            }
         }
     }
 }

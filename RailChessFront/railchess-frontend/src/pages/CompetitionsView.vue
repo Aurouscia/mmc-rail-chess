@@ -51,10 +51,11 @@ onMounted(() => {
             <iframe :src="widgetSrc(c.Id)" class="widget" :title="c.Title || '比赛 #' + c.Id"></iframe>
         </div>
     </div>
+    <div v-if="!loading && items.length === 0" class="empty">当前暂无比赛</div>
     <div v-if="loading" class="loadingWrap">
         <Loading></Loading>
     </div>
-    <div v-if="hasMore" class="loadMoreWrap">
+    <div v-if="hasMore && items.length > 0" class="loadMoreWrap">
         <button @click="loadMore" :disabled="loading" class="confirm">加载更多</button>
     </div>
 </div>
@@ -103,5 +104,11 @@ onMounted(() => {
     display: flex;
     justify-content: center;
     margin: 20px 0;
+}
+.empty{
+    text-align: center;
+    font-size: 24px;
+    color: #aaa;
+    margin-top: 50px;
 }
 </style>

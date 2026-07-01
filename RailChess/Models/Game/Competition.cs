@@ -28,11 +28,24 @@ namespace RailChess.Models.Game
 
         public bool Deleted { get; set; }
 
-        /// <summary>参赛用户Id列表，CSV格式</summary>
-        public string? ParticipantUserIdCsv { get; set; }
+        /// <summary>比赛主页URL</summary>
+        public string? HomepageUrl { get; set; }
+
+        /// <summary>
+        /// 参赛选手列表，JSON格式，例如：[{ "UserId": 1, "Number": "A01" }]
+        /// 由业务代码自行序列化/反序列化
+        /// </summary>
+        public string? ParticipantsJson { get; set; }
 
         /// <summary>比赛包含的对局</summary>
         public List<CompetitionMatch> Matches { get; set; } = new();
+    }
+
+    /// <summary>参赛选手信息，供业务代码解析 ParticipantsJson 使用</summary>
+    public class CompetitionParticipant
+    {
+        public int UserId { get; set; }
+        public string? Number { get; set; }
     }
 
     public enum CompetitionStatus

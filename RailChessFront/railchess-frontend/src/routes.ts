@@ -12,7 +12,7 @@ import RankingList from './pages/RankingList.vue'
 import Guide from './pages/Guide.vue'
 import { RouteLocation } from 'vue-router'
 import AarcConverter from './pages/AarcConverter.vue'
-import ViewCompetitions from './pages/ViewCompetitions.vue'
+import CompetitionsView from './pages/CompetitionsView.vue'
 
 export const routes = [
     {
@@ -37,7 +37,7 @@ export const routes = [
         component: Games
     },{
         path: '/competitions',
-        component: ViewCompetitions,
+        component: CompetitionsView,
         name: 'competitions'
     },{
         path: '/competitions/manage',
