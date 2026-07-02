@@ -30,10 +30,12 @@ export class SignalRClient{
     gameId:number
     conn:signalR.HubConnection
     private textMsgCall:TextMsgCall
+    private showClientErrors:boolean
 
-    constructor(gameId:number, jwtToken:string, syncCall:SyncCall, textMsgCall:TextMsgCall){
+    constructor(gameId:number, jwtToken:string, syncCall:SyncCall, textMsgCall:TextMsgCall, showClientErrors:boolean = false){
         this.gameId = gameId;
         this.textMsgCall = textMsgCall;
+        this.showClientErrors = showClientErrors;
         const baseUrl = import.meta.env.VITE_BASEURL;
         const url = baseUrl+"/Play";
         const retryDelays = [500, 500, 1000, 1000, 2000, 2000, 4000, 4000]
@@ -82,7 +84,9 @@ export class SignalRClient{
         }
         this.errTimestamps.set(methodName, now)
         const msg = err instanceof Error ? err.message : String(err)
-        this.textMsgCall(getLocalTextMsg(`${methodName}失败：${msg}`, 2))
+        if(this.showClientErrors){
+            this.textMsgCall(getLocalTextMsg(`${methodName}失败：${msg}`, 2))
+        }
     }
     private async invokeWithErr(methodName:string, req:unknown, suppressIntervalMs:number = 0){
         try{

@@ -443,7 +443,8 @@ const sidebarOptions = useTemplateRef('sidebarOptions')
 const msgs = ref<TextMsg[]>([]);
 const frame = useTemplateRef('frame')
 const arena = useTemplateRef('arena')
-const { bgOpacity, staSizeRatio, connDisplayMode, syncMeIntervalSec } = storeToRefs(usePlayOptionsStore())
+const playOptions = usePlayOptionsStore()
+const { bgOpacity, staSizeRatio, connDisplayMode, syncMeIntervalSec } = storeToRefs(playOptions)
 const staSize = ref<number>(0.8)
 function autoStaSize(){
     if(!frame.value || !arena.value){return;}
@@ -542,7 +543,7 @@ onMounted(async()=>{
             pop.value.show(truncate(m.sender+"："+m.content, {length:30}), t)
     }
     const jwtToken = useJwtTokenStore().jwtToken
-    sgrc = new SignalRClient(gameId,jwtToken||"", sync, textMsgCall);
+    sgrc = new SignalRClient(gameId,jwtToken||"", sync, textMsgCall, playOptions.showClientErrors);
 
     //旧版兼容性
     localStorage.removeItem('staSize')

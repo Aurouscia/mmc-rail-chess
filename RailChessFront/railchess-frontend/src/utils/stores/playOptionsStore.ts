@@ -23,12 +23,13 @@ function fixStringNumbers(){
 
 const storeName = 'playOptionsStore'
 export const usePlayOptionsStore = defineStore(storeName, ()=>{
-    const bgOpacity = ref<number>(0.4)
+    const bgOpacity = ref<number>(0.3)
     const staSizeRatio = ref<number>(0.8)
     const vacuumStaOpacity = ref<number>(1)
     const connDisplayMode = ref<'none'|'anim'>('none')
     const autoSeekInterval = ref<number>(3000)
     const syncMeIntervalSec = ref<number>(8)
+    const showClientErrors = ref<boolean>(false)
 
     watch(() => vacuumStaOpacity.value, () => {
         applyVacuumStaOpacity()
@@ -40,7 +41,8 @@ export const usePlayOptionsStore = defineStore(storeName, ()=>{
         vacuumStaOpacity,
         connDisplayMode,
         autoSeekInterval,
-        syncMeIntervalSec
+        syncMeIntervalSec,
+        showClientErrors
     }
 }, {
     persist:{

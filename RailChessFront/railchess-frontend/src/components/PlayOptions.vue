@@ -6,7 +6,7 @@ defineProps<{
     playback?:boolean|string
 }>()
 
-const { bgOpacity, staSizeRatio, vacuumStaOpacity, autoSeekInterval, connDisplayMode, syncMeIntervalSec } = storeToRefs(usePlayOptionsStore())
+const { bgOpacity, staSizeRatio, vacuumStaOpacity, autoSeekInterval, connDisplayMode, syncMeIntervalSec, showClientErrors } = storeToRefs(usePlayOptionsStore())
 </script>
 
 <template>
@@ -40,6 +40,12 @@ const { bgOpacity, staSizeRatio, vacuumStaOpacity, autoSeekInterval, connDisplay
             <option :value="'none'">关闭</option>
             <option :value="'anim'">动画</option>
         </select>
+    </div>
+    <div class="sideBarOption">
+        <label>
+            <input type="checkbox" v-model="showClientErrors"/>
+            展示客户端错误信息
+        </label>
     </div>
 </template>
 
