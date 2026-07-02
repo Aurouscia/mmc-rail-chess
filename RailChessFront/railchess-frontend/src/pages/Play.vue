@@ -423,10 +423,12 @@ async function init(){
         bg.value.addEventListener('load', ()=>{
             renderStaList();
             clearTimeout(loadingBgTimer);
+            bgLoaded.value = true;
         })
     }
 }
 const bg = useTemplateRef('bg')
+const bgLoaded = ref(false)
 let loadingBgTimer = 0;
 
 const sending = ref<string>("");
@@ -719,7 +721,7 @@ watch(props,()=>{
 <SideBar ref="sidebarOptions">
     <PlayOptions :playback="playback"></PlayOptions>
 </SideBar>
-<Timeline v-if="playback" :game-id="gameId" :autoplay="autoplay" @view-time="t=>sgrc.syncMe(t)"></Timeline>
+<Timeline v-if="playback" :game-id="gameId" :autoplay="autoplay" :bg-loaded="bgLoaded" @view-time="t=>sgrc.syncMe(t)"></Timeline>
 </template>
 
 <style scoped lang="scss">

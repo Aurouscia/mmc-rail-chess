@@ -54,7 +54,7 @@ function copyHtml(id: string, src: string) {
             AARC &rarr; 轨交棋 转换器
         </router-link>
     </div>
-    <img style="width: 80vw; max-width: 400px; margin: auto; display: block;" src="http://static.wiki.jowei19.com/wikiFile/cbecztuu.jpg"/>
+    <img style="width: 80vw; max-width: 400px; margin: auto; display: block;" src="/mor26poster.jpg"/>
     <div class="widgets">
         <div v-for="w in widgets" :key="w.id" class="widget-wrapper">
             <iframe :src="w.src" class="widget" :title="w.title"></iframe>

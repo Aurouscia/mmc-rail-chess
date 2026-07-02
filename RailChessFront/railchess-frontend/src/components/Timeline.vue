@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, useTemplateRef } from 'vue';
+import { nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { GameTimeline } from '../models/game';
 import { injectApi, injectPop } from '../provides';
 import { avtSrc } from '../utils/fileSrc';
@@ -9,7 +9,8 @@ import { displayForRandNum } from '../utils/randNumDisplay';
 
 const props = defineProps<{
     gameId:number,
-    autoplay?:string
+    autoplay?:string,
+    bgLoaded?:boolean
 }>()
 const emit = defineEmits<{
     (e:'viewTime', eid?:number):void
@@ -172,17 +173,23 @@ const thSeekSameRight = createBtnThrottle(()=>seekSame('right'))
 const thSeekEndRight = createBtnThrottle(()=>seekEnd('right'))
 
 const timelineDiv = useTemplateRef('timelineDiv')
+let autoPlayStarted = false
+function tryStartAutoplay(){
+    if(!props.autoplay || autoPlayStarted || !data.value || !props.bgLoaded)
+        return
+    autoPlayStarted = true
+    selectedIdx.value = -1
+    selectedItem(true)
+    toggleAuto()
+}
 onMounted(async()=>{
     await load()
     if(data.value?.Warning){
         pop.value.show(data.value.Warning, 'warning')
     }
-    if(props.autoplay && data.value){
-        selectedIdx.value = -1
-        selectedItem(true)
-        toggleAuto()
-    }
+    tryStartAutoplay()
 })
+watch(()=>props.bgLoaded, tryStartAutoplay)
 </script>
 
 <template>
