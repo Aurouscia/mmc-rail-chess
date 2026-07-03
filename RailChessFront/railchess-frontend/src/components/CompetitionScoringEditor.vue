@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { CompetitionMatchScoring } from '../models/competition'
+import { useScoringPresetStore, ScoringPreset } from '../utils/stores/scoringPresetStore'
+
+const presetStore = useScoringPresetStore()
 
 const props = defineProps<{
     modelValue?: string
@@ -72,10 +75,43 @@ function updatePoint(ruleIndex: number, pointIndex: number, value: string) {
 }
 
 watch(() => props.modelValue, parse, { immediate: true })
+
+function savePreset() {
+    const name = window.prompt('请输入预设名称')
+    if (!name || !name.trim()) return
+    presetStore.add({
+        name: name.trim(),
+        scoring: JSON.parse(JSON.stringify(scoring.value)) as CompetitionMatchScoring
+    })
+}
+
+function applyPreset(preset: ScoringPreset) {
+    if (scoring.value.Rules.length > 0) {
+        if (!window.confirm(`当前已有积分规则，确定应用预设“${preset.name}”吗？`)) {
+            return
+        }
+    }
+    parse(JSON.stringify(preset.scoring))
+    emitValue()
+}
 </script>
 
 <template>
     <div class="scoringEditor">
+        <div v-if="presetStore.presets.length > 0" class="presets">
+            <div
+                v-for="preset in presetStore.presets"
+                :key="preset.name"
+                class="presetItem"
+            >
+                <button class="lite applyBtn" @click="applyPreset(preset)">
+                    使用预设 {{ preset.name }}
+                </button>
+                <button class="lite removeBtn" @click="presetStore.remove(preset.name)">
+                    移除
+                </button>
+            </div>
+        </div>
         <div class="rules">
             <div v-for="(rule, rIdx) in scoring.Rules" :key="rIdx" class="rule">
                 <div class="ruleHeader">
@@ -107,6 +143,9 @@ watch(() => props.modelValue, parse, { immediate: true })
             <div v-if="scoring.Rules.length === 0" class="empty">非积分赛（无积分规则）</div>
         </div>
         <button class="minor" @click="addRule">+添加积分规则</button>
+        <button class="lite save-preset" @click="savePreset">
+            保存当前设置为预设
+        </button>
     </div>
 </template>
 
@@ -172,5 +211,31 @@ watch(() => props.modelValue, parse, { immediate: true })
 }
 .danger {
     color: #d9534f;
+}
+.presets {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.presetItem {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+.applyBtn {
+    flex: 1;
+    text-align: left;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    color: cornflowerblue
+}
+.removeBtn {
+    color: #999;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+.save-preset{
+    color: cornflowerblue;
+    margin-top: 10px;
 }
 </style>
