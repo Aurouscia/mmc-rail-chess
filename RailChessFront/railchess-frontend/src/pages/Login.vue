@@ -10,6 +10,7 @@ import { useRouter } from 'vue-router';
 import { User } from '../models/user';
 import Loading from '../components/Loading.vue';
 import Avatar from '../components/Avatar.vue';
+import Notice from '../components/Notice.vue';
 
 const router = useRouter();
 const userName = ref<string>("")
@@ -102,6 +103,10 @@ onMounted(async()=>{
             <div class="login">
                 <button @click="Login" class="confirm">登&nbsp;录</button>
             </div>
+            <Notice :type="'warn'" :title="'请注意'">
+                请确保使用 Edge/Chrome/Safari 浏览器以正常游玩<br/>
+                较大的图请尽量使用电脑游玩
+            </Notice>
         </div>
         <div class="loginInfo" v-if="identityInfo">
             当前登录：
