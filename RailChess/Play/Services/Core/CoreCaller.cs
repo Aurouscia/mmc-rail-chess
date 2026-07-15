@@ -78,7 +78,8 @@ namespace RailChess.Play.Services.Core
             return new PathFindOptions { 
                 Steps = steps,
                 MaxiumTransfer = game.AllowTransfer,
-                AllowReverseAtTerminal = game.AllowReverseAtTerminal
+                AllowReverseAtTerminal = game.AllowReverseAtTerminal,
+                CacheScopeKey = $"game:{game.Id}"
             };
         }
     }
