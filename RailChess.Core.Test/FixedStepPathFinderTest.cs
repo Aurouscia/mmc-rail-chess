@@ -963,6 +963,106 @@ namespace RailChess.Core.Test
         }
 
         [TestMethod]
+        public void SameLineTailFastPath()
+        {
+            // 线路: 1 - 2 - 3 - 4 - 5，禁止换乘时应直接沿线归档终点，无需逐邻点扩展
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            Sta sta4 = new(4, 1);
+            Sta sta5 = new(5, 1);
+            List<Sta> stas = [sta1, sta2, sta3, sta4, sta5];
+            Dictionary<int, List<int>> lines = new()
+            {
+                { 1, [1, 2, 3, 4, 5] }
+            };
+            Graph g = new(stas, lines);
+            g.UserPosition.Add(1, 1);
+
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            sta3.TwowayConnect(sta4, 1);
+            sta4.TwowayConnect(sta5, 1);
+
+            var paths = _finder.FindAllPaths(g, 1, [1, 2, 3, 4], 0).ToList().ConvertAll(x => x.Last());
+
+            CollectionAssert.AreEquivalent(new List<int> { 2, 3, 4, 5 }, paths);
+            Assert.AreEqual(0, GetNeighborsTriedTimes());
+        }
+
+        [TestMethod]
+        public void CachedLineRangeSearchUpdatesAfterOwnershipChange()
+        {
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            Sta sta4 = new(4, 1);
+            Sta sta5 = new(5, 1);
+            List<Sta> stas = [sta1, sta2, sta3, sta4, sta5];
+            Dictionary<int, List<int>> lines = new()
+            {
+                { 1, [1, 2, 3] },
+                { 2, [3, 4, 5] }
+            };
+            Graph g = new(stas, lines);
+            g.UserPosition.Add(1, 1);
+
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            sta3.TwowayConnect(sta4, 2);
+            sta4.TwowayConnect(sta5, 2);
+
+            PathFindOptions options = new()
+            {
+                Steps = [4],
+                MaxiumTransfer = 1,
+                CacheScopeKey = "test-cache-line-range-update"
+            };
+            var beforeBlock = _finder.FindAllPaths(g, 1, options).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 5 }, beforeBlock);
+
+            sta4.Owner = 2;
+            var afterBlock = _finder.FindAllPaths(g, 1, options).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int>(), afterBlock);
+        }
+
+        [TestMethod]
+        public void CachedLineRangeSearchSupportsSelfIntersectLineIndexes()
+        {
+            Sta sta1 = new(1, 1);
+            Sta sta2 = new(2, 1);
+            Sta sta3 = new(3, 1);
+            Sta sta4 = new(4, 1);
+            sta1.TwowayConnect(sta2, 1);
+            sta2.TwowayConnect(sta3, 1);
+            sta2.TwowayConnect(sta4, 1);
+            List<Sta> stas = [sta1, sta2, sta3, sta4];
+            Graph g = new(stas, new Dictionary<int, List<int>>()
+            {
+                { 1, [1, 2, 3, 2, 4] }
+            });
+            g.UserPosition.Add(1, 1);
+
+            PathFindOptions noTransfer = new()
+            {
+                Steps = [2],
+                MaxiumTransfer = 0,
+                CacheScopeKey = "test-cache-self-intersect-no-transfer"
+            };
+            var withoutTransfer = _finder.FindAllPaths(g, 1, noTransfer).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 3 }, withoutTransfer);
+
+            PathFindOptions oneTransfer = new()
+            {
+                Steps = [2],
+                MaxiumTransfer = 1,
+                CacheScopeKey = "test-cache-self-intersect-one-transfer"
+            };
+            var withTransfer = _finder.FindAllPaths(g, 1, oneTransfer).ToList().ConvertAll(x => x.Last());
+            CollectionAssert.AreEquivalent(new List<int> { 3, 4 }, withTransfer);
+        }
+
+        [TestMethod]
         public void NegativeOne()
         {
             //当步数为-1时，可以一步走到任何其他玩家没占的地方

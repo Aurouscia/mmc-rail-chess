@@ -1,3 +1,4 @@
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using RailChess.Core.Abstractions;
 using RailChess.GraphDefinition;
@@ -6,6 +7,9 @@ namespace RailChess.Core
 {
     public class FixedStepPathFinder : IFixedStepPathFinder
     {
+        private static readonly int[] Directions = [-1, 1];
+        private static readonly ConcurrentDictionary<string, LineReachabilityCache> LineReachabilityCaches = new();
+
         public List<List<int>> FindAllPaths(Graph graph, int userId, PathFindOptions options)
         {
             var steps = options.Steps;
@@ -61,6 +65,7 @@ namespace RailChess.Core
 
             if (!graph.UserPosition.TryGetValue(userId, out int from))
                 throw new Exception("算路异常:找不到玩家位置");
+            var stationById = graph.Stations.ToDictionary(x => x.Id);
 
             // 处理 -1 的特殊情况
             var normalSteps = stepsList.Where(s => s != -1).ToList();
@@ -80,8 +85,14 @@ namespace RailChess.Core
             if (normalSteps.Count == 0)
                 return negativeOnePaths;
 
+            if (TryFindAllPathsByCachedLineRanges(
+                graph, stationById, userId, normalSteps, options, teammates,
+                negativeOnePaths, out var cachedLineRangeResult))
+                return cachedLineRangeResult;
+
             // 按步数从小到大排序，用于归档中间结果
             var sortedSteps = normalSteps.OrderBy(x => x).ToList();
+            var targetSteps = sortedSteps.ToHashSet();
             var stepArchives = new Dictionary<int, List<LinedPath>>();
             foreach (var s in sortedSteps)
                 stepArchives[s] = [];
@@ -108,7 +119,7 @@ namespace RailChess.Core
             int minStepRequired = sortedSteps.Min();
             Queue<LinedPath> paths = [];
             var initPaths = startStas
-                .Where(x => CanInitialDirectionPossiblyReach(graph, x, userId, minStepRequired, allowReverseAtTerminal, maxiumTransfer, teammates))
+                .Where(x => CanInitialDirectionPossiblyReach(graph, stationById, x, userId, minStepRequired, allowReverseAtTerminal, maxiumTransfer, teammates))
                 .Select(x => new LinedPath(x));
             foreach (var p in initPaths)
                 paths.Enqueue(p);
@@ -141,6 +152,12 @@ namespace RailChess.Core
                 int currentStepCount = p.Count - 1; // 已走步数
                 bool pJustStared = p.Count == 1;
                 bool transferUsedUp = p.TransferredTimes == maxiumTransfer;
+
+                if (transferUsedUp && TryArchiveRemainingSameLinePaths(
+                    graph, stationById, p, sortedSteps, targetSteps,
+                    userId, teammates, allowReverseAtTerminal,
+                    stepArchives, confirmedDestByStep))
+                    continue;
 
                 // 判断当前路径是否接近某个目标步数（还差一步就达到目标）
                 var nearFullSteps = sortedSteps.Where(s => currentStepCount == s - 1).ToList();
@@ -278,7 +295,7 @@ namespace RailChess.Core
                                 bool isRing = IsRingLine(line);
                                 int maxWalkable = 0;
                                 // 换乘后方向不确定，尝试两个方向取最大值
-                                foreach (int dir in new[] { +1, -1 })
+                                foreach (int dir in Directions)
                                 {
                                     int? firstStep = GetNextIndexOnLine(line, ncr.IndexChosen, dir, isRing);
                                     if (firstStep is null)
@@ -288,7 +305,7 @@ namespace RailChess.Core
                                         continue;
 
                                     int walkable = 1 + ScanWalkableStepsOnLine(
-                                        graph, line, firstStep.Value, dir,
+                                        stationById, line, firstStep.Value, dir,
                                         allowReverseAtTerminal, remainingSteps - 1, userId, teammates);
                                     maxWalkable = Math.Max(maxWalkable, walkable);
                                 }
@@ -352,6 +369,353 @@ namespace RailChess.Core
         public bool IsValidMove(Graph graph, int userId, int to, PathFindOptions options) =>
             FindAllPaths(graph, userId, options).Any(x => x.LastOrDefault() == to);
 
+        private bool TryFindAllPathsByCachedLineRanges(
+            Graph graph,
+            IReadOnlyDictionary<int, Sta> stationById,
+            int userId,
+            List<int> normalSteps,
+            PathFindOptions options,
+            HashSet<int> teammates,
+            List<List<int>> negativeOnePaths,
+            out List<List<int>> result)
+        {
+            result = [];
+            if (string.IsNullOrWhiteSpace(options.CacheScopeKey))
+                return false;
+
+            if (options.AllowReverseAtTerminal)
+                return false;
+
+            if (graph.LineStaIndexes is null || graph.Lines.Count == 0)
+                return false;
+
+            int maxSteps = normalSteps.Max();
+            if (maxSteps <= 0)
+                return false;
+
+            if (!graph.UserPosition.TryGetValue(userId, out int from))
+                return false;
+
+            var cacheKey = LineReachabilityCache.CreateKey(options.CacheScopeKey, userId, teammates);
+            var cache = LineReachabilityCaches.GetOrAdd(cacheKey, _ => new LineReachabilityCache());
+            cache.EnsureCurrent(graph, stationById, userId, teammates, maxSteps);
+
+            if (!cache.TryGetOccurrences(from, out var startOccurrences) || startOccurrences.Count == 0)
+                return false;
+
+            var sortedSteps = normalSteps.OrderBy(x => x).ToList();
+            var targetSteps = sortedSteps.ToHashSet();
+            var resultByDestination = new Dictionary<int, List<int>>();
+            Queue<LineSearchState> queue = [];
+            HashSet<LineSearchVisitKey> visited = [];
+
+            foreach (var start in startOccurrences)
+            {
+                var state = new LineSearchState(start.LineId, start.Index, 0, 0, null, [from]);
+                if (visited.Add(state.VisitKey))
+                    queue.Enqueue(state);
+            }
+
+            var limit = DateTime.Now.AddSeconds(3);
+            while (queue.Count > 0)
+            {
+                if (!DisableTimeoutTestOnly && DateTime.Now > limit)
+                    throw new Exception("计算超时，请联系管理员");
+
+                var state = queue.Dequeue();
+                if (!graph.Lines.TryGetValue(state.LineId, out var line))
+                    continue;
+
+                int remainingSteps = maxSteps - state.StepsUsed;
+                if (remainingSteps <= 0)
+                    continue;
+
+                foreach (int direction in Directions)
+                {
+                    var reachableIndexes = cache.GetReachableIndexes(state.LineId, state.Index, direction);
+                    int maxTake = Math.Min(remainingSteps, reachableIndexes.Length);
+                    if (maxTake == 0)
+                        continue;
+
+                    List<int> segmentStationIds = [];
+                    for (int offset = 0; offset < maxTake; offset++)
+                    {
+                        int stationId = line[reachableIndexes[offset]];
+                        if (offset == 0 && state.PreviousStationId == stationId)
+                            break;
+
+                        segmentStationIds.Add(stationId);
+                        int newStepCount = state.StepsUsed + offset + 1;
+                        if (targetSteps.Contains(newStepCount)
+                            && !resultByDestination.ContainsKey(stationId)
+                            && !IsTeammateCurrentPosition(graph, teammates, stationId))
+                        {
+                            resultByDestination.Add(stationId, ExtendPath(state.Path, segmentStationIds));
+                        }
+
+                        if (newStepCount >= maxSteps || state.TransfersUsed >= options.MaxiumTransfer)
+                            continue;
+
+                        if (!cache.TryGetOccurrences(stationId, out var transferOccurrences))
+                            continue;
+
+                        int previousStationId = segmentStationIds.Count >= 2
+                            ? segmentStationIds[^2]
+                            : state.Path[^1];
+                        foreach (var transfer in transferOccurrences)
+                        {
+                            if (transfer.LineId == state.LineId && transfer.Index == state.Index)
+                                continue;
+
+                            var transferredPath = ExtendPath(state.Path, segmentStationIds);
+                            var transferredState = new LineSearchState(
+                                transfer.LineId,
+                                transfer.Index,
+                                newStepCount,
+                                state.TransfersUsed + 1,
+                                previousStationId,
+                                transferredPath);
+                            if (visited.Add(transferredState.VisitKey))
+                                queue.Enqueue(transferredState);
+                        }
+                    }
+                }
+            }
+
+            result = resultByDestination.Values.ToList();
+            if (negativeOnePaths.Count > 0)
+                result.AddRange(negativeOnePaths);
+            result = result
+                .DistinctBy(x => x.LastOrDefault())
+                .Where(x => x.Count > 0 && !IsTeammateCurrentPosition(graph, teammates, x.Last()))
+                .ToList();
+            return true;
+        }
+
+        private static List<int> ExtendPath(List<int> path, List<int> segment)
+        {
+            List<int> result = [.. path];
+            result.AddRange(segment);
+            return result;
+        }
+
+        private sealed class LineSearchState(
+            int lineId,
+            int index,
+            int stepsUsed,
+            int transfersUsed,
+            int? previousStationId,
+            List<int> path)
+        {
+            public int LineId { get; } = lineId;
+            public int Index { get; } = index;
+            public int StepsUsed { get; } = stepsUsed;
+            public int TransfersUsed { get; } = transfersUsed;
+            public int? PreviousStationId { get; } = previousStationId;
+            public List<int> Path { get; } = path;
+            public LineSearchVisitKey VisitKey { get; } = new(lineId, index, stepsUsed, transfersUsed, previousStationId);
+        }
+
+        private readonly record struct LineSearchVisitKey(
+            int LineId,
+            int Index,
+            int StepsUsed,
+            int TransfersUsed,
+            int? PreviousStationId);
+
+        private readonly record struct LineIndexRef(int LineId, int Index);
+
+        private readonly record struct LineRangeKey(int LineId, int Index, int Direction);
+
+        private sealed class LineReachabilityCache
+        {
+            private const int MaxChangedStationsForIncrementalUpdate = 64;
+            private readonly Lock _lock = new();
+            private string _topologySignature = string.Empty;
+            private int _maxSteps;
+            private Dictionary<int, int> _ownerByStationId = [];
+            private Dictionary<int, List<LineIndexRef>> _occurrencesByStationId = [];
+            private Dictionary<LineRangeKey, int[]> _reachableIndexesByDirection = [];
+
+            public static string CreateKey(string scopeKey, int userId, HashSet<int> teammates)
+            {
+                var teammatePart = teammates.Count == 0
+                    ? "none"
+                    : string.Join('-', teammates.OrderBy(x => x));
+                return $"{scopeKey}|user:{userId}|team:{teammatePart}";
+            }
+
+            public void EnsureCurrent(
+                Graph graph,
+                IReadOnlyDictionary<int, Sta> stationById,
+                int userId,
+                HashSet<int> teammates,
+                int maxSteps)
+            {
+                lock (_lock)
+                {
+                    var topologySignature = CreateTopologySignature(graph);
+                    if (_topologySignature != topologySignature || _maxSteps < maxSteps || _ownerByStationId.Count == 0)
+                    {
+                        Rebuild(graph, stationById, userId, teammates, maxSteps, topologySignature);
+                        return;
+                    }
+
+                    List<int> changedStationIds = [];
+                    foreach (var station in graph.Stations)
+                    {
+                        if (!_ownerByStationId.TryGetValue(station.Id, out var owner) || owner != station.Owner)
+                            changedStationIds.Add(station.Id);
+                    }
+
+                    if (changedStationIds.Count == 0)
+                        return;
+
+                    if (changedStationIds.Count > MaxChangedStationsForIncrementalUpdate)
+                    {
+                        Rebuild(graph, stationById, userId, teammates, _maxSteps, topologySignature);
+                        return;
+                    }
+
+                    foreach (var stationId in changedStationIds)
+                    {
+                        if (stationById.TryGetValue(stationId, out var station))
+                            _ownerByStationId[stationId] = station.Owner;
+                    }
+
+                    foreach (var stationId in changedStationIds)
+                    {
+                        if (!_occurrencesByStationId.TryGetValue(stationId, out var occurrences))
+                            continue;
+
+                        foreach (var occurrence in occurrences)
+                            RecomputeRangesAffectedBy(graph, stationById, userId, teammates, occurrence);
+                    }
+                }
+            }
+
+            public bool TryGetOccurrences(int stationId, out List<LineIndexRef> occurrences) =>
+                _occurrencesByStationId.TryGetValue(stationId, out occurrences!);
+
+            public int[] GetReachableIndexes(int lineId, int index, int direction) =>
+                _reachableIndexesByDirection.TryGetValue(new(lineId, index, direction), out var indexes)
+                    ? indexes
+                    : [];
+
+            private void Rebuild(
+                Graph graph,
+                IReadOnlyDictionary<int, Sta> stationById,
+                int userId,
+                HashSet<int> teammates,
+                int maxSteps,
+                string topologySignature)
+            {
+                _topologySignature = topologySignature;
+                _maxSteps = maxSteps;
+                _ownerByStationId = graph.Stations.ToDictionary(x => x.Id, x => x.Owner);
+                _occurrencesByStationId = [];
+                _reachableIndexesByDirection = [];
+
+                foreach (var (lineId, line) in graph.Lines)
+                {
+                    for (int index = 0; index < line.Count; index++)
+                    {
+                        int stationId = line[index];
+                        if (!_occurrencesByStationId.TryGetValue(stationId, out var occurrences))
+                        {
+                            occurrences = [];
+                            _occurrencesByStationId.Add(stationId, occurrences);
+                        }
+                        occurrences.Add(new(lineId, index));
+                    }
+                }
+
+                foreach (var (lineId, line) in graph.Lines)
+                {
+                    for (int index = 0; index < line.Count; index++)
+                    {
+                        foreach (int direction in Directions)
+                            SetReachableIndexes(graph, stationById, userId, teammates, lineId, line, index, direction);
+                    }
+                }
+            }
+
+            private void RecomputeRangesAffectedBy(
+                Graph graph,
+                IReadOnlyDictionary<int, Sta> stationById,
+                int userId,
+                HashSet<int> teammates,
+                LineIndexRef occurrence)
+            {
+                if (!graph.Lines.TryGetValue(occurrence.LineId, out var line))
+                    return;
+
+                bool isRing = IsRingLine(line);
+                foreach (int direction in Directions)
+                {
+                    int currentIndex = occurrence.Index;
+                    for (int distance = 0; distance <= _maxSteps; distance++)
+                    {
+                        SetReachableIndexes(graph, stationById, userId, teammates, occurrence.LineId, line, currentIndex, direction);
+                        var previousIndex = GetNextIndexOnLine(line, currentIndex, -direction, isRing);
+                        if (previousIndex is null)
+                            break;
+                        currentIndex = previousIndex.Value;
+                    }
+                }
+            }
+
+            private void SetReachableIndexes(
+                Graph graph,
+                IReadOnlyDictionary<int, Sta> stationById,
+                int userId,
+                HashSet<int> teammates,
+                int lineId,
+                List<int> line,
+                int startIndex,
+                int direction)
+            {
+                _reachableIndexesByDirection[new(lineId, startIndex, direction)] = CalculateReachableIndexes(
+                    stationById, line, startIndex, direction, _maxSteps, userId, teammates);
+            }
+
+            private static int[] CalculateReachableIndexes(
+                IReadOnlyDictionary<int, Sta> stationById,
+                List<int> line,
+                int startIndex,
+                int direction,
+                int maxSteps,
+                int userId,
+                HashSet<int> teammates)
+            {
+                bool isRing = IsRingLine(line);
+                int currentIndex = startIndex;
+                List<int> indexes = [];
+                while (indexes.Count < maxSteps)
+                {
+                    var nextIndex = GetNextIndexOnLine(line, currentIndex, direction, isRing);
+                    if (nextIndex is null)
+                        break;
+
+                    if (!stationById.TryGetValue(line[nextIndex.Value], out var station))
+                        break;
+
+                    if (!IsEmptyOrMineOrTeammateOwned(station, userId, teammates))
+                        break;
+
+                    indexes.Add(nextIndex.Value);
+                    currentIndex = nextIndex.Value;
+                }
+
+                return [.. indexes];
+            }
+
+            private static string CreateTopologySignature(Graph graph) =>
+                string.Join(';', graph.Lines
+                    .OrderBy(x => x.Key)
+                    .Select(x => $"{x.Key}:{string.Join(',', x.Value)}"));
+        }
+
         public static bool DisableTimeoutTestOnly { get; set; }
         [Conditional("DEBUG")]
         private void ResetNeighborsTriedTimesTestOnly() => NeighborsTriedTimesTestOnly = 0;
@@ -395,6 +759,12 @@ namespace RailChess.Core
                 Stations.Add(newSta);
                 if (transfer)
                     TransferredTimes++;
+            }
+            public LinedPath(LinedPath basedOn, IReadOnlyList<LinedStaCollapsed> newStas)
+            {
+                Stations = [.. basedOn.Stations];
+                TransferredTimes = basedOn.TransferredTimes;
+                Stations.AddRange(newStas);
             }
 
             public List<int> ToIds() =>
@@ -477,13 +847,143 @@ namespace RailChess.Core
             return sta.IndexChosen == 0 || sta.IndexChosen == line.Count - 1;
         }
 
+        private static bool TryArchiveRemainingSameLinePaths(
+            Graph graph,
+            IReadOnlyDictionary<int, Sta> stationById,
+            LinedPath path,
+            List<int> sortedSteps,
+            HashSet<int> targetSteps,
+            int userId,
+            HashSet<int> teammates,
+            bool allowReverseAtTerminal,
+            Dictionary<int, List<LinedPath>> stepArchives,
+            Dictionary<int, HashSet<int>> confirmedDestByStep)
+        {
+            var tail = path.Tail;
+            if (tail is null)
+                return false;
+
+            if (!graph.Lines.TryGetValue(tail.LineId, out var line))
+                return false;
+
+            int currentStepCount = path.Count - 1;
+            int maxTargetStep = sortedSteps[^1];
+            if (currentStepCount >= maxTargetStep)
+                return true;
+
+            var directions = GetContinuationDirections(graph, path, line, allowReverseAtTerminal);
+            if (directions.Count == 0)
+                return false;
+
+            bool isRing = IsRingLine(line);
+            foreach (var initialDirection in directions)
+            {
+                int currentIndex = tail.IndexChosen;
+                int direction = initialDirection;
+                List<LinedStaCollapsed> segment = [];
+
+                for (int step = currentStepCount; step < maxTargetStep;)
+                {
+                    int? nextIndex = GetNextIndexOnLine(line, currentIndex, direction, isRing);
+                    if (nextIndex is null)
+                    {
+                        if (!allowReverseAtTerminal)
+                            break;
+
+                        direction *= -1;
+                        continue;
+                    }
+
+                    if (!stationById.TryGetValue(line[nextIndex.Value], out var station))
+                        break;
+
+                    if (!IsEmptyOrMineOrTeammateOwned(station, userId, teammates))
+                        break;
+
+                    currentIndex = nextIndex.Value;
+                    step++;
+                    segment.Add(new LinedStaCollapsed(tail.LineId, station, currentIndex));
+
+                    if (targetSteps.Contains(step))
+                    {
+                        var archivedPath = new LinedPath(path, segment);
+                        stepArchives[step].Add(archivedPath);
+                        confirmedDestByStep[step].Add(station.Id);
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private static List<int> GetContinuationDirections(
+            Graph graph, LinedPath path, List<int> line, bool allowReverseAtTerminal)
+        {
+            var tail = path.Tail;
+            if (tail is null)
+                return [];
+
+            bool isRing = IsRingLine(line);
+            if (path.Count == 1)
+            {
+                List<int> initialDirections = [];
+                HashSet<int> nextIndexes = [];
+                foreach (int direction in Directions)
+                {
+                    var nextIndex = GetNextIndexOnLine(line, tail.IndexChosen, direction, isRing);
+                    if (nextIndex is not null && nextIndexes.Add(nextIndex.Value))
+                        initialDirections.Add(direction);
+                }
+                return initialDirections;
+            }
+
+            var previous = path.Stations[^2];
+            List<int> previousIndexes = [];
+            if (graph.LineStaIndexes is not null
+                && graph.LineStaIndexes.TryGetValue(tail.LineId, out var lineIndexes)
+                && lineIndexes.TryGetValue(previous.Station.Id, out var indexes))
+            {
+                previousIndexes.AddRange(indexes);
+            }
+            else if (previous.LineId == tail.LineId)
+            {
+                previousIndexes.Add(previous.IndexChosen);
+            }
+
+            List<int> directions = [];
+            foreach (var previousIndex in previousIndexes)
+            {
+                foreach (int direction in Directions)
+                {
+                    var nextIndex = GetNextIndexOnLine(line, previousIndex, direction, isRing);
+                    if (nextIndex == tail.IndexChosen && !directions.Contains(direction))
+                        directions.Add(direction);
+                }
+            }
+
+            if (allowReverseAtTerminal && IsAtTerminal(tail, graph))
+            {
+                foreach (var direction in directions.ToList())
+                {
+                    if (GetNextIndexOnLine(line, tail.IndexChosen, direction, isRing) is null)
+                    {
+                        int reversed = -direction;
+                        if (!directions.Contains(reversed))
+                            directions.Add(reversed);
+                    }
+                }
+            }
+
+            return directions;
+        }
+
         /// <summary>
         /// 线性扫描剪枝：在换乘次数为0的情况下，
         /// 若从指定索引出发沿线路单向（可考虑环线、折返、障碍物）最远可走步数小于 minSteps，
         /// 则该初始方向不可能完成任何目标，可跳过入队。
         /// </summary>
         private bool CanInitialDirectionPossiblyReach(
-            Graph graph, LinedStaCollapsed startSta, int userId, int minSteps,
+            Graph graph, IReadOnlyDictionary<int, Sta> stationById, LinedStaCollapsed startSta, int userId, int minSteps,
             bool allowReverseAtTerminal, int maxiumTransfer, HashSet<int> teammates)
         {
             // 仅在换乘次数为0时启用此保守剪枝
@@ -501,10 +1001,10 @@ namespace RailChess.Core
                 return true;
 
             int leftSteps = ScanWalkableStepsOnLine(
-                graph, line, startSta.IndexChosen, -1,
+                stationById, line, startSta.IndexChosen, -1,
                 allowReverseAtTerminal, minSteps, userId, teammates);
             int rightSteps = ScanWalkableStepsOnLine(
-                graph, line, startSta.IndexChosen, +1,
+                stationById, line, startSta.IndexChosen, +1,
                 allowReverseAtTerminal, minSteps, userId, teammates);
 
             bool canReach = Math.Max(leftSteps, rightSteps) >= minSteps;
@@ -519,7 +1019,7 @@ namespace RailChess.Core
         /// 扫描步数上限为 maxScanSteps，避免折返或环线导致无限循环。
         /// </summary>
         private static int ScanWalkableStepsOnLine(
-            Graph graph, List<int> line, int startIndex, int initialDirection,
+            IReadOnlyDictionary<int, Sta> stationById, List<int> line, int startIndex, int initialDirection,
             bool allowReverseAtTerminal, int maxScanSteps, int userId, HashSet<int> teammates)
         {
             bool isRing = IsRingLine(line);
@@ -541,8 +1041,7 @@ namespace RailChess.Core
                     continue;
                 }
 
-                var station = graph.Stations.Find(s => s.Id == line[nextIndex.Value]);
-                if (station is null)
+                if (!stationById.TryGetValue(line[nextIndex.Value], out var station))
                     break;
 
                 if (!IsEmptyOrMineOrTeammateOwned(station, userId, teammates))
